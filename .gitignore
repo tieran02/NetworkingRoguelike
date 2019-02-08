@@ -1,0 +1,23 @@
+.vs/
+/bin-int/
+/bin/
+
+
+### CodeBlocks ###
+# specific to CodeBlocks IDE
+*.layout
+*.depend
+
+### premake-gmake ###
+Makefile
+*.make
+
+*.vcxproj
+
+*.filters
+
+*.user
+
+*.cbp
+
+*.sln
