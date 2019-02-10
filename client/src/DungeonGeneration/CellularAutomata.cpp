@@ -1,5 +1,6 @@
 #include "CellularAutomata.h"
 #include <iostream>
+#include "../Random.h"
 
 CellularAutomata::CellularAutomata(unsigned int width, unsigned int height, int seed) : WIDTH(width), HEIGHT(height), SEED(seed)
 {
@@ -50,9 +51,9 @@ void CellularAutomata::randomFill(int fillPercentage)
 		for (int x = 0; x < WIDTH; ++x)
 		{
 			//make all borders walls
-			if (y == 0 || y == HEIGHT - 1 || x == 0 || x == WIDTH - 1)
+			if (y == 0 || y == HEIGHT - 2 || x == 0 || x == WIDTH - 2)
 				m_map[y][x] = true;
-			else if (std::rand() % 100 < fillPercentage)
+			else if (Random::Instance().RangeSeeded(1,100) < fillPercentage)
 				m_map[y][x] = true;
 			else
 				m_map[y][x] = false;

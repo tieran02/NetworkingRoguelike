@@ -3,14 +3,17 @@
 
 int main()
 {
-	Dungeon dungeon{ 32,32 };
+
+	Dungeon dungeon{ 9 };
 	dungeon.Generate();
 
 	int width{ 1280 }, height{ 720 };
 	sf::RenderWindow window(sf::VideoMode(width, height), "SFML window");
 	sf::View view(sf::FloatRect(0.0f, 0.0f, (float)width, (float)height));
-	view.setCenter(32 * 1.5 * 16, 32 * 1.5 * 16);
+	view.setCenter(32 / 2 * 16, 32 / 2 * 16);
 	view.zoom(-2.5);
+
+	size_t size = sizeof(DungeonChunk);
 
 	window.setView(view);
 	while (window.isOpen())
@@ -25,7 +28,7 @@ int main()
 			if(event.type == sf::Event::Resized)
 			{
 				sf::View view(sf::FloatRect(0.0f, 0.0f, (float)event.size.width, (float)event.size.height));
-				view.setCenter(32 * 1.5 * 16, 32 * 1.5 * 16);
+				view.setCenter(32 / 2 * 16, 32 / 2 * 16);
 				view.zoom(-2.5);
 				window.setView(view);
 			}

@@ -3,12 +3,14 @@
 #include <iostream>
 #include <queue>
 #include <unordered_set>
+#include "Random.h"
+#include "Algorithms/Graphs/PrimsAlgorithm.h"
 
 int sign(int val) {
 	return ((0) < val) - (val < (0));
 }
 
-DungeonChunk::DungeonChunk()
+DungeonChunk::DungeonChunk(int x, int y) : chunkX(x), chunkY(y)
 {
 	//Allocate dungeon tiles
 	m_tiles = new DungeonTile*[CHUNK_SIZE];
@@ -26,6 +28,8 @@ DungeonChunk::DungeonChunk()
 			m_tiles[y][x].type = DungeonTileType::EMPTY;
 		}
 	}
+
+	m_weight = Random::Instance().RangeSeeded(0, 100);
 }
 
 DungeonChunk::~DungeonChunk()
@@ -68,4 +72,251 @@ void DungeonChunk::Draw(sf::RenderWindow& window)
 bool DungeonChunk::InBounds(int x, int y) const
 {
 	return x >= 0 && x < (int)CHUNK_SIZE && y >= 0 && y < (int)CHUNK_SIZE;
+}
+
+void DungeonChunk::AddNeighbour(DungeonChunk* chunk)
+{
+	m_neighbourChunks.push_back(chunk);
+}
+
+void DungeonChunk::AddConnection(DungeonChunk* chunk)
+{
+	m_connectedChunks.push_back(chunk);
+}
+
+void DungeonChunk::connectRooms()
+{
+	if (m_rooms.size() <= 1)
+	{
+		return;
+	}
+
+	Graph<DungeonRoom*> graph;
+	//Add all rooms to the graph and connect all rooms with one another
+	for (int i = 0; i < m_rooms.size(); ++i)
+	{
+		graph.AddVertex(i, &m_rooms[i]);
+	}
+
+	for (int i = 0; i < m_rooms.size(); ++i)
+	{
+		for (int j = 0; j < m_rooms.size(); ++j)
+		{
+			if(i == j)
+				continue;
+
+			graph.AddEdge(i, j, Random::Instance().RangeSeeded(0,100)); //TODO add weight as distance
+		}
+	}
+	PrimsAlgorithm<DungeonRoom*> minimalSpanningTree(graph);
+	minimalSpanningTree.MST();
+	auto order = minimalSpanningTree.GetVerticiesInOrder();
+	for (int i = 0; i < (int)order.size(); i++)
+	{
+		const auto& edge = order[i];
+		DungeonRoom* roomA = graph.Vertices().at(edge.VertexA).Data;
+		DungeonRoom* roomB = graph.Vertices().at(edge.VertexB).Data;
+
+		connectRoom(*roomA, *roomB);
+	}
+}
+
+void DungeonChunk::connectRoom(DungeonRoom& roomA, DungeonRoom& roomB)
+{
+	if (roomA.IsConnected(roomB))
+		return;
+
+	DungeonRoom::ConnectRooms(roomA, roomB);
+
+	int bestDistance = 0;
+	DungeonTile* bestTileA{ nullptr };
+	DungeonTile* bestTileB{ nullptr };
+	DungeonRoom* bestRoomA{ nullptr };
+	DungeonRoom* bestRoomB{ nullptr };
+	bool possibleConnectionFound = false;
+
+	for (int tileIndexA = 0; tileIndexA < (int)roomA.GetEdgeTiles().size(); ++tileIndexA)
+	{
+		for (int tileIndexB = 0; tileIndexB < (int)roomB.GetEdgeTiles().size(); ++tileIndexB)
+		{
+			DungeonTile* tileA = roomA.GetEdgeTiles()[tileIndexA];
+			DungeonTile* tileB = roomB.GetEdgeTiles()[tileIndexB];
+			int distance = (int)(pow(tileA->x - tileB->x, 2) + pow(tileA->y - tileB->y, 2));
+
+			if (distance < bestDistance || !possibleConnectionFound)
+			{
+				bestDistance = distance;
+				possibleConnectionFound = true;
+				bestTileA = tileA;
+				bestTileB = tileB;
+				bestRoomA = &roomA;
+				bestRoomB = &roomB;
+			}
+		}
+	}
+
+	if (possibleConnectionFound)
+	{
+		createPassage(*bestRoomA, *bestRoomB, *bestTileA, *bestTileB);
+	}
+}
+
+void DungeonChunk::processMap()
+{
+	detectRooms();
+
+	connectRooms();
+}
+
+void DungeonChunk::detectRooms()
+{
+	m_rooms.clear();
+	std::unordered_set<int> visitedNodes;
+
+	for (int y = 0; y < (int)CHUNK_SIZE; y++)
+	{
+		for (int x = 0; x < (int)CHUNK_SIZE; x++)
+		{
+			if (visitedNodes.find(m_tiles[y][x].id) == visitedNodes.end() && m_tiles[y][x].type == DungeonTileType::EMPTY)
+			{
+				auto tiles = getRoom(x, y);
+				m_rooms.push_back(tiles);
+
+				for (auto& tile : tiles.GetTiles())
+				{
+					visitedNodes.insert(tile->id);
+				}
+			}
+		}
+	}
+	std::cout << "Region count " << m_rooms.size() << std::endl;
+}
+
+DungeonRoom DungeonChunk::getRoom(int startX, int startY)
+{
+	std::vector<DungeonTile*> tiles;
+
+	std::unordered_set<int> visitedNodes;
+
+	DungeonTileType tileType = m_tiles[startY][startX].type;
+
+	std::queue<DungeonTile*> queue;
+	queue.push(&m_tiles[startY][startX]);
+	visitedNodes.insert(m_tiles[startY][startX].id);
+
+	while (!queue.empty())
+	{
+		DungeonTile* tile = queue.front();
+		queue.pop();
+		tiles.push_back(tile);
+
+		for (auto& neighbour : getNeighbours(tile->x, tile->y))
+		{
+			if (neighbour->type == tileType && visitedNodes.find(neighbour->id) == visitedNodes.end()) {
+				visitedNodes.insert(neighbour->id);
+				queue.push(neighbour);
+			}
+		}
+	}
+
+	return DungeonRoom(tiles, m_tiles, CHUNK_SIZE);
+}
+
+std::vector<DungeonTile*> DungeonChunk::getNeighbours(int startX, int startY)
+{
+	std::vector<DungeonTile*> tiles;
+	for (int y = startY - 1; y <= startY + 1; ++y)
+	{
+		for (int x = startX - 1; x <= startX + 1; ++x)
+		{
+			if (InBounds(x, y) && (y == startY || x == startX))
+			{
+				tiles.push_back(&m_tiles[y][x]);
+			}
+		}
+	}
+	return tiles;
+}
+
+std::vector<DungeonTile*> DungeonChunk::getLine(const DungeonTile& from, const DungeonTile& to)
+{
+	std::vector<DungeonTile*> line;
+
+	int x = from.x;
+	int y = from.y;
+
+	int dx = to.x - from.x;
+	int dy = to.y - from.y;
+
+	bool inverted = false;
+
+	int step = sign(dx);
+	int gradientStep = sign(dy);
+
+	int longest = abs(dx);
+	int shortest = abs(dy);
+
+	if(longest < shortest)
+	{
+		inverted = true;
+		longest = shortest;
+		shortest = abs(dx);
+
+		step = sign(dy);
+		gradientStep = sign(dx);
+	}
+
+	int gradiantAccumlation = longest / 2;
+	for (int i = 0; i < longest; ++i)
+	{
+		line.push_back(&m_tiles[y][x]);
+
+		if (inverted)
+			y += step;
+		else
+			x += step;
+
+		gradiantAccumlation += shortest;
+		if(gradiantAccumlation >= longest)
+		{
+			if (inverted)
+				x += gradientStep;
+			else
+				y += gradientStep;
+
+			gradiantAccumlation -= longest;
+		}
+	}
+
+	return line;
+}
+
+void DungeonChunk::createPassage(DungeonRoom& roomA, DungeonRoom& roomB, const DungeonTile& tileA, const DungeonTile& tileB)
+{
+	auto line = getLine(tileA, tileB);
+
+	//create passage by making a cirlce at each tile
+	for (auto& tile : line)
+	{
+		drawCircle(*tile, 2);
+	}
+}
+
+void DungeonChunk::drawCircle(const DungeonTile& tile, int r)
+{
+	for (int x = -r; x < r; ++x)
+	{
+		for (int y = -r; y < r; ++y)
+		{
+			if (x*x + y * y <= r * r)
+			{
+				int realX = tile.x + x;
+				int realY = tile.y + y;
+				if(InBounds(realX, realY))
+				{
+					m_tiles[realY][realX].type = DungeonTileType::EMPTY;
+				}
+			}
+		}
+	}
 }

@@ -26,7 +26,8 @@ project "client"
 
 	filter "system:windows"
 		systemversion "latest"
-		includedirs { "dependencies/windows/SFML/include" }
+		includedirs { "dependencies/windows/SFML/include",
+					  "client/src"}
 		libdirs { "dependencies/windows/SFML/lib" }
 		links
 		{	
@@ -46,7 +47,8 @@ project "client"
 	filter "system:linux"	
 		cppdialect "C++11"
 		systemversion "latest"
-		includedirs { "dependencies/linux/SFML/include" }
+		includedirs { "dependencies/linux/SFML/include",
+					  "client/src"}
 		libdirs { "dependencies/linux/SFML/lib" }
 		linkoptions { '-Wl,-rpath=\\$$ORIGIN' }
 		links
