@@ -1,5 +1,6 @@
 #include "DungeonRoom.h"
 #include "Dungeon.h"
+#include <algorithm>
 
 DungeonRoom::DungeonRoom(const std::vector<DungeonTile*>& tiles, DungeonTile** map, unsigned int chunkSize) : tiles(tiles)
 {

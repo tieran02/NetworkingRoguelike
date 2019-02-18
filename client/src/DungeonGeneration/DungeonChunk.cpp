@@ -60,7 +60,7 @@ void DungeonChunk::Draw(sf::RenderWindow& window)
 			case DungeonTileType::WALL:
 				window.draw(rectangle);
 				break;
-			default: 
+			default:
 				break;
 			}
 		}
@@ -179,7 +179,7 @@ int DungeonChunk::getDistanceBetweenRooms(DungeonRoom& roomA, DungeonRoom& roomB
 	{
 		return bestDistance;
 	}
-	return INT_MAX;
+	return std::numeric_limits<int>::max();
 }
 
 void DungeonChunk::processMap()

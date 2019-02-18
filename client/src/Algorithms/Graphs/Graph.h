@@ -3,12 +3,13 @@
 #include "Vertex.h"
 #include <unordered_map>
 #include "Edge.h"
+#include <limits>
 
 template<class T>
 class Graph
 {
 public:
-	Graph(){}	
+	Graph(){}
 	~Graph(){};
 	void AddVertex(int id, T data);
 	void AddEdge(int vertexA, int vertexB, int weight = 0);
@@ -29,7 +30,7 @@ private:
 template <class T>
 void Graph<T>::AddVertex(int id, T data)
 {
-	if (m_vertices.find(id) == m_vertices.end()) 
+	if (m_vertices.find(id) == m_vertices.end())
 	{
 		//Add to vertex list
 
@@ -69,7 +70,7 @@ int Graph<T>::GetEdgeWeight(int vertexA, int vertexB) const
 		if (edge.VertexA == vertexA && edge.VertexB == vertexB)
 			return edge.Weight;
 	}
-	return INT_MAX;
+	return std::numeric_limits<int>::max();
 }
 
 template <class T>
@@ -80,7 +81,7 @@ const Edge& Graph<T>::GetEdge(int vertexA, int vertexB) const
 		if (edge.VertexA == vertexA && edge.VertexB == vertexB)
 			return edge;
 	}
-	return Edge{INT_MAX,INT_MAX ,INT_MAX };
+	return Edge{std::numeric_limits<int>::max(),std::numeric_limits<int>::max() ,std::numeric_limits<int>::max() };
 }
 
 template <class T>

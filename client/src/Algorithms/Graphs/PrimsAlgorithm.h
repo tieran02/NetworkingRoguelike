@@ -26,7 +26,7 @@ void PrimsAlgorithm<T>::MST()
 	std::priority_queue<iPair, std::vector<iPair>, std::greater<iPair> > pq;
 
 	std::vector<int> parent(SIZE, -1);
-	std::vector<int> key(SIZE, INT_MAX);
+	std::vector<int> key(SIZE, std::numeric_limits<int>::max());
 	std::vector<bool> inMST(SIZE, false);
 
 	int src = 0;
@@ -59,8 +59,8 @@ void PrimsAlgorithm<T>::MST()
 template <class T>
 int PrimsAlgorithm<T>::minKey(const std::vector<int>& key, const std::vector<bool>& mstSet) const
 {
-	// Initialize min value 
-	int min = INT_MAX;
+	// Initialize min value
+	int min = std::numeric_limits<int>::max();
 	int min_index;
 
 	for (int v = 0; v < SIZE; v++)

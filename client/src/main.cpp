@@ -2,24 +2,28 @@
 #include "DungeonGeneration/Dungeon.h"
 #include <SFML/Network.hpp>
 #include <iostream>
-
+#include <string.h>
 
 int main()
 {
 	//networking
+	//TCP
+	sf::TcpSocket tcpSocket;
+
 	sf::UdpSocket socket;
 	char data[256]{ "broadcast message" };
 	sf::IpAddress recipient = sf::IpAddress::Broadcast;
 	sf::IpAddress sender;
-	unsigned short remote_port{ 4300 };
+    unsigned short server_udp_port{ 4305 };
+    unsigned short server_tcp_port{ 4310 };
 	std::size_t received;
 
-	if (socket.send(data, sizeof(data), recipient, remote_port) != sf::Socket::Done)
+	if (socket.send(data, sizeof(data), recipient, server_udp_port) != sf::Socket::Done)
 	{
 		std::cerr << "Failed to send data\n";
 	}
 	//get response from server
-	if (socket.receive(data, sizeof(data), received, sender, remote_port) != sf::Socket::Done)
+	if (socket.receive(data, sizeof(data), received, sender, server_udp_port) != sf::Socket::Done)
 	{
 		std::cout << "Failed to receive data from server\n";
 	}
@@ -28,7 +32,25 @@ int main()
 	if (strcmp(data, "server response") == 0)
 	{
 		serverIP = sender;
-		std::cout << "Found server: " << serverIP << ":" << remote_port << std::endl;
+		std::cout << "Found server: " << serverIP << ":" << server_udp_port << std::endl;
+
+		//connect to the first server it finds for now
+		char msg[256]{"connection message"};
+		if (socket.send(msg, sizeof(msg), serverIP, server_udp_port) != sf::Socket::Done)
+        {
+            std::cerr << "Failed to send conection data\n";
+        }
+
+        //TCP SOCKET
+        sf::Socket::Status status = tcpSocket.connect(serverIP, server_tcp_port);
+        if (status != sf::Socket::Done)
+        {
+            std::cerr << "Failed to connect to sever TCP socket\n";
+        }
+        if (tcpSocket.send("TCP Connection Established", 256) != sf::Socket::Done)
+        {
+           std::cerr << "Failed to send tcp message to the server\n";
+        }
 	}
 
 
