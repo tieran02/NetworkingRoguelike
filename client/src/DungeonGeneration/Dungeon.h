@@ -18,9 +18,6 @@ public:
 private:
 	const int CHUNK_COUNT;
 	std::vector<DungeonChunk*> m_chunks;
-
-	void connectChunks();
-	void connectChunk(DungeonChunk* from, DungeonChunk* to);
 	void generateNeighbourChunks(const DungeonChunk* chunk, int& chunkCount);
 	void assignNeighbours(DungeonChunk* chunk);
 	DungeonChunk* getChunk(int x, int y);

@@ -9,7 +9,10 @@ DungeonRoom::DungeonRoom(const std::vector<DungeonTile*>& tiles, DungeonTile** m
 		{
 			for (int x = tile->x - 1; x < tile->x + 1; ++x)
 			{
-				if((x == tile->x || y == tile->y) && map[y][x].type == DungeonTileType::WALL)
+				if(x < 0 || y < 0)
+					continue;
+
+				if((x == tile->x || y == tile->y ) && map[y][x].type == DungeonTileType::WALL)
 				{
 					edgeTiles.push_back(tile);
 				}

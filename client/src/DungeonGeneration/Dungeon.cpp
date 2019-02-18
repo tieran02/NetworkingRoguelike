@@ -1,9 +1,11 @@
 #include <SFML/Graphics.hpp>
+#include <SFML/System/Vector2.hpp>
 #include "Dungeon.h"
 #include "CellularAutomata.h"
 #include "DungeonChunkCave.h"
 #include <queue>
 #include <iostream>
+#include "Random.h"
 
 
 Dungeon::Dungeon(int chunkCount) : CHUNK_COUNT(chunkCount), m_chunks(chunkCount)
@@ -29,6 +31,9 @@ void Dungeon::Generate()
 {
 	Cleanup();
 
+	//set seed
+	Random::Instance().SetSeed(1);
+
 	//generate first chunk
 	m_chunks[0] = new DungeonChunkCave(0,0);
 	int chunkCount = 1;
@@ -43,8 +48,6 @@ void Dungeon::Generate()
 		assignNeighbours(chunk);
 		chunk->Generate();
 	}
-
-	connectChunks();
 }
 
 
@@ -57,80 +60,6 @@ void Dungeon::Draw(sf::RenderWindow & window)
 	}
 }
 
-void Dungeon::connectChunks()
-{
-	//use a minimal spanning tree to connect chunks together
-	std::unordered_set<DungeonChunk*> visitedChunks;
-
-	std::queue<DungeonChunk*> chunks;
-	chunks.push(m_chunks[0]);
-	visitedChunks.insert(m_chunks[0]);
-
-	while (!chunks.empty())
-	{
-		DungeonChunk* currentChunk = chunks.front();
-		chunks.pop();
-
-		for (auto neighbour : currentChunk->GetNeighbours())
-		{
-			if (!currentChunk->GetConnections().empty())
-				break;
-
-			if(visitedChunks.find(neighbour) == visitedChunks.end())
-			{
-				//Connect chunks
-				visitedChunks.insert(neighbour);
-				chunks.push(neighbour);
-
-				currentChunk->AddConnection(neighbour);
-
-				connectChunk(currentChunk, neighbour);
-			}
-		}
-
-	}
-}
-
-void Dungeon::connectChunk(DungeonChunk* from, DungeonChunk* to)
-{
-	//detect what direction
-	int dx = from->GetX() - to->GetX();
-	int dy = from->GetY() - to->GetY();
-
-	if (dx == -1 && dy == 0) // Left
-	{
-		//from->createPassage(*from->m_rooms[0].GetEdgeTiles()[0], from->m_tiles[0][0]);
-		//to->createPassage(*to->m_rooms[0].GetEdgeTiles()[0], to->m_tiles[16][0]);
-	}
-	else if (dx == 0 && dy == 1) // Top
-	{
-
-	}
-	else if (dx == 1 && dy == 0) // right
-	{
-
-	}
-	else if (dx == 0 && dy == -1) // bottom
-	{
-
-	}
-	else if (dx == -1 && dy == 1) // Top Left
-	{
-
-	}
-	else if (dx == 1 && dy == 1) // Top right
-	{
-
-	}
-	else if (dx == -1 && dy == -1) // bottom Left
-	{
-
-	}
-	else if (dx == 1 && dy == -1) // bottom right
-	{
-
-	}
-}
 
 void Dungeon::generateNeighbourChunks(const DungeonChunk* chunk, int& chunkCount)
 {

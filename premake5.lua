@@ -75,3 +75,62 @@ project "client"
 	filter "configurations:Release"
 		defines { "NDEBUG" }
 		optimize "On"
+
+project "server"
+	location "server"
+	kind "ConsoleApp"
+	language "C++"
+	cppdialect "C++11"
+
+	targetdir "bin/%{cfg.buildcfg}"
+	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+	debugdir ("bin/" .. outputdir .. "/%{prj.name}")
+
+	files { "server/src/**.*" }
+
+	filter "system:windows"
+		systemversion "latest"
+		includedirs { "dependencies/windows/SFML/include",
+					  "server/src"}
+		libdirs { "dependencies/windows/SFML/lib" }
+		links
+		{	
+			"sfml-graphics",
+			"sfml-window",
+			"sfml-system",
+			"sfml-audio",
+			"sfml-network"
+		}
+
+		postbuildcommands
+		{
+			("{COPY} %{wks.location}dependencies/windows/SFML/bin ../bin/" .. outputdir .. "/server")
+		}
+
+	filter "system:linux"	
+		cppdialect "C++11"
+		systemversion "latest"
+		includedirs { "dependencies/linux/SFML/include",
+					  "server/src"}
+		libdirs { "dependencies/linux/SFML/lib" }
+		linkoptions { '-Wl,-rpath=\\$$ORIGIN' }
+		links
+		{	
+			"sfml-system",
+			"sfml-network"
+		}
+
+		postbuildcommands
+		{
+			("{COPY} %{wks.location}dependencies/linux/SFML/lib/bin ../bin/" .. outputdir .. "/server")
+		}
+
+	filter "configurations:Debug"
+		defines { "DEBUG" }
+		symbols "On"
+
+
+	filter "configurations:Release"
+		defines { "NDEBUG" }
+		optimize "On"

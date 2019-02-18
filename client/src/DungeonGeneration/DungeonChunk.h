@@ -40,27 +40,22 @@ public:
 	int GetX() const { return chunkX; }
 	int GetY() const { return chunkY; }
 	void AddNeighbour(DungeonChunk* chunk);
-	void AddConnection(DungeonChunk* chunk);
 	const std::vector<DungeonChunk*>& GetNeighbours() const { return m_neighbourChunks; }
-	const std::vector<DungeonChunk*>& GetConnections() const { return m_connectedChunks; }
 protected:
-	const unsigned int CHUNK_SIZE{ 32 };
+	const unsigned int CHUNK_SIZE{ 64 };
 	int chunkX, chunkY;
 	DungeonTile** m_tiles;
 	std::vector<DungeonRoom> m_rooms;
 	std::vector<DungeonChunk*> m_neighbourChunks;
-	std::vector<DungeonChunk*> m_connectedChunks;
-	int m_weight;
-
 	void processMap();
 private:
 	void connectRooms();
 	void connectRoom(DungeonRoom& roomA, DungeonRoom& roomB);
+	int getDistanceBetweenRooms(DungeonRoom& roomA, DungeonRoom& roomB);;
 	void detectRooms();
 	DungeonRoom getRoom(int x, int y);
 	std::vector<DungeonTile*> getNeighbours(int startX, int startY);
 	std::vector<DungeonTile*> getLine(const DungeonTile& from, const DungeonTile& to);
-	void createPassage(DungeonRoom& roomA, DungeonRoom& roomB, const DungeonTile& tileA, const DungeonTile& tileB);
+	void createPassage(const DungeonTile& tileA, const DungeonTile& tileB);
 	void drawCircle(const DungeonTile& tile, int r);
-
 };

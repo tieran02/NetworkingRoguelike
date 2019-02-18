@@ -28,8 +28,6 @@ DungeonChunk::DungeonChunk(int x, int y) : chunkX(x), chunkY(y)
 			m_tiles[y][x].type = DungeonTileType::EMPTY;
 		}
 	}
-
-	m_weight = Random::Instance().RangeSeeded(0, 100);
 }
 
 DungeonChunk::~DungeonChunk()
@@ -79,11 +77,6 @@ void DungeonChunk::AddNeighbour(DungeonChunk* chunk)
 	m_neighbourChunks.push_back(chunk);
 }
 
-void DungeonChunk::AddConnection(DungeonChunk* chunk)
-{
-	m_connectedChunks.push_back(chunk);
-}
-
 void DungeonChunk::connectRooms()
 {
 	if (m_rooms.size() <= 1)
@@ -105,7 +98,7 @@ void DungeonChunk::connectRooms()
 			if(i == j)
 				continue;
 
-			graph.AddEdge(i, j, Random::Instance().RangeSeeded(0,100)); //TODO add weight as distance
+			graph.AddEdge(i, j, getDistanceBetweenRooms(m_rooms[i],m_rooms[j])); //TODO add weight as distance
 		}
 	}
 	PrimsAlgorithm<DungeonRoom*> minimalSpanningTree(graph);
@@ -157,12 +150,64 @@ void DungeonChunk::connectRoom(DungeonRoom& roomA, DungeonRoom& roomB)
 
 	if (possibleConnectionFound)
 	{
-		createPassage(*bestRoomA, *bestRoomB, *bestTileA, *bestTileB);
+		createPassage(*bestTileA, *bestTileB);
 	}
+}
+
+int DungeonChunk::getDistanceBetweenRooms(DungeonRoom& roomA, DungeonRoom& roomB)
+{
+	int bestDistance = 0;
+	bool possibleConnectionFound = false;
+
+	for (int tileIndexA = 0; tileIndexA < (int)roomA.GetEdgeTiles().size(); ++tileIndexA)
+	{
+		for (int tileIndexB = 0; tileIndexB < (int)roomB.GetEdgeTiles().size(); ++tileIndexB)
+		{
+			DungeonTile* tileA = roomA.GetEdgeTiles()[tileIndexA];
+			DungeonTile* tileB = roomB.GetEdgeTiles()[tileIndexB];
+			int distance = (int)(pow(tileA->x - tileB->x, 2) + pow(tileA->y - tileB->y, 2));
+
+			if (distance < bestDistance || !possibleConnectionFound)
+			{
+				bestDistance = distance;
+				possibleConnectionFound = true;
+			}
+		}
+	}
+
+	if (possibleConnectionFound)
+	{
+		return bestDistance;
+	}
+	return INT_MAX;
 }
 
 void DungeonChunk::processMap()
 {
+	//add connections to neighbours
+	for (auto neighbour_chunk : m_neighbourChunks)
+	{
+		int dx = chunkX - neighbour_chunk->GetX();
+		int dy = chunkY - neighbour_chunk->GetY();
+
+		if(dx == 0 && dy == 1) // connect to bottom
+		{
+			drawCircle(m_tiles[0][CHUNK_SIZE / 2], 2);
+		}
+		else if (dx == 0 && dy == -1) // connect to top
+		{
+			drawCircle(m_tiles[CHUNK_SIZE - 1][CHUNK_SIZE / 2], 2);
+		}
+		else if (dx == 1 && dy == 0) // connect to right
+		{
+			drawCircle(m_tiles[CHUNK_SIZE / 2][0], 2);
+		}
+		else if (dx == -1 && dy == 0) // connect to right
+		{
+			drawCircle(m_tiles[CHUNK_SIZE / 2][CHUNK_SIZE - 1], 2);
+		}
+
+	}
 	detectRooms();
 
 	connectRooms();
@@ -291,7 +336,7 @@ std::vector<DungeonTile*> DungeonChunk::getLine(const DungeonTile& from, const D
 	return line;
 }
 
-void DungeonChunk::createPassage(DungeonRoom& roomA, DungeonRoom& roomB, const DungeonTile& tileA, const DungeonTile& tileB)
+void DungeonChunk::createPassage(const DungeonTile& tileA, const DungeonTile& tileB)
 {
 	auto line = getLine(tileA, tileB);
 
@@ -301,6 +346,7 @@ void DungeonChunk::createPassage(DungeonRoom& roomA, DungeonRoom& roomB, const D
 		drawCircle(*tile, 2);
 	}
 }
+
 
 void DungeonChunk::drawCircle(const DungeonTile& tile, int r)
 {
