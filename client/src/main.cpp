@@ -15,7 +15,7 @@ int main()
 	sf::IpAddress recipient = sf::IpAddress::Broadcast;
 	sf::IpAddress sender;
     unsigned short server_udp_port{ 4305 };
-    unsigned short server_tcp_port{ 4310 };
+    unsigned short server_tcp_port{ 4306 };
 	std::size_t received;
 
 	if (socket.send(data, sizeof(data), recipient, server_udp_port) != sf::Socket::Done)
@@ -33,13 +33,6 @@ int main()
 	{
 		serverIP = sender;
 		std::cout << "Found server: " << serverIP << ":" << server_udp_port << std::endl;
-
-		//connect to the first server it finds for now
-		char msg[256]{"connection message"};
-		if (socket.send(msg, sizeof(msg), serverIP, server_udp_port) != sf::Socket::Done)
-        {
-            std::cerr << "Failed to send conection data\n";
-        }
 
         //TCP SOCKET
         sf::Socket::Status status = tcpSocket.connect(serverIP, server_tcp_port);

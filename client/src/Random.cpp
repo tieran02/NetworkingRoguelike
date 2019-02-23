@@ -2,25 +2,19 @@
 #include <ctime>
 #include <chrono>
 
-int Random::RangeSeeded(int min, int max)
+namespace Random 
 {
-	gen = std::mt19937(m_seed);
-	m_seed += 1;
+	static thread_local std::mt19937 generator;
 
-	std::uniform_int_distribution<> dis(min, max);
-	int num = dis(gen);
-	return num;
-}
+	int randInt(int min, int max)
+	{
+		std::uniform_int_distribution<int> distribution(min, max);
+		int num = distribution(generator);
+		return distribution(generator);
+	}
 
-int Random::Range(int min, int max)
-{
-	std::default_random_engine eng{ static_cast<long unsigned int>(time(0)) };
-	std::uniform_int_distribution<> dis(min, max);
-	return dis(eng);
-}
-
-void Random::SetSeed(long unsigned int seed)
-{
-	m_seed = seed;
-	gen = std::mt19937(m_seed);
+	void SetSeed(int seed)
+	{
+		generator.seed(seed);
+	}
 }

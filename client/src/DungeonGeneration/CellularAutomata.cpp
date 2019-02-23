@@ -53,7 +53,7 @@ void CellularAutomata::randomFill(int fillPercentage)
 			//make all borders walls
 			if (y == 0 || y == HEIGHT - 2 || x == 0 || x == WIDTH - 2)
 				m_map[y][x] = true;
-			else if (Random::Instance().RangeSeeded(1,100) < fillPercentage)
+			else if (Random::randInt(1,100) < fillPercentage)
 				m_map[y][x] = true;
 			else
 				m_map[y][x] = false;

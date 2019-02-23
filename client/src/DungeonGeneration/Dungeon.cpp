@@ -34,7 +34,7 @@ void Dungeon::Generate()
 	Cleanup();
 
 	//set seed
-	Random::Instance().SetSeed(std::time(0));
+	Random::SetSeed(112337);
 
 	//generate first chunk
 	m_chunks[0] = new DungeonChunkCave(0,0);

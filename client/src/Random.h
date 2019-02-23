@@ -1,26 +1,14 @@
 #pragma once
 #include <random>
 
-class Random
+#if defined (_MSC_VER)  // Visual studio
+#define thread_local __declspec( thread )
+#elif defined (__GCC__) // GCC
+#define thread_local __thread
+#endif
+
+namespace Random
 {
-public:
-	static Random& Instance()
-	{
-		static Random instance;
-		return instance;
-	}
-
-	Random(Random const&) = delete;
-	void operator=(Random const&) = delete;
-private:
-	Random() {}
-
-public:
-	int RangeSeeded(int min, int max);
-	int Range(int min, int max);
-	void SetSeed(long unsigned int);
-private:
-	long unsigned int m_seed{0};
-	std::mt19937 gen;
-};
-
+	int randInt(int min, int max);
+	void SetSeed(int seed);
+}
