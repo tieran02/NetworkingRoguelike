@@ -3,6 +3,7 @@
 #include <iostream>
 #include <SFML/Network.hpp>
 #include <thread>
+#include "Message.h"
 
 Network::Network(unsigned short port) : UDP_PORT(port), TCP_PORT(port+1)
 {
@@ -31,27 +32,31 @@ void Network::Start()
 	{
 		while (!m_retrievedMessages.empty())
 		{
-			//Get message
-			auto msg = m_retrievedMessages.front();
+			//Get Data
+			Message msg = m_retrievedMessages.front();
 			m_retrievedMessages.pop();
 
 			switch (msg.protocol)
 			{
-			case Message::Protocol::UPD:
-				std::cout << "UDP::Received " << msg.message << " bytes from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
+			case Protocol::UPD:
+				std::cout << "UDP::Received " << msg.header.size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
 				break;
-			case Message::Protocol::TCP:
-				std::cout << "TCP::Received " << msg.message << " bytes from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
+			case Protocol::TCP:
+				std::cout << "TCP::Received " << msg.header.size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
 				break;
 			default: 
 				break;
 			}
 
 
-			if (strcmp(msg.message, "broadcast message") == 0) //UDP broadcast (used to find a server)
+			if (strcmp(msg.data, "broadcast message") == 0) //UDP broadcast (used to find a server)
 			{
-				char data[256]{ "server response" };
-				if (m_udpSocket.send(data, sizeof(data), msg.senderAddress, msg.senderPort) != sf::Socket::Done)
+				std::string responseMsg{ "server response" };
+				Message response{ responseMsg };
+				sf::Packet packet;
+				packet << response;
+
+				if (m_udpSocket.send(packet, msg.senderAddress, msg.senderPort) != sf::Socket::Done)
 				{
 					std::cerr << "Failed To send packet\n";
 				}
@@ -99,23 +104,26 @@ void Network::retrieveUDP()
 {
 	sf::IpAddress sender;
 	unsigned short port;
-	char data[256];
-	std::size_t received;
+	sf::Packet packet;
 
 	while (m_running)
 	{
-		if (m_udpSocket.receive(data, sizeof(data), received, sender, port) != sf::Socket::Done)
+		if (m_udpSocket.receive(packet, sender, port) != sf::Socket::Done)
 		{
 			std::cerr << "Failed To receive udp packet\n";
 		}
-		m_retrievedMessages.push(Message(Message::Protocol::UPD, data, sizeof(data), sender, port));
+		Message message;
+		packet >> message;
+		message.protocol = Protocol::UPD;
+		message.senderAddress = sender;
+		message.senderPort = port;
+		m_retrievedMessages.push(message);
 	}
 }
 
 void Network::retrieveTCP()
 {
-	char data[256];
-	std::size_t received;
+	sf::Packet packet;
 
 	while (m_running) 
 	{
@@ -124,7 +132,7 @@ void Network::retrieveTCP()
 			if(m_connections[i] == nullptr || !m_connections[i]->IsConnected())
 				continue;
 
-			auto send = m_connections[i]->GetTcpSocket().receive(data, 256, received);
+			auto send = m_connections[i]->GetTcpSocket().receive(packet);
 			if (send != sf::Socket::Done)
 			{
 				if(send == sf::Socket::Disconnected)
@@ -134,7 +142,12 @@ void Network::retrieveTCP()
 				}
 				std::cerr << "Failed To receive tcp packet\n";
 			}
-			m_retrievedMessages.push(Message(Message::Protocol::TCP, data, sizeof(data), m_connections[i]->GetAddress(), m_connections[i]->GetPort()));
+			Message message;
+			packet >> message;
+			message.protocol = Protocol::TCP;
+			message.senderAddress = m_connections[i]->GetAddress();
+			message.senderPort = m_connections[i]->GetPort();
+			m_retrievedMessages.push(message);
 		}
 	}
 }

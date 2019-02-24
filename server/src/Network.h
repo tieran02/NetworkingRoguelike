@@ -2,37 +2,7 @@
 #include <SFML/Network.hpp>
 #include "Connection.h"
 #include <queue>
-
-struct Message
-{
-	enum class Protocol
-	{
-		UPD,
-		TCP
-	};
-
-
-	Message(Protocol proto)
-	{
-		protocol = proto;
-	}
-
-	Message(Protocol proto, const char* data, size_t size, sf::IpAddress ip, unsigned short port)
-	{
-		protocol = proto;
-		message = data;
-		this->size = size;
-		senderAddress = ip;
-		senderPort = port;
-	}
-
-
-	Protocol protocol;
-	const char* message;
-	size_t size;
-	sf::IpAddress senderAddress;
-	unsigned short senderPort;
-};
+#include "Message.h"
 
 class Network
 {

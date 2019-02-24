@@ -3,6 +3,7 @@
 #include <SFML/Network.hpp>
 #include <iostream>
 #include <string.h>
+#include "Networking/Message.h"
 
 int main()
 {
@@ -11,25 +12,33 @@ int main()
 	sf::TcpSocket tcpSocket;
 
 	sf::UdpSocket socket;
-	char data[256]{ "broadcast message" };
 	sf::IpAddress recipient = sf::IpAddress::Broadcast;
 	sf::IpAddress sender;
     unsigned short server_udp_port{ 4305 };
     unsigned short server_tcp_port{ 4306 };
-	std::size_t received;
 
-	if (socket.send(data, sizeof(data), recipient, server_udp_port) != sf::Socket::Done)
+	std::string msg{ "broadcast message" };
+	Message broadcastMessage(msg);
+	sf::Packet broadcastPacket;
+	broadcastPacket << broadcastMessage;
+
+	if (socket.send(broadcastPacket,recipient,server_udp_port) != sf::Socket::Done)
 	{
 		std::cerr << "Failed to send data\n";
 	}
+
+	sf::Packet responsePacket;
 	//get response from server
-	if (socket.receive(data, sizeof(data), received, sender, server_udp_port) != sf::Socket::Done)
+	if (socket.receive(responsePacket, sender, server_udp_port) != sf::Socket::Done)
 	{
 		std::cout << "Failed to receive data from server\n";
 	}
 
 	sf::IpAddress serverIP;
-	if (strcmp(data, "server response") == 0)
+
+	Message serverResponseMessage;
+	responsePacket >> serverResponseMessage;
+	if (strcmp(serverResponseMessage.data, "server response") == 0)
 	{
 		serverIP = sender;
 		std::cout << "Found server: " << serverIP << ":" << server_udp_port << std::endl;
@@ -40,7 +49,12 @@ int main()
         {
             std::cerr << "Failed to connect to sever TCP socket\n";
         }
-        if (tcpSocket.send("TCP Connection Established", 256) != sf::Socket::Done)
+
+		std::string tcpResponseString{ "TCP Connection Established" };
+		Message tcpResponse{ tcpResponseString };
+		sf::Packet tcpResponsePacket;
+		tcpResponsePacket << tcpResponse;
+        if (tcpSocket.send(tcpResponsePacket) != sf::Socket::Done)
         {
            std::cerr << "Failed to send tcp message to the server\n";
         }
