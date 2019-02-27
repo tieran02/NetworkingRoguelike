@@ -1,64 +1,13 @@
 #include <SFML/Graphics.hpp>
 #include "DungeonGeneration/Dungeon.h"
-#include <SFML/Network.hpp>
-#include <iostream>
-#include <string.h>
-#include "Networking/Message.h"
+#include "Networking/ServerConnection.h"
 
 int main()
 {
 	//networking
-	//TCP
-	sf::TcpSocket tcpSocket;
-
-	sf::UdpSocket socket;
-	sf::IpAddress recipient = sf::IpAddress::Broadcast;
-	sf::IpAddress sender;
-    unsigned short server_udp_port{ 4305 };
-    unsigned short server_tcp_port{ 4306 };
-
-	std::string msg{ "broadcast message" };
-	Message broadcastMessage(msg);
-	sf::Packet broadcastPacket;
-	broadcastPacket << broadcastMessage;
-
-	if (socket.send(broadcastPacket,recipient,server_udp_port) != sf::Socket::Done)
-	{
-		std::cerr << "Failed to send data\n";
-	}
-
-	sf::Packet responsePacket;
-	//get response from server
-	if (socket.receive(responsePacket, sender, server_udp_port) != sf::Socket::Done)
-	{
-		std::cout << "Failed to receive data from server\n";
-	}
-
-	sf::IpAddress serverIP;
-
-	Message serverResponseMessage;
-	responsePacket >> serverResponseMessage;
-	if (strcmp(serverResponseMessage.data, "server response") == 0)
-	{
-		serverIP = sender;
-		std::cout << "Found server: " << serverIP << ":" << server_udp_port << std::endl;
-
-        //TCP SOCKET
-        sf::Socket::Status status = tcpSocket.connect(serverIP, server_tcp_port);
-        if (status != sf::Socket::Done)
-        {
-            std::cerr << "Failed to connect to sever TCP socket\n";
-        }
-
-		std::string tcpResponseString{ "TCP Connection Established" };
-		Message tcpResponse{ tcpResponseString };
-		sf::Packet tcpResponsePacket;
-		tcpResponsePacket << tcpResponse;
-        if (tcpSocket.send(tcpResponsePacket) != sf::Socket::Done)
-        {
-           std::cerr << "Failed to send tcp message to the server\n";
-        }
-	}
+	ServerConnection server_connection{4305};
+	server_connection.FindServer();
+	server_connection.Connect();
 
 
 	Dungeon dungeon{ 9 };
@@ -75,6 +24,9 @@ int main()
 	window.setView(view);
 	while (window.isOpen())
 	{
+		server_connection.PollMessages();
+
+
 		// Event processing
 		sf::Event event;
 		while (window.pollEvent(event))
@@ -101,5 +53,6 @@ int main()
 		window.display();
 	}
 
+	server_connection.Disconnect();
 	return 0;
 }

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <SFML/Network.hpp>
 #include <thread>
+#include <string.h>
 #include "Message.h"
 
 Network::Network(unsigned short port) : UDP_PORT(port), TCP_PORT(port+1)
@@ -25,41 +26,31 @@ void Network::Start()
 	}
 
 	std::thread tcpAcceptThread(&Network::acceptTCP,this);
-	std::thread updRecieve(&Network::retrieveUDP, this);
-	std::thread tcpRecieve(&Network::retrieveTCP, this);
+	std::thread updRecieve(&Network::receiveUDP, this);
+	std::thread tcpRecieve(&Network::receiveTCP, this);
 
 	while (m_running)
 	{
-		while (!m_retrievedMessages.empty())
+		while (!m_receivedMessages.empty())
 		{
-			//Get Data
-			Message msg = m_retrievedMessages.front();
-			m_retrievedMessages.pop();
-
+			//Get GetData
+            ServerMessage msg = m_receivedMessages.dequeue();
 			switch (msg.protocol)
 			{
 			case Protocol::UPD:
-				std::cout << "UDP::Received " << msg.header.size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
+				if (msg.message.GetHeader().type == MessageType::BROADCAST) //UDP broadcast (used to find a server)
+				{
+					std::cout << "BROADCAST_MESSAGE from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
+					sendUdpMessage(MessageType::BROADCAST_RESPONSE, nullptr, 0, msg.senderAddress, msg.senderPort);
+				}
+				else
+					std::cout << "UDP::Received '" << msg.message.ToString() << "' " << msg.message.GetHeader().size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
 				break;
 			case Protocol::TCP:
-				std::cout << "TCP::Received " << msg.header.size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
+				std::cout << "TCP::Received '" << msg.message.ToString() << "' " << msg.message.GetHeader().size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
 				break;
-			default: 
+			default:
 				break;
-			}
-
-
-			if (strcmp(msg.data, "broadcast message") == 0) //UDP broadcast (used to find a server)
-			{
-				std::string responseMsg{ "server response" };
-				Message response{ responseMsg };
-				sf::Packet packet;
-				packet << response;
-
-				if (m_udpSocket.send(packet, msg.senderAddress, msg.senderPort) != sf::Socket::Done)
-				{
-					std::cerr << "Failed To send packet\n";
-				}
 			}
 		}
 
@@ -70,6 +61,55 @@ void Network::Start()
 	updRecieve.join();
 	tcpRecieve.join();
 
+}
+
+void Network::sendUdpMessage(MessageType type, char* data, size_t size, sf::IpAddress address, unsigned short port)
+{
+	const Message message(type,data,size);
+
+	auto buffer = message.GetBuffer();
+	if (m_udpSocket.send(buffer.data(), buffer.size(),address,port) != sf::Socket::Done)
+	{
+		std::cerr << "Failed To send packet\n";
+	}
+}
+
+void Network::sendUdpMessage(const std::string& string, sf::IpAddress address, unsigned short port)
+{
+	const Message message(MessageType::TEXT ,(char*)string.c_str(),string.size());
+
+	auto buffer = message.GetBuffer();
+	if (m_udpSocket.send(buffer.data(), buffer.size(), address, port) != sf::Socket::Done)
+	{
+		std::cerr << "Failed To send packet\n";
+	}
+}
+
+void Network::sendTcpMessage(MessageType type, char* data, size_t size, int clientID)
+{
+	const Message message(type, data, size);
+
+	auto buffer = message.GetBuffer();
+	Connection* client = m_connections[clientID].get();
+	if (client != nullptr)
+	{
+		if (client->GetTcpSocket().send(buffer.data(), buffer.size()) != sf::Socket::Done)
+		{
+			std::cerr << "Failed To send packet over TCP\n";
+		}
+	}
+}
+
+void Network::sendTcpMessage(const std::string& string, int clientID)
+{
+	const Message message(MessageType::TEXT, (char*)string.data(), string.size());
+
+	auto buffer = message.GetBuffer();
+	Connection* client = m_connections[clientID].get();
+	if (client->GetTcpSocket().send(buffer.data(), buffer.size()) != sf::Socket::Done)
+	{
+		std::cerr << "Failed To send packet over TCP\n";
+	}
 }
 
 void Network::acceptTCP()
@@ -91,63 +131,80 @@ void Network::acceptTCP()
 		}
 		else
 		{
+			//TODO: check if client with that id already exists if so reconnect with it
 			std::unique_ptr<Connection> connection{ new Connection };
-			connection->Connect(client);
+			unsigned int id = m_connectionIdCount++;
+			connection->Connect(client, id);
+			m_connections[id] = std::move(connection);
 
-			m_connections.push_back(std::move(connection));
-
+			//send connection id to client
+			sendTcpMessage(MessageType::CONNECTION_ID, (char*)&id, sizeof(unsigned int), id);
 		}
 	};
 }
 
-void Network::retrieveUDP()
+void Network::receiveUDP()
 {
-	sf::IpAddress sender;
-	unsigned short port;
-	sf::Packet packet;
-
 	while (m_running)
 	{
-		if (m_udpSocket.receive(packet, sender, port) != sf::Socket::Done)
+		sf::IpAddress sender;
+		unsigned short port;
+		size_t received;
+		const size_t maxMessageSize = 256;
+		char* buffer = new char[maxMessageSize];
+
+		if (m_udpSocket.receive(buffer, maxMessageSize, received,sender,port) != sf::Socket::Done)
 		{
 			std::cerr << "Failed To receive udp packet\n";
+			continue;
 		}
-		Message message;
-		packet >> message;
-		message.protocol = Protocol::UPD;
-		message.senderAddress = sender;
-		message.senderPort = port;
-		m_retrievedMessages.push(message);
+
+		Message message{buffer};
+
+		ServerMessage serverMessage(message);
+		serverMessage.protocol = Protocol::UPD;
+		serverMessage.senderAddress = sender;
+		serverMessage.senderPort = port;
+		m_receivedMessages.enqueue(serverMessage);
+
+		delete[] buffer;
+
+		//std::cout << std::endl;
+		//std::cout << "received  " << serverMessage.message.ToString() << std::endl;
 	}
 }
 
-void Network::retrieveTCP()
+void Network::receiveTCP()
 {
-	sf::Packet packet;
-
-	while (m_running) 
+	while (m_running)
 	{
-		for (int i = 0; i < m_connections.size(); ++i)
+		for (auto& connection : m_connections)
 		{
-			if(m_connections[i] == nullptr || !m_connections[i]->IsConnected())
+			if (connection.second == nullptr || !connection.second->IsConnected())
 				continue;
 
-			auto send = m_connections[i]->GetTcpSocket().receive(packet);
+			size_t received;
+			const size_t maxMessageSize = 256;
+			char* buffer = new char[maxMessageSize];
+
+			auto send = connection.second->GetTcpSocket().receive(buffer, maxMessageSize,received);
 			if (send != sf::Socket::Done)
 			{
-				if(send == sf::Socket::Disconnected)
+				if (send == sf::Socket::Disconnected)
 				{
-					m_connections[i]->Disconnect();
+					connection.second->Disconnect();
 					continue;;
 				}
 				std::cerr << "Failed To receive tcp packet\n";
+				continue;
 			}
-			Message message;
-			packet >> message;
-			message.protocol = Protocol::TCP;
-			message.senderAddress = m_connections[i]->GetAddress();
-			message.senderPort = m_connections[i]->GetPort();
-			m_retrievedMessages.push(message);
+			Message message{ buffer };
+
+			ServerMessage serverMessage(message);
+			serverMessage.protocol = Protocol::TCP;
+			serverMessage.senderAddress = connection.second->GetAddress();
+			serverMessage.senderPort = connection.second->GetPort();
+			m_receivedMessages.enqueue(serverMessage);
 		}
 	}
 }
