@@ -1,8 +1,8 @@
 #pragma once
-#include "Networking/Message.h"
 #include <SFML/Network.hpp>
-#include <queue>
 #include <thread>
+#include <shared/Message.h>
+#include <shared/MessageQueue.h>
 
 class ServerConnection
 {
@@ -25,9 +25,9 @@ private:
 	sf::TcpSocket m_serverTcpSocket;
 	sf::UdpSocket m_serverUdpSocket;
 	bool m_isConnected{ false };
-	unsigned int clientID;
+	unsigned int m_clientID;
 
-	std::queue<ServerMessage> m_receivedMessages;
+	MessageQueue m_receivedMessages;
 
 	void sendUdpMessage(MessageType type, char* data, size_t size, sf::IpAddress address, unsigned short port);
 	void sendUdpMessage(const std::string& string, sf::IpAddress address, unsigned short port);

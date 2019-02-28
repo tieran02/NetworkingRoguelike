@@ -1,7 +1,8 @@
 #include "ServerConnection.h"
 #include <iostream>
 #include <thread>
-#include <string.h>
+#include <cstring>
+#include "shared/Message.h"
 
 
 ServerConnection::ServerConnection(unsigned short port) : m_serverUdpPort(port), m_serverTcpPort(port+1)
@@ -42,11 +43,14 @@ void ServerConnection::Connect()
 	if (status != sf::Socket::Done)
 	{
 		std::cerr << "Failed to connect to sever TCP socket\n";
+		return;
 	}
 	m_isConnected = true;
-	PollMessages();
 
-	sendTcpMessage("TCP Connection Established");
+	//request for client ID
+	sendTcpMessage(MessageType::CONNECTION_ID, nullptr, 0);
+
+	PollMessages();
 }
 
 void ServerConnection::PollMessages()
@@ -54,8 +58,7 @@ void ServerConnection::PollMessages()
 	while (!m_receivedMessages.empty())
 	{
 		//Get Data
-		ServerMessage msg = m_receivedMessages.front();
-		m_receivedMessages.pop();
+		ServerMessage msg = m_receivedMessages.dequeue();
 
 		switch (msg.protocol)
 		{
@@ -64,6 +67,11 @@ void ServerConnection::PollMessages()
 			break;
 		case Protocol::TCP:
 			std::cout << "TCP::Received " << msg.message.GetHeader().size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
+
+			if(msg.message.GetHeader().type == MessageType::CONNECTION_ID)
+			{
+				m_clientID = static_cast<unsigned int>(*msg.message.GetData());
+			}
 			break;
 		default:
 			break;
@@ -168,17 +176,18 @@ void ServerConnection::receiveUDP()
 		serverMessage.protocol = Protocol::UPD;
 		serverMessage.senderAddress = sender;
 		serverMessage.senderPort = port;
-		m_receivedMessages.push(serverMessage);
+		m_receivedMessages.enqueue(serverMessage);
+
 	}
 }
 
 void ServerConnection::receiveTCP()
 {
-	if (!m_isConnected)
-		return;
-
 	while (true)
 	{
+		if (!m_isConnected)
+			continue;
+
 		size_t received;
 		const size_t maxMessageSize = 256;
 		char* buffer = new char[maxMessageSize];
@@ -201,6 +210,6 @@ void ServerConnection::receiveTCP()
 		serverMessage.protocol = Protocol::TCP;
 		serverMessage.senderAddress = m_serverTcpSocket.getRemoteAddress();
 		serverMessage.senderPort = m_serverTcpSocket.getRemotePort();
-		m_receivedMessages.push(serverMessage);
+		m_receivedMessages.enqueue(serverMessage);
 	}
 }

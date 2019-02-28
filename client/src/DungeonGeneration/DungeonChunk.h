@@ -17,12 +17,6 @@ enum class DungeonTileType
 class DungeonTile
 {
 public:
-	enum class Type
-	{
-		EMPTY,
-		WALL
-	};
-
 	int x{ 0 }, y{ 0 }, id{ 0 };
 	DungeonTileType type{DungeonTileType::EMPTY};
 };

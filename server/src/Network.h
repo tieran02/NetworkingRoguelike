@@ -2,7 +2,7 @@
 #include <SFML/Network.hpp>
 #include "Connection.h"
 #include <queue>
-#include "MessageQueue.h"
+#include "shared/MessageQueue.h"
 #include <unordered_map>
 
 class Network

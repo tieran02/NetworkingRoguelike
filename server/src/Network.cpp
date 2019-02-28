@@ -4,7 +4,7 @@
 #include <SFML/Network.hpp>
 #include <thread>
 #include <string.h>
-#include "Message.h"
+#include "shared/Message.h"
 
 Network::Network(unsigned short port) : UDP_PORT(port), TCP_PORT(port+1)
 {
@@ -47,6 +47,11 @@ void Network::Start()
 					std::cout << "UDP::Received '" << msg.message.ToString() << "' " << msg.message.GetHeader().size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
 				break;
 			case Protocol::TCP:
+				if(msg.message.GetHeader().type == MessageType::CONNECTION_ID)
+				{
+					sendTcpMessage(MessageType::CONNECTION_ID, (char*)&msg.clientID, sizeof(unsigned int), msg.clientID);
+				}
+
 				std::cout << "TCP::Received '" << msg.message.ToString() << "' " << msg.message.GetHeader().size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
 				break;
 			default:
@@ -138,7 +143,7 @@ void Network::acceptTCP()
 			m_connections[id] = std::move(connection);
 
 			//send connection id to client
-			sendTcpMessage(MessageType::CONNECTION_ID, (char*)&id, sizeof(unsigned int), id);
+			//sendTcpMessage(MessageType::CONNECTION_ID, (char*)&id, sizeof(unsigned int), id);
 		}
 	};
 }
@@ -204,6 +209,7 @@ void Network::receiveTCP()
 			serverMessage.protocol = Protocol::TCP;
 			serverMessage.senderAddress = connection.second->GetAddress();
 			serverMessage.senderPort = connection.second->GetPort();
+			serverMessage.clientID = connection.first;
 			m_receivedMessages.enqueue(serverMessage);
 		}
 	}

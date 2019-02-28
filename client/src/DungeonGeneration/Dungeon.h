@@ -9,16 +9,15 @@ namespace sf {
 class Dungeon
 {
 public:
-	Dungeon(int chunkCount = 9);
+	Dungeon(int width, int height);
 	~Dungeon();
 	void Cleanup();
 
 	void Generate();
 	void Draw(sf::RenderWindow & window);
 private:
-	const int CHUNK_COUNT;
+	const unsigned int WIDTH{ 0 }, HEIGHT{ 0 };
 	std::vector<DungeonChunk*> m_chunks;
-	void generateNeighbourChunks(const DungeonChunk* chunk, int& chunkCount);
 	void assignNeighbours(DungeonChunk* chunk);
 	DungeonChunk* getChunk(int x, int y);
 };

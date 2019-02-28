@@ -1,16 +1,12 @@
 #include <SFML/Graphics.hpp>
-#include <SFML/System/Vector2.hpp>
 #include "Dungeon.h"
 #include "CellularAutomata.h"
 #include "DungeonChunkCave.h"
-#include <queue>
-#include <iostream>
 #include "Random.h"
 #include <chrono>
-#include <ctime>
 
 
-Dungeon::Dungeon(int chunkCount) : CHUNK_COUNT(chunkCount), m_chunks(chunkCount)
+Dungeon::Dungeon(int width, int height) : WIDTH(width), HEIGHT(height), m_chunks(width*height)
 {
 
 }
@@ -34,15 +30,19 @@ void Dungeon::Generate()
 	Cleanup();
 
 	//set seed
-	Random::SetSeed(112337);
+	unsigned long milliseconds_since_epoch =
+		std::chrono::duration_cast<std::chrono::milliseconds>
+		(std::chrono::system_clock::now().time_since_epoch()).count();
+	Random::SetSeed(milliseconds_since_epoch);
 
-	//generate first chunk
-	m_chunks[0] = new DungeonChunkCave(0,0);
-	int chunkCount = 1;
-
-	while (chunkCount != m_chunks.size())
+	int index = 0;
+	for (unsigned int y = 0; y < HEIGHT; ++y)
 	{
-		generateNeighbourChunks(m_chunks[chunkCount - 1], chunkCount);
+		for (unsigned int x = 0; x < WIDTH; x++)
+		{
+			m_chunks[index] = new DungeonChunkCave(x, y);
+			index++;
+		}
 	}
 
 	for (auto chunk : m_chunks)
@@ -59,24 +59,6 @@ void Dungeon::Draw(sf::RenderWindow & window)
 	for (auto& chunk : m_chunks)
 	{
 		chunk->Draw(window);
-	}
-}
-
-
-void Dungeon::generateNeighbourChunks(const DungeonChunk* chunk, int& chunkCount)
-{
-	for (int y = chunk->GetY() - 1; y <= chunk->GetY() + 1; ++y)
-	{
-		for (int x = chunk->GetX() - 1; x <= chunk->GetX() + 1; ++x)
-		{
-			if(x == chunk->GetX() && y == chunk->GetY() )
-				continue;
-
-			if (chunkCount == CHUNK_COUNT)
-				return;
-
-			m_chunks[chunkCount++] = new DungeonChunkCave(x, y);
-		}
 	}
 }
 

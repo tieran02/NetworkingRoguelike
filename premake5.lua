@@ -27,15 +27,18 @@ project "client"
 	filter "system:windows"
 		systemversion "latest"
 		includedirs { "dependencies/windows/SFML/include",
-					  "client/src"}
-		libdirs { "dependencies/windows/SFML/lib" }
+					  "client/src",
+					  "shared_network/include"}
+		libdirs { "dependencies/windows/SFML/lib",
+				  "bin/" .. outputdir .. "shared_network"}
 		links
 		{	
 			"sfml-graphics",
 			"sfml-window",
 			"sfml-system",
 			"sfml-audio",
-			"sfml-network"
+			"sfml-network",
+			"shared_network"
 		}
 
 		postbuildcommands
@@ -48,8 +51,11 @@ project "client"
 		cppdialect "C++11"
 		systemversion "latest"
 		includedirs { "dependencies/linux/SFML/include",
-					  "client/src"}
-		libdirs { "dependencies/linux/SFML/lib" }
+					  "client/src",
+					  "shared_network/include"}
+					  
+		libdirs { "dependencies/linux/SFML/lib",
+				  "bin/" .. outputdir .. "shared_network"}
 		linkoptions { '-Wl,-rpath=\\$$ORIGIN' }
 		links
 		{	
@@ -58,7 +64,8 @@ project "client"
 			"sfml-window",
 			"sfml-system",
 			"sfml-audio",
-			"sfml-network"
+			"sfml-network",
+			"shared_network"
 		}
 
 		postbuildcommands
@@ -92,15 +99,15 @@ project "server"
 	filter "system:windows"
 		systemversion "latest"
 		includedirs { "dependencies/windows/SFML/include",
-					  "server/src"}
-		libdirs { "dependencies/windows/SFML/lib" }
+					  "server/src",
+					  "shared_network/include"}
+		libdirs { "dependencies/windows/SFML/lib",
+				  "shared_network/src" }
 		links
 		{	
-			"sfml-graphics",
-			"sfml-window",
 			"sfml-system",
-			"sfml-audio",
-			"sfml-network"
+			"sfml-network",
+			"shared_network"
 		}
 
 		postbuildcommands
@@ -112,18 +119,64 @@ project "server"
 		cppdialect "C++11"
 		systemversion "latest"
 		includedirs { "dependencies/linux/SFML/include",
-					  "server/src"}
+					  "server/src",
+					  "shared_network/include"}
 		libdirs { "dependencies/linux/SFML/lib" }
 		linkoptions { '-Wl,-rpath=\\$$ORIGIN' }
+		links
+		{	
+			"sfml-system",
+			"sfml-network",
+			"shared_network"
+		}
+
+		postbuildcommands
+		{
+			("{COPY} %{wks.location}dependencies/linux/SFML/lib/bin ../bin/" .. outputdir .. "/server")
+		}
+
+	filter "configurations:Debug"
+		defines { "DEBUG" }
+		symbols "On"
+
+
+	filter "configurations:Release"
+		defines { "NDEBUG" }
+		optimize "On"
+		
+project "shared_network"
+location "shared_network"
+	kind "StaticLib"
+	language "C++"
+	cppdialect "C++11"
+	systemversion "latest"
+
+	targetdir "bin/%{cfg.buildcfg}"
+	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+	debugdir ("bin/" .. outputdir .. "/%{prj.name}")
+
+	files { "shared_network/src/**.*",
+			"shared_network/include/shared/**.*"	}
+
+	filter "system:windows"
+		includedirs { "dependencies/windows/SFML/include",
+					  "%{prj.name}/include/shared"}
+		libdirs { "dependencies/windows/SFML/lib" }
 		links
 		{	
 			"sfml-system",
 			"sfml-network"
 		}
 
-		postbuildcommands
-		{
-			("{COPY} %{wks.location}dependencies/linux/SFML/lib/bin ../bin/" .. outputdir .. "/server")
+	filter "system:linux"	
+		includedirs { "dependencies/linux/SFML/include",
+					  "%{prj.name}/include/shared"}
+		libdirs { "dependencies/linux/SFML/lib" }
+		links
+		{	
+			"sfml-system",
+			"sfml-network"
 		}
 
 	filter "configurations:Debug"
