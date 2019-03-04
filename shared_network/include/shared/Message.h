@@ -49,12 +49,13 @@ private:
 //Message wrapper for the client/server. Includes the protocol, address and port of the sender
 struct ServerMessage
 {
+	ServerMessage(){}
 	ServerMessage(const Message& msg) : message(msg)
 	{
 
 	}
 
-	const Message message;
+	Message message;
 	Protocol protocol;
 	sf::IpAddress senderAddress;
 	unsigned short senderPort;

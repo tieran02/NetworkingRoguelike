@@ -2,7 +2,7 @@
 #include <SFML/Network.hpp>
 #include <thread>
 #include <shared/Message.h>
-#include <shared/MessageQueue.h>
+#include "shared/CircularBuffer.h"
 
 class ServerConnection
 {
@@ -27,7 +27,7 @@ private:
 	bool m_isConnected{ false };
 	unsigned int m_clientID;
 
-	MessageQueue m_receivedMessages;
+	CircularBuffer<ServerMessage, 32> m_receivedMessages;
 
 	void sendUdpMessage(MessageType type, char* data, size_t size, sf::IpAddress address, unsigned short port);
 	void sendUdpMessage(const std::string& string, sf::IpAddress address, unsigned short port);

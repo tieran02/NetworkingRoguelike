@@ -35,6 +35,7 @@ void Network::Start()
 		{
 			//Get GetData
             ServerMessage msg = m_receivedMessages.dequeue();
+
 			switch (msg.protocol)
 			{
 			case Protocol::UPD:

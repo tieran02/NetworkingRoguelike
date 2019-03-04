@@ -4,6 +4,7 @@
 #include <queue>
 #include "shared/MessageQueue.h"
 #include <unordered_map>
+#include "shared/CircularBuffer.h"
 
 class Network
 {
@@ -20,7 +21,7 @@ private:
 	sf::UdpSocket m_udpSocket;
 	std::unordered_map<unsigned int,std::unique_ptr<Connection>> m_connections;
 	unsigned int m_connectionIdCount{ 0 };
-	MessageQueue m_receivedMessages;
+	CircularBuffer<ServerMessage, 32> m_receivedMessages;
 
 	void sendUdpMessage(MessageType type, char* data, size_t size, sf::IpAddress address, unsigned short port);
 	void sendUdpMessage(const std::string& string, sf::IpAddress address, unsigned short port);
