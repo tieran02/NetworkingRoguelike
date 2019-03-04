@@ -162,9 +162,9 @@ void ServerConnection::receiveUDP()
 		unsigned short port;
 		size_t received;
 		const size_t maxMessageSize = 256;
-		char* buffer = new char[maxMessageSize];
+		char buffer[maxMessageSize];
 
-		auto receive = m_serverUdpSocket.receive(buffer, maxMessageSize, received, sender, port);
+		const auto receive = m_serverUdpSocket.receive(buffer, maxMessageSize, received, sender, port);
 		if (receive != sf::Socket::Done)
 		{
 			std::cerr << "Failed To receive udp packet\n";
@@ -190,7 +190,7 @@ void ServerConnection::receiveTCP()
 
 		size_t received;
 		const size_t maxMessageSize = 256;
-		char* buffer = new char[maxMessageSize];
+		char buffer[maxMessageSize];
 
 		const auto receive = m_serverTcpSocket.receive(buffer, maxMessageSize, received);
 		if (receive != sf::Socket::Done)

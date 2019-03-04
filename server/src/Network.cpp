@@ -157,7 +157,7 @@ void Network::receiveUDP()
 		unsigned short port;
 		size_t received;
 		const size_t maxMessageSize = 256;
-		char* buffer = new char[maxMessageSize];
+		char buffer[maxMessageSize];
 
 		if (m_udpSocket.receive(buffer, maxMessageSize, received,sender,port) != sf::Socket::Done)
 		{
@@ -172,8 +172,6 @@ void Network::receiveUDP()
 		serverMessage.senderAddress = sender;
 		serverMessage.senderPort = port;
 		m_receivedMessages.enqueue(serverMessage);
-
-		delete[] buffer;
 
 		//std::cout << std::endl;
 		//std::cout << "received  " << serverMessage.message.ToString() << std::endl;
@@ -191,7 +189,7 @@ void Network::receiveTCP()
 
 			size_t received;
 			const size_t maxMessageSize = 256;
-			char* buffer = new char[maxMessageSize];
+			char buffer[maxMessageSize];
 
 			auto send = connection.second->GetTcpSocket().receive(buffer, maxMessageSize,received);
 			if (send != sf::Socket::Done)
