@@ -17,6 +17,7 @@ public:
 	bool FoundServer() const;
 	bool IsConnected() const;
 	void Disconnect();
+	int GetSeed() const { return m_seed; }
 private:
 	sf::IpAddress m_serverAddress{sf::IpAddress::None};
 	const unsigned short m_serverUdpPort;
@@ -26,8 +27,9 @@ private:
 	sf::UdpSocket m_serverUdpSocket;
 	bool m_isConnected{ false };
 	unsigned int m_clientID;
+	unsigned int m_seed;
 
-	CircularBuffer<ServerMessage, 32> m_receivedMessages;
+	CircularBuffer<ServerMessage> m_serverMessages{32};
 
 	void sendUdpMessage(MessageType type, char* data, size_t size, sf::IpAddress address, unsigned short port);
 	void sendUdpMessage(const std::string& string, sf::IpAddress address, unsigned short port);

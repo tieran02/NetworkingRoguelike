@@ -11,7 +11,6 @@ enum class Protocol
 enum class MessageType
 {
 	BROADCAST,
-	BROADCAST_RESPONSE,
 	CONNECTION_ID,
 	TEXT,
 	MOVEMENT
@@ -23,8 +22,9 @@ struct Header
 	MessageType type;
 };
 
-struct Message
+class Message
 {
+public:
 	Message() {}
 	~Message(){}
 
@@ -40,7 +40,9 @@ struct Message
 
 	std::vector<char> GetBuffer() const;
 
-private:
+	size_t Size() const;
+
+protected:
 	Header header{};
 	std::vector<char> data;
 

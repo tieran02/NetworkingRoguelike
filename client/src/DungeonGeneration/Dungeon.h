@@ -9,7 +9,7 @@ namespace sf {
 class Dungeon
 {
 public:
-	Dungeon(int width, int height);
+	Dungeon(int width, int height, int seed);
 	~Dungeon();
 	void Cleanup();
 
@@ -17,6 +17,7 @@ public:
 	void Draw(sf::RenderWindow & window);
 private:
 	const unsigned int WIDTH{ 0 }, HEIGHT{ 0 };
+	const int m_seed;
 	std::vector<DungeonChunk*> m_chunks;
 	void assignNeighbours(DungeonChunk* chunk);
 	DungeonChunk* getChunk(int x, int y);

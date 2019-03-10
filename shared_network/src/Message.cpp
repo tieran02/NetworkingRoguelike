@@ -38,6 +38,11 @@ std::string Message::ToString() const
 	return str;
 }
 
+size_t Message::Size() const
+{
+    return sizeof(Header) + header.size;
+}
+
 std::vector<char> Message::GetBuffer() const
 {
 	std::vector<char> buffer(sizeof(Header) + header.size);

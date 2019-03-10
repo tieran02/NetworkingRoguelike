@@ -1,6 +1,7 @@
 #include <SFML/Graphics.hpp>
 #include "DungeonGeneration/Dungeon.h"
 #include "Networking/ServerConnection.h"
+#include "Random.h"
 
 int main()
 {
@@ -10,7 +11,7 @@ int main()
 	server_connection.Connect();
 
 	const int DUNGEON_SIZE{ 2 };
-	Dungeon dungeon{ DUNGEON_SIZE,DUNGEON_SIZE };
+	Dungeon dungeon{ DUNGEON_SIZE,DUNGEON_SIZE, server_connection.GetSeed() };
 	dungeon.Generate();
 
 	int width{ 1280 }, height{ 720 };

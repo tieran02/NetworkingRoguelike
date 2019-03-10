@@ -6,7 +6,7 @@
 #include <chrono>
 
 
-Dungeon::Dungeon(int width, int height) : WIDTH(width), HEIGHT(height), m_chunks(width*height)
+Dungeon::Dungeon(int width, int height, int seed) : WIDTH(width), HEIGHT(height), m_chunks(width*height), m_seed(seed)
 {
 
 }
@@ -29,11 +29,7 @@ void Dungeon::Generate()
 {
 	Cleanup();
 
-	//set seed
-	unsigned long milliseconds_since_epoch =
-		std::chrono::duration_cast<std::chrono::milliseconds>
-		(std::chrono::system_clock::now().time_since_epoch()).count();
-	Random::SetSeed(milliseconds_since_epoch);
+	Random::SetSeed(m_seed);
 
 	int index = 0;
 	for (unsigned int y = 0; y < HEIGHT; ++y)

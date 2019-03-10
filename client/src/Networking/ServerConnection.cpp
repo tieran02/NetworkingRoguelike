@@ -3,6 +3,7 @@
 #include <thread>
 #include <cstring>
 #include "shared/Message.h"
+#include "shared/ConnectionMessage.h"
 
 
 ServerConnection::ServerConnection(unsigned short port) : m_serverUdpPort(port), m_serverTcpPort(port+1)
@@ -45,20 +46,22 @@ void ServerConnection::Connect()
 		std::cerr << "Failed to connect to sever TCP socket\n";
 		return;
 	}
-	m_isConnected = true;
 
-	//request for client ID
 	sendTcpMessage(MessageType::CONNECTION_ID, nullptr, 0);
 
-	PollMessages();
+	//request for client ID
+	while (!m_isConnected)
+	{
+		PollMessages();
+	}
 }
 
 void ServerConnection::PollMessages()
 {
-	while (!m_receivedMessages.empty())
+	while (!m_serverMessages.empty())
 	{
 		//Get Data
-		ServerMessage msg = m_receivedMessages.dequeue();
+		ServerMessage msg = m_serverMessages.dequeue();
 
 		switch (msg.protocol)
 		{
@@ -70,7 +73,10 @@ void ServerConnection::PollMessages()
 
 			if(msg.message.GetHeader().type == MessageType::CONNECTION_ID)
 			{
-				m_clientID = static_cast<unsigned int>(*msg.message.GetData());
+                ConnectionMessage* message = static_cast<ConnectionMessage*>(&msg.message);
+				std::cout << "Client ID = " << message->GetClientID() <<" World Seed = " << message->GetSeed() << std::endl;
+				m_seed = message->GetSeed();
+				m_isConnected = true;
 			}
 			break;
 		default:
@@ -78,7 +84,7 @@ void ServerConnection::PollMessages()
 		}
 
 
-		if (!FoundServer() && msg.message.GetHeader().type == MessageType::BROADCAST_RESPONSE) //server response from broadcast sent
+		if (!FoundServer() && msg.message.GetHeader().type == MessageType::BROADCAST) //server response from broadcast sent
 		{
 			m_serverAddress = msg.senderAddress;
 		}
@@ -128,7 +134,7 @@ void ServerConnection::sendUdpMessage(const std::string& string, sf::IpAddress a
 
 void ServerConnection::sendTcpMessage(MessageType type, char* data, size_t size)
 {
-	if (!m_isConnected)
+	if (m_serverTcpSocket.getLocalPort() == 0)
 		return;
 
 	const Message message(type, data, size);
@@ -142,7 +148,7 @@ void ServerConnection::sendTcpMessage(MessageType type, char* data, size_t size)
 
 void ServerConnection::sendTcpMessage(const std::string& string)
 {
-	if (!m_isConnected)
+	if (m_serverTcpSocket.getLocalPort() == 0)
 		return;
 
 	const Message message(MessageType::TEXT, (char*)string.data(), string.size());
@@ -176,7 +182,7 @@ void ServerConnection::receiveUDP()
 		serverMessage.protocol = Protocol::UPD;
 		serverMessage.senderAddress = sender;
 		serverMessage.senderPort = port;
-		m_receivedMessages.enqueue(serverMessage);
+		m_serverMessages.enqueue(serverMessage);
 
 	}
 }
@@ -185,7 +191,7 @@ void ServerConnection::receiveTCP()
 {
 	while (true)
 	{
-		if (!m_isConnected)
+		if (m_serverTcpSocket.getLocalPort() == 0)
 			continue;
 
 		size_t received;
@@ -210,6 +216,6 @@ void ServerConnection::receiveTCP()
 		serverMessage.protocol = Protocol::TCP;
 		serverMessage.senderAddress = m_serverTcpSocket.getRemoteAddress();
 		serverMessage.senderPort = m_serverTcpSocket.getRemotePort();
-		m_receivedMessages.enqueue(serverMessage);
+		m_serverMessages.enqueue(serverMessage);
 	}
 }

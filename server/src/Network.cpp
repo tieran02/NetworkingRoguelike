@@ -5,6 +5,7 @@
 #include <thread>
 #include <string.h>
 #include "shared/Message.h"
+#include "shared/ConnectionMessage.h"
 
 Network::Network(unsigned short port) : UDP_PORT(port), TCP_PORT(port+1)
 {
@@ -18,6 +19,10 @@ void Network::Start()
 {
 	m_running = true;
 	std::cout << "Running Server\n";
+	std::cout << "Enter level seed: ";
+	std::cin >> m_seed;
+	std::cout << std::endl;
+
 
 	//BIND UPD
 	if (m_udpSocket.bind(UDP_PORT) != sf::Socket::Done)
@@ -31,10 +36,10 @@ void Network::Start()
 
 	while (m_running)
 	{
-		while (!m_receivedMessages.empty())
+		while (!m_serverMessages.empty())
 		{
 			//Get GetData
-            ServerMessage msg = m_receivedMessages.dequeue();
+            ServerMessage msg = m_serverMessages.dequeue();
 
 			switch (msg.protocol)
 			{
@@ -42,7 +47,7 @@ void Network::Start()
 				if (msg.message.GetHeader().type == MessageType::BROADCAST) //UDP broadcast (used to find a server)
 				{
 					std::cout << "BROADCAST_MESSAGE from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
-					sendUdpMessage(MessageType::BROADCAST_RESPONSE, nullptr, 0, msg.senderAddress, msg.senderPort);
+					sendUdpMessage(MessageType::BROADCAST, nullptr, 0, msg.senderAddress, msg.senderPort);
 				}
 				else
 					std::cout << "UDP::Received '" << msg.message.ToString() << "' " << msg.message.GetHeader().size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
@@ -50,7 +55,8 @@ void Network::Start()
 			case Protocol::TCP:
 				if(msg.message.GetHeader().type == MessageType::CONNECTION_ID)
 				{
-					sendTcpMessage(MessageType::CONNECTION_ID, (char*)&msg.clientID, sizeof(unsigned int), msg.clientID);
+                    ConnectionMessage message(msg.clientID, m_seed);
+					sendTcpMessage(&message, msg.clientID);
 				}
 
 				std::cout << "TCP::Received '" << msg.message.ToString() << "' " << msg.message.GetHeader().size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
@@ -118,6 +124,21 @@ void Network::sendTcpMessage(const std::string& string, int clientID)
 	}
 }
 
+void Network::sendTcpMessage(Message* message, int clientID)
+{
+    if(message == nullptr)
+    {
+        std::cerr << "Failed to send TCP message to client " << clientID << " because the message is a nullptr)\n";
+    }
+
+    auto buffer = message->GetBuffer();
+    Connection* client = m_connections[clientID].get();
+	if (client->GetTcpSocket().send(buffer.data(), buffer.size()) != sf::Socket::Done)
+	{
+		std::cerr << "Failed To send packet over TCP\n";
+	}
+}
+
 void Network::acceptTCP()
 {
 	sf::TcpListener listener;
@@ -171,10 +192,7 @@ void Network::receiveUDP()
 		serverMessage.protocol = Protocol::UPD;
 		serverMessage.senderAddress = sender;
 		serverMessage.senderPort = port;
-		m_receivedMessages.enqueue(serverMessage);
-
-		//std::cout << std::endl;
-		//std::cout << "received  " << serverMessage.message.ToString() << std::endl;
+		m_serverMessages.enqueue(serverMessage);
 	}
 }
 
@@ -209,7 +227,7 @@ void Network::receiveTCP()
 			serverMessage.senderAddress = connection.second->GetAddress();
 			serverMessage.senderPort = connection.second->GetPort();
 			serverMessage.clientID = connection.first;
-			m_receivedMessages.enqueue(serverMessage);
+			m_serverMessages.enqueue(serverMessage);
 		}
 	}
 }

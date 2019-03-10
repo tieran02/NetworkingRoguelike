@@ -2,93 +2,65 @@
 #include <cstdint>
 #include <mutex>
 
-template<class T,uint32_t Size>
+template<class T>
 class CircularBuffer
 {
 public:
-	CircularBuffer() : m_buffer(std::unique_ptr<T[]>(new T[Size])), m_front(0), m_back(0), m_full(false)
-	{
-	}
+	CircularBuffer(size_t size) : m_buffer(std::unique_ptr<T[]>(new T[size])) , m_capacity(size), m_front(0), m_back(0), m_count(0){}
 
 	bool empty() const;
-	//Get the overall size of the buffer
-	size_t capacity() const;
-	//Get the current size of the buffer
-	size_t size() const;
 
 	void enqueue(const T& element);
-	T& dequeue();
+	T dequeue();
 private:
 	std::unique_ptr<T[]> m_buffer;
+	size_t m_capacity;
 	uint32_t m_front;
 	uint32_t m_back;
-	bool m_full;
+	uint32_t m_count;
 
 	std::mutex m_mutex;
+	std::condition_variable m_notFull;
+	std::condition_variable m_notEmpty;
 };
 
-template <class T, uint32_t Size>
-bool CircularBuffer<T, Size>::empty() const
+template <class T>
+bool CircularBuffer<T>::empty() const
 {
-	return (!m_full && (m_front == m_back));
+	return m_count == 0;
 }
 
-template <class T, uint32_t Size>
-size_t CircularBuffer<T, Size>::capacity() const
+template <class T>
+void CircularBuffer<T>::enqueue(const T& element)
 {
-	return Size;
-}
+	std::unique_lock<std::mutex> lock(m_mutex);
 
-template <class T, uint32_t Size>
-size_t CircularBuffer<T, Size>::size() const
-{
-	size_t size = Size;
-
-	if(!m_full)
+	m_notFull.wait(lock,[this] ()
 	{
-		if(m_front >= m_back)
-		{
-			size = m_front - m_back;
-		}
-		else
-		{
-			size = Size + m_front - m_back;
-		}
-	}
+		return m_count != m_capacity;
+	});
 
-	return size;
+	m_buffer[m_back] = element;
+	m_back = (m_back + 1) % m_capacity;
+	++m_count;
+
+	m_notEmpty.notify_one();
 }
 
-template <class T, uint32_t Size>
-void CircularBuffer<T, Size>::enqueue(const T& element)
+template <class T>
+T CircularBuffer<T>::dequeue()
 {
-	std::lock_guard<std::mutex> lock(m_mutex);
+	std::unique_lock<std::mutex> lock(m_mutex);
 
-	m_buffer[m_front] = element;
-
-	if(m_full)
+	m_notEmpty.wait(lock,[this]()
 	{
-		m_back = (m_back + 1) % Size;
-	}
+		return m_count != 0;
+	});
 
-	m_front = (m_front + 1) % Size;
+	T& result = m_buffer[m_front];
+	m_front = (m_front + 1) % m_capacity;
+	--m_count;
 
-	m_full = m_front == m_back;
-}
-
-template <class T, uint32_t Size>
-T& CircularBuffer<T, Size>::dequeue()
-{
-	std::lock_guard<std::mutex> lock(m_mutex);
-
-	if (empty())
-	{
-		return T();
-	}
-
-	T& value = m_buffer[m_back];
-	m_full = false;
-	m_back = (m_back + 1) % Size;
-
-	return value;
+	m_notFull.notify_one();
+	return result;
 }
