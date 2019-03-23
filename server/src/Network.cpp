@@ -49,11 +49,17 @@ void Network::Start()
 					sendUdpMessage(MessageType::BROADCAST, nullptr, 0, msg.senderAddress, msg.senderPort);
 				}
 				else
+				{
 					std::cout << "UDP::Received '" << msg.message.ToString() << "' " << msg.message.GetHeader().size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
+
+					//echo to all the other clients
+					SendToAllUDP(msg.message, msg.message.GetHeader().id);
+				}
 				break;
 			case Protocol::TCP:
-
 				std::cout << "TCP::Received '" << msg.message.ToString() << "' " << msg.message.GetHeader().size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
+				//echo to all the other clients
+				SendToAllTCP(msg.message, msg.message.GetHeader().id);
 				break;
 			default:
 				break;
@@ -155,5 +161,31 @@ void Network::receiveUDP()
 		serverMessage.senderAddress = sender;
 		serverMessage.senderPort = port;
 		m_serverMessages.enqueue(serverMessage);
+	}
+}
+
+void Network::SendToAllUDP(const Message& message, unsigned int ignore)
+{
+	for (auto& connection : m_connections)
+	{
+		if(m_connections.find(ignore) != m_connections.end())
+		{
+			continue;
+		}
+
+		connection.second->SendUDP(message);
+	}
+}
+
+void Network::SendToAllTCP(const Message& message, unsigned int ignore)
+{
+	for (auto& connection : m_connections)
+	{
+		if (m_connections.find(ignore) != m_connections.end())
+		{
+			continue;
+		}
+
+		connection.second->SendTCP(message);
 	}
 }

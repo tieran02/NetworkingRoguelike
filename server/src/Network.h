@@ -34,6 +34,9 @@ private:
 	void sendUdpMessage(MessageType type, char* data, size_t size, sf::IpAddress address, unsigned short port);
 	void receiveUDP();
 
+	void SendToAllUDP(const Message& message, unsigned int ignore);
+	void SendToAllTCP(const Message& message, unsigned int ignore);
+
 
 	void setupSocketSelector();
 };
