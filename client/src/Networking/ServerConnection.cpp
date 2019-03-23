@@ -6,7 +6,7 @@
 #include "shared/ConnectionMessage.h"
 
 
-ServerConnection::ServerConnection(unsigned short port) : m_serverUdpPort(port), m_serverTcpPort(port+1)
+ServerConnection::ServerConnection(unsigned short port, World* world) : m_world(world), m_broadcastUdpPort(port)
 {
 	updRecieve = std::thread(&ServerConnection::receiveUDP, this);
 	tcpRecieve = std::thread(&ServerConnection::receiveTCP, this);
@@ -24,7 +24,14 @@ void ServerConnection::FindServer()
 	while (!FoundServer())
 	{
 		std::cout << "Finding a server...\n";
-		sendUdpMessage(MessageType::BROADCAST, nullptr, 0, sf::IpAddress::Broadcast, m_serverUdpPort);
+		//send broadcast message
+		const Message message(MessageType::BROADCAST, nullptr, 0, m_clientID);
+		auto buffer = message.GetBuffer();
+		if (m_serverUdpSocket.send(buffer.data(), buffer.size(), sf::IpAddress::Broadcast, m_broadcastUdpPort) != sf::Socket::Done)
+		{
+			std::cerr << "Failed To send broadcast message\n";
+		}
+
 		sf::sleep(sf::milliseconds(100));
 
 		//poll messages
@@ -40,14 +47,12 @@ void ServerConnection::Connect()
 		return;
 
 	//TCP SOCKET
-	sf::Socket::Status status = m_serverTcpSocket.connect(m_serverAddress, m_serverTcpPort);
+	sf::Socket::Status status = m_serverTcpSocket.connect(m_serverAddress, m_broadcastUdpPort+1);
 	if (status != sf::Socket::Done)
 	{
 		std::cerr << "Failed to connect to sever TCP socket\n";
 		return;
 	}
-
-	sendTcpMessage(MessageType::CONNECTION_ID, nullptr, 0);
 
 	//request for client ID
 	while (!m_isConnected)
@@ -75,7 +80,10 @@ void ServerConnection::PollMessages()
 			{
                 ConnectionMessage* message = static_cast<ConnectionMessage*>(&msg.message);
 				std::cout << "Client ID = " << message->GetClientID() <<" World Seed = " << message->GetSeed() << std::endl;
-				m_seed = message->GetSeed();
+				m_world->SetSeed(message->GetSeed());
+				m_serverUdpPort = message->GetUdpPort();
+				m_serverTcpPort = m_serverTcpSocket.getRemotePort();
+				m_serverIP = m_serverTcpSocket.getRemoteAddress();
 				m_isConnected = true;
 			}
 			break;
@@ -109,23 +117,23 @@ void ServerConnection::Disconnect()
 
 }
 
-void ServerConnection::sendUdpMessage(MessageType type, char* data, size_t size, sf::IpAddress address, unsigned short port)
+void ServerConnection::sendUdpMessage(MessageType type, char* data, size_t size)
 {
-	const Message message(type, data, size);
+	const Message message(type, data, size, m_clientID);
 
 	auto buffer = message.GetBuffer();
-	if (m_serverUdpSocket.send(buffer.data(), buffer.size(), address, port) != sf::Socket::Done)
+	if (m_serverUdpSocket.send(buffer.data(), buffer.size(), m_serverAddress, m_serverUdpPort) != sf::Socket::Done)
 	{
 		std::cerr << "Failed To send packet\n";
 	}
 }
 
-void ServerConnection::sendUdpMessage(const std::string& string, sf::IpAddress address, unsigned short port)
+void ServerConnection::sendUdpMessage(const std::string& string)
 {
-	const Message message(MessageType::TEXT, (char*)string.c_str(), string.size());
+	const Message message(MessageType::TEXT, (char*)string.c_str(), string.size(), m_clientID);
 
 	auto buffer = message.GetBuffer();
-	if (m_serverUdpSocket.send(buffer.data(), buffer.size(), address, port) != sf::Socket::Done)
+	if (m_serverUdpSocket.send(buffer.data(), buffer.size(), m_serverAddress, m_serverUdpPort) != sf::Socket::Done)
 	{
 		std::cerr << "Failed To send packet\n";
 	}
@@ -137,7 +145,7 @@ void ServerConnection::sendTcpMessage(MessageType type, char* data, size_t size)
 	if (m_serverTcpSocket.getLocalPort() == 0)
 		return;
 
-	const Message message(type, data, size);
+	const Message message(type, data, size, m_clientID);
 
 	auto buffer = message.GetBuffer();
 	if (m_serverTcpSocket.send(buffer.data(), buffer.size()) != sf::Socket::Done)
@@ -151,7 +159,7 @@ void ServerConnection::sendTcpMessage(const std::string& string)
 	if (m_serverTcpSocket.getLocalPort() == 0)
 		return;
 
-	const Message message(MessageType::TEXT, (char*)string.data(), string.size());
+	const Message message(MessageType::TEXT, (char*)string.data(), string.size(), m_clientID);
 
 	auto buffer = message.GetBuffer();
 	if (m_serverTcpSocket.send(buffer.data(), buffer.size()) != sf::Socket::Done)

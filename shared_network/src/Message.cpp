@@ -11,7 +11,7 @@ Message::Message(char* buffer)
 	memcpy(data.data(), buffer, header.size);
 }
 
-Message::Message(MessageType type, char* src, size_t size)
+Message::Message(MessageType type, char* src, size_t size, uint16_t id)
 {
 	header.type = type;
 	header.size = (int16_t)size;

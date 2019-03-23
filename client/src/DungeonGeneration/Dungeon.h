@@ -15,6 +15,8 @@ public:
 
 	void Generate();
 	void Draw(sf::RenderWindow & window);
+
+	const std::vector<DungeonChunk*>& GetChunks() const;
 private:
 	const unsigned int WIDTH{ 0 }, HEIGHT{ 0 };
 	const int m_seed;

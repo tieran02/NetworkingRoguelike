@@ -5,8 +5,9 @@ class ConnectionMessage : public Message
 {
 public:
     ConnectionMessage(char* buffer);
-    ConnectionMessage(unsigned int clientID, unsigned int seed);
+    ConnectionMessage(unsigned int clientID, unsigned int seed, unsigned short udpPort);
     unsigned int GetClientID() const;
     unsigned int GetSeed() const;
+	unsigned short GetUdpPort() const;
 };
 

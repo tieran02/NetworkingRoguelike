@@ -58,6 +58,12 @@ void Dungeon::Draw(sf::RenderWindow & window)
 	}
 }
 
+
+const std::vector<DungeonChunk*>& Dungeon::GetChunks() const
+{
+    return m_chunks;
+}
+
 void Dungeon::assignNeighbours(DungeonChunk* chunk)
 {
 	for (int y = chunk->GetY() - 1; y <= chunk->GetY() + 1; ++y)

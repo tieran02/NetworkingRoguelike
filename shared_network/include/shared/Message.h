@@ -20,6 +20,7 @@ struct Header
 {
 	int16_t size;
 	MessageType type;
+	uint16_t id{0};
 };
 
 class Message
@@ -30,7 +31,7 @@ public:
 
 	Message(char* buffer);
 
-	Message(MessageType type, char* src, size_t size);
+	Message(MessageType type, char* src, size_t size, uint16_t id);
 
 	const Header& GetHeader() const;
 
@@ -61,5 +62,4 @@ struct ServerMessage
 	Protocol protocol;
 	sf::IpAddress senderAddress;
 	unsigned short senderPort;
-	unsigned int clientID{ 0 };
 };

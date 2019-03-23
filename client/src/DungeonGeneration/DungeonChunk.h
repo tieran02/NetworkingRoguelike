@@ -35,6 +35,7 @@ public:
 	int GetY() const { return chunkY; }
 	void AddNeighbour(DungeonChunk* chunk);
 	const std::vector<DungeonChunk*>& GetNeighbours() const { return m_neighbourChunks; }
+	const std::vector<DungeonRoom>& GetRooms() const;
 protected:
 	const unsigned int CHUNK_SIZE{ 64 };
 	int chunkX, chunkY;

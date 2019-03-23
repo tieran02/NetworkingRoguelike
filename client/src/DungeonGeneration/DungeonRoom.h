@@ -12,8 +12,8 @@ public:
 	~DungeonRoom();
 
 	int RoomSize() const { return (int)tiles.size(); }
-	const std::vector<DungeonTile*>& GetTiles() { return tiles; }
-	const std::vector<DungeonTile*>& GetEdgeTiles() { return edgeTiles; }
+	const std::vector<DungeonTile*>& GetTiles() const { return tiles; }
+	const std::vector<DungeonTile*>& GetEdgeTiles() const { return edgeTiles; }
 	bool IsConnected(const DungeonRoom& otherRoom) const;
 	static void ConnectRooms(DungeonRoom& roomA, DungeonRoom& roomB);
 

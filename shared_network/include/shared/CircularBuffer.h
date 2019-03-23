@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <mutex>
+#include <condition_variable>
 
 template<class T>
 class CircularBuffer

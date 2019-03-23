@@ -77,6 +77,10 @@ void DungeonChunk::AddNeighbour(DungeonChunk* chunk)
 	m_neighbourChunks.push_back(chunk);
 }
 
+const std::vector<DungeonRoom>& DungeonChunk::GetRooms() const
+{
+    return m_rooms;
+}
 void DungeonChunk::connectRooms()
 {
 	if (m_rooms.size() <= 1)

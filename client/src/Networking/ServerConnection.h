@@ -3,11 +3,12 @@
 #include <thread>
 #include <shared/Message.h>
 #include "shared/CircularBuffer.h"
+#include "World.h"
 
 class ServerConnection
 {
 public:
-	ServerConnection(unsigned short port);
+	ServerConnection(unsigned short port, World* world);
 	~ServerConnection();
 
 	void FindServer();
@@ -17,22 +18,25 @@ public:
 	bool FoundServer() const;
 	bool IsConnected() const;
 	void Disconnect();
-	int GetSeed() const { return m_seed; }
 private:
+	World* m_world{ nullptr };
 	sf::IpAddress m_serverAddress{sf::IpAddress::None};
-	const unsigned short m_serverUdpPort;
-	const unsigned short m_serverTcpPort;
+
+	const unsigned short m_broadcastUdpPort;
+	sf::IpAddress m_serverIP;
+	unsigned short m_serverTcpPort;
+	unsigned short m_serverUdpPort;
+
 
 	sf::TcpSocket m_serverTcpSocket;
 	sf::UdpSocket m_serverUdpSocket;
 	bool m_isConnected{ false };
 	unsigned int m_clientID;
-	unsigned int m_seed;
 
 	CircularBuffer<ServerMessage> m_serverMessages{32};
 
-	void sendUdpMessage(MessageType type, char* data, size_t size, sf::IpAddress address, unsigned short port);
-	void sendUdpMessage(const std::string& string, sf::IpAddress address, unsigned short port);
+	void sendUdpMessage(MessageType type, char* data, size_t size);
+	void sendUdpMessage(const std::string& string);
 
 	void sendTcpMessage(MessageType type, char* data, size_t size);
 	void sendTcpMessage(const std::string& string);
