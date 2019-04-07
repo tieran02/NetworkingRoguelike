@@ -1,19 +1,28 @@
 #pragma once
 #include <SFML/Network.hpp>
 #include "Connection.h"
-#include <queue>
 #include "shared/MessageQueue.h"
 #include <unordered_map>
 #include "shared/CircularBuffer.h"
+#include "shared/Queue.h"
 
+class WorldState;
 class Network
 {
 public:
-	Network(unsigned short port);
+	Network(WorldState& world, unsigned short port);
 	~Network();
 
 	void Start();
+
+	void SendUdpMessage(const Message& message, sf::IpAddress address, unsigned short port);
+	void SendToAllUDP(const Message& message, unsigned int ignore = 0);
+	void SendToAllTCP(const Message& message, unsigned int ignore = 0);
+
+	void SendSpawnMessage(unsigned int worldID, unsigned int entityID, sf::Vector2f position, unsigned int ownershipID = 0);
+	void SendMovementMessage(unsigned int worldID, sf::Vector2f newPosition);
 private:
+	WorldState* m_worldState;
 	bool m_running{ false };
 	const unsigned short UDP_PORT;
 	const unsigned short TCP_PORT;
@@ -21,23 +30,12 @@ private:
 	sf::UdpSocket m_udpSocket;
 	std::unordered_map<unsigned int,std::unique_ptr<Connection>> m_connections;
 	unsigned int m_connectionIdCount{ 1 };
-	CircularBuffer<ServerMessage> m_serverMessages{32};
+	Queue<ServerMessage> m_serverMessages;
 
-	sf::TcpListener listener;
-	sf::SocketSelector selector;
 	std::mutex m_acceptMutex;
 
-	//Seed to send to client for level generation
-	int m_seed{0};
-
 	//Recieve and send broadcasts
-	void sendUdpMessage(MessageType type, char* data, size_t size, sf::IpAddress address, unsigned short port);
 	void receiveUDP();
-
-	void SendToAllUDP(const Message& message, unsigned int ignore);
-	void SendToAllTCP(const Message& message, unsigned int ignore);
-
-
-	void setupSocketSelector();
+	void socketLoop();
 };
 

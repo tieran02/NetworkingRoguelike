@@ -1,5 +1,5 @@
 #include <SFML/Graphics.hpp>
-#include "DungeonGeneration/Dungeon.h"
+#include "shared/DungeonGeneration/Dungeon.h"
 #include "Networking/ServerConnection.h"
 #include "World.h"
 
@@ -13,7 +13,7 @@ int main()
 	server_connection.Connect();
 
 	const int DUNGEON_SIZE{ 2 };
-	world.Generate();
+	world.Generate(&server_connection);
 
 	int width{ 1280 }, height{ 720 };
 	sf::RenderWindow window(sf::VideoMode(width, height), "SFML window");
@@ -42,11 +42,9 @@ int main()
 				view.zoom(-2.5);
 				window.setView(view);
 			}
-			if(event.type == sf::Event::KeyPressed)
-			{
-				world.Generate();
-			}
 		}
+
+		world.Update();
 		window.clear();
 
 		world.Draw(window);

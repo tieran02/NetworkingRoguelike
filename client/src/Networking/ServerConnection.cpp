@@ -4,6 +4,9 @@
 #include <cstring>
 #include "shared/Message.h"
 #include "shared/ConnectionMessage.h"
+#include "shared/SpawnMessage.h"
+#include "shared/MovementMessage.h"
+#include "shared/Utility/Math.h"
 
 
 ServerConnection::ServerConnection(unsigned short port, World* world) : m_world(world), m_broadcastUdpPort(port)
@@ -72,23 +75,37 @@ void ServerConnection::PollMessages()
 		{
 		case Protocol::UPD:
 			std::cout << "UDP::Received " << msg.message.GetHeader().size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
+
+			if (msg.message.GetHeader().type == MessageType::MOVEMENT)
+			{
+				MovementMessage* message = static_cast<MovementMessage*>(&msg.message);
+				m_world->UpdateEntityPosition(message->WorldID(), message->GetPosition());
+			}
 			break;
 		case Protocol::TCP:
 			std::cout << "TCP::Received " << msg.message.GetHeader().size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
 
 			if(msg.message.GetHeader().type == MessageType::CONNECTION_ID)
 			{
-                ConnectionMessage* message = static_cast<ConnectionMessage*>(&msg.message);
-				std::cout << "Client ID = " << message->GetClientID() <<" World Seed = " << message->GetSeed() << std::endl;
+				ConnectionMessage* message = static_cast<ConnectionMessage*>(&msg.message);
+				std::cout << "Client ID = " << message->GetClientID() << " World Seed = " << message->GetSeed() << std::endl;
 				m_world->SetSeed(message->GetSeed());
 				m_serverUdpPort = message->GetUdpPort();
 				m_serverTcpPort = m_serverTcpSocket.getRemotePort();
 				m_serverIP = m_serverTcpSocket.getRemoteAddress();
 				m_isConnected = true;
+				m_clientID = message->GetClientID();
+				//send client udp port to server 
+				ConnectionMessage updPortMessage{ m_clientID ,0,m_serverUdpSocket.getLocalPort() };
+				SendTcpMessage(updPortMessage);
 			}
-			break;
-		default:
-			break;
+			else if(msg.message.GetHeader().type == MessageType::SPAWN)
+			{
+				SpawnMessage* spawnMessage = static_cast<SpawnMessage*>(&msg.message);
+				std::cout << "Spawning Entity with ID = " << spawnMessage->GetEntityID() << " and ownership of connection " << spawnMessage->GetOwnershipID() << " @" << spawnMessage->GetPosition().x << "," << spawnMessage->GetPosition().y  << std::endl;
+				m_world->SpawnEntity(spawnMessage->GetEntityID(), spawnMessage->GetWorldID(), spawnMessage->GetPosition(), spawnMessage->GetOwnershipID());
+			}
+			
 		}
 
 
@@ -117,54 +134,53 @@ void ServerConnection::Disconnect()
 
 }
 
-void ServerConnection::sendUdpMessage(MessageType type, char* data, size_t size)
+void ServerConnection::SendUdpMessage(const Message& message)
 {
-	const Message message(type, data, size, m_clientID);
-
-	auto buffer = message.GetBuffer();
-	if (m_serverUdpSocket.send(buffer.data(), buffer.size(), m_serverAddress, m_serverUdpPort) != sf::Socket::Done)
+    auto buffer = message.GetBuffer();
+    if (m_serverUdpSocket.send(buffer.data(), buffer.size(), m_serverAddress, m_serverUdpPort) != sf::Socket::Done)
 	{
 		std::cerr << "Failed To send packet\n";
+	}else
+	{
+		std::cout << "Sent UDP message of size " << message.GetHeader().size << " to server" << std::endl;
+
 	}
 }
 
-void ServerConnection::sendUdpMessage(const std::string& string)
+void ServerConnection::SendTcpMessage(const Message& message)
 {
-	const Message message(MessageType::TEXT, (char*)string.c_str(), string.size(), m_clientID);
-
-	auto buffer = message.GetBuffer();
-	if (m_serverUdpSocket.send(buffer.data(), buffer.size(), m_serverAddress, m_serverUdpPort) != sf::Socket::Done)
-	{
-		std::cerr << "Failed To send packet\n";
-	}
-	std::cout << "Sending   " << message.GetData() << std::endl;
-}
-
-void ServerConnection::sendTcpMessage(MessageType type, char* data, size_t size)
-{
-	if (m_serverTcpSocket.getLocalPort() == 0)
+    if (m_serverTcpSocket.getLocalPort() == 0)
 		return;
-
-	const Message message(type, data, size, m_clientID);
 
 	auto buffer = message.GetBuffer();
 	if (m_serverTcpSocket.send(buffer.data(), buffer.size()) != sf::Socket::Done)
 	{
 		std::cerr << "Failed To send packet over TCP\n";
 	}
+	else
+	{
+		std::cout << "Sent TCP message of size " << message.GetHeader().size << " to server" << std::endl;
+	}
 }
 
-void ServerConnection::sendTcpMessage(const std::string& string)
+void ServerConnection::NotifyWorldGeneration()
 {
-	if (m_serverTcpSocket.getLocalPort() == 0)
-		return;
+	m_waitTillGenerated.notify_all();
+}
 
-	const Message message(MessageType::TEXT, (char*)string.data(), string.size(), m_clientID);
-
-	auto buffer = message.GetBuffer();
-	if (m_serverTcpSocket.send(buffer.data(), buffer.size()) != sf::Socket::Done)
+void ServerConnection::SendMovementMessage(unsigned int worldID, sf::Vector2f newPosition)
+{
+	//get entity
+	if (m_world->GetEntities().find(worldID) != m_world->GetEntities().end())
 	{
-		std::cerr << "Failed To send packet over TCP\n";
+		auto& entity = m_world->GetEntities().at(worldID);
+
+		//check if distance is greater than threshold
+		const float distance = std::abs(Math::Distance(entity->GetNetworkPosition(), entity->GetPosition()));
+		if (distance >= 16.0f) {
+			MovementMessage message{ worldID,newPosition,sf::Vector2f{0.0f,0.0f} };
+			SendUdpMessage(message);
+		}
 	}
 }
 
@@ -224,6 +240,14 @@ void ServerConnection::receiveTCP()
 		serverMessage.protocol = Protocol::TCP;
 		serverMessage.senderAddress = m_serverTcpSocket.getRemoteAddress();
 		serverMessage.senderPort = m_serverTcpSocket.getRemotePort();
+
+		//if the message is not a connection message we wait till the map has been generated
+		if(serverMessage.message.GetHeader().type != MessageType::CONNECTION_ID)
+		{
+			std::unique_lock<std::mutex> lk(m_mutex);
+			m_waitTillGenerated.wait(lk, [this] {return m_world->IsGenerated(); });
+		}
+
 		m_serverMessages.enqueue(serverMessage);
 	}
 }

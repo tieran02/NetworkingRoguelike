@@ -24,7 +24,7 @@ project "client"
 	debugdir ("bin/" .. outputdir .. "/%{prj.name}")
 
 	files { "client/src/**.*" }
-	includedirs {"client/src", "shared_network/include"}
+	includedirs {"client/src", "shared_network/include", "dependencies/spdlog/include"}
 	libdirs {"bin/" .. outputdir .. "shared_network"}
 	links
 	{	
@@ -88,11 +88,14 @@ project "server"
 
 	files { "server/src/**.*" }
 
-	includedirs {"server/src", "shared_network/include"}
+	includedirs {"server/src", "shared_network/include", "dependencies/spdlog/include"}
 	libdirs { "shared_network/src" }
 	links
 	{	
+		"sfml-graphics",
+		"sfml-window",
 		"sfml-system",
+		"sfml-audio",
 		"sfml-network",
 		"shared_network"
 	}

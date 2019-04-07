@@ -12,6 +12,7 @@ enum class MessageType
 {
 	BROADCAST,
 	CONNECTION_ID,
+	SPAWN,
 	TEXT,
 	MOVEMENT
 };

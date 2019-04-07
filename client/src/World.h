@@ -1,29 +1,36 @@
 #pragma once
-#include "DungeonGeneration/Dungeon.h"
 #include <memory>
 #include <SFML/Graphics.hpp>
+#include "EntityFactory.h"
+#include "shared/DungeonGeneration/Dungeon.h"
 
 class Entity;
+class ServerConnection;
+
 class World
 {
 public:
 	World();
 	~World();
 
-	void Generate();
+	void Generate(ServerConnection* connection);
 	void SetSeed(unsigned int);
-    void SpawnPlayer();
 
+    void Update();
 	void Draw(sf::RenderWindow & window);
 
-	void SpawnEntity(int id);
+	std::shared_ptr<Entity> SpawnEntity(unsigned int entityID, unsigned int worldID, sf::Vector2f pos, unsigned int ownership);
+	void UpdateEntityPosition(unsigned int worldID, sf::Vector2f newPosition);
+
+	bool IsGenerated() const { return m_generated; }
+	const std::unordered_map<unsigned int, std::shared_ptr<Entity>>& GetEntities() const { return m_entities; }
 private:
+	bool m_generated{ false };
 	unsigned int m_seed{0};
 	std::unique_ptr<Dungeon> m_dungeon;
 	sf::Vector2f m_spawnPos;
-	std::vector<Entity*> m_entities;
-
-	void FindSpawnPoint();
-
+	std::unordered_map<unsigned int, std::shared_ptr<Entity>> m_entities;
+	EntityFactory m_entityFactory;
+	ServerConnection* m_serverConnection;
 };
 
