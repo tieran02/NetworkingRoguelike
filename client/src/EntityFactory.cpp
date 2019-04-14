@@ -17,11 +17,11 @@ void EntityFactory::Setup()
     AddEntity(0,std::make_shared<Player>());
 }
 
-std::shared_ptr<Entity> EntityFactory::CreateEntity(unsigned int entityID, unsigned int worldID, unsigned int ownership, ServerConnection* connection) const
+std::shared_ptr<Entity> EntityFactory::CreateEntity(unsigned int entityID, unsigned int worldID, unsigned int ownership, ServerConnection* connection, World* world) const
 {
     if(m_entities.find(entityID) != m_entities.end())
     {
-        return m_entities.at(entityID)->Clone(worldID,ownership, connection);
+        return m_entities.at(entityID)->Clone(worldID,ownership, connection, world);
     }
     return nullptr;
 }

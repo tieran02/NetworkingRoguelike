@@ -30,7 +30,7 @@ void World::SetSeed(unsigned int seed)
 
 std::shared_ptr<Entity> World::SpawnEntity(unsigned int entityID, unsigned int worldID, sf::Vector2f pos, unsigned int ownership)
 {
-    auto entity = m_entityFactory.CreateEntity(entityID,worldID, ownership,m_serverConnection);
+    auto entity = m_entityFactory.CreateEntity(entityID,worldID, ownership,m_serverConnection, this);
     if(entity != nullptr)
     {
 		entity->SetPosition(pos);
@@ -48,6 +48,16 @@ void World::UpdateEntityPosition(unsigned worldID, sf::Vector2f newPosition)
 		m_entities.at(worldID)->SetPosition(newPosition);
 		m_entities.at(worldID)->SetNetworkPosition(newPosition);
 	}
+}
+
+void World::SetWindowFocused(bool focused)
+{
+	m_windowFocused = focused;
+}
+
+bool World::IsWindowFocused() const
+{
+	return m_windowFocused;
 }
 
 

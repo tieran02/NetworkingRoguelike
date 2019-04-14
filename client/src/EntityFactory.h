@@ -11,7 +11,7 @@ public:
 
     void Setup();
 
-    std::shared_ptr<Entity> CreateEntity(unsigned int entityID, unsigned int worldID, unsigned int ownership, ServerConnection* connection) const;
+    std::shared_ptr<Entity> CreateEntity(unsigned int entityID, unsigned int worldID, unsigned int ownership, ServerConnection* connection, World* world) const;
 private:
     std::unordered_map<unsigned int, std::shared_ptr<Entity>> m_entities;
 

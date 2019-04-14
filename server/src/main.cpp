@@ -2,10 +2,12 @@
 #include "Network.h"
 #include "WorldState.h"
 #include <iostream>
+#include "shared/Utility/Log.h"
 
 int main()
 {
-	std::cout << "Enter level seed: ";
+	Log::Init();
+	LOG_INFO("Enter level seed: ");
 	unsigned int seed = 0;
 	std::cin >> seed;
 

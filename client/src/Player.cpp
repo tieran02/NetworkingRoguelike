@@ -1,5 +1,6 @@
 #include "Player.h"
 #include "Networking/ServerConnection.h"
+#include "World.h"
 
 Player::Player()
 {
@@ -18,7 +19,7 @@ void Player::Start()
 
 void Player::Update()
 {
-	if(hasOwnership())
+	if(hasOwnership() && m_world->IsWindowFocused())
 	{
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
 		{
@@ -55,11 +56,12 @@ void Player::Draw(sf::RenderWindow & window)
     window.draw(shape);
 }
 
-std::shared_ptr<Entity> Player::Clone(unsigned int worldID, unsigned int ownership, ServerConnection* connection)
+std::shared_ptr<Entity> Player::Clone(unsigned int worldID, unsigned int ownership, ServerConnection* connection, World* world)
 {
 	auto player = std::make_shared<Player>();
 	player->m_worldID = worldID;
 	player->m_ownership = ownership;
 	player->m_connection = connection;
+	player->m_world = world;
 	return player;
 }

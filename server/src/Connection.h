@@ -13,7 +13,7 @@ class Connection
 	friend WorldState;
 	friend Network;
 public:
-	Connection();
+	Connection(Network* network);
 	~Connection();
 	Connection(const Connection& other) = delete;
 	Connection& operator=(const Connection& other) = delete;
@@ -44,6 +44,7 @@ private:
 	std::unique_ptr<sf::TcpSocket> m_tcpSocket;
 	std::unique_ptr<sf::UdpSocket> m_udpSocket;
 	bool m_isConnected{ false };
-	std::shared_ptr<std::thread> m_receiveThread;
+
+	Network* m_network;
 };
 

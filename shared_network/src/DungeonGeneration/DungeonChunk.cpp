@@ -5,6 +5,8 @@
 #include "Random.h"
 #include "Algorithms/Graphs/PrimsAlgorithm.h"
 #include "DungeonGeneration/DungeonChunk.h"
+#include "sstream"
+#include "Utility/Log.h"
 
 int sign(int val) {
 	return ((0) < val) - (val < (0));
@@ -238,7 +240,9 @@ void DungeonChunk::detectRooms()
 			}
 		}
 	}
-	std::cout << "Region count " << m_rooms.size() << std::endl;
+	std::stringstream stream;
+	stream << "Region count " << m_rooms.size();
+	LOG_TRACE(stream.str());
 }
 
 DungeonRoom DungeonChunk::getRoom(int startX, int startY)

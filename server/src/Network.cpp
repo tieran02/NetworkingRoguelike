@@ -10,6 +10,10 @@
 #include "WorldState.h"
 #include "shared/SpawnMessage.h"
 #include "shared/MovementMessage.h"
+#include "shared/Utility/Log.h"
+#include <sstream>
+#include "shared/EntityStateMessage.h"
+#include "shared/MessageBatch.h"
 
 Network::Network(WorldState& world, unsigned short port) :m_worldState(&world), UDP_PORT(port), TCP_PORT(port+1)
 {
@@ -22,14 +26,14 @@ Network::~Network()
 void Network::Start()
 {
 	m_running = true;
-	std::cout << "Running Server\n";
+	LOG_INFO("Running Server");
 
 
 
 	//BIND UPD
 	if (m_udpSocket.bind(UDP_PORT) != sf::Socket::Done)
 	{
-		std::cerr << "failed to bind upd socket\n";
+		LOG_FATAL("failed to bind upd socket");
 	}
 
 	//thread to wait for new connections
@@ -49,13 +53,23 @@ void Network::Start()
 			case Protocol::UPD:
 				if (msg.message.GetHeader().type == MessageType::BROADCAST) //UDP broadcast (used to find a server)
 				{
-					std::cout << "BROADCAST_MESSAGE from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
+					std::stringstream stream;
+					stream << "BROADCAST_MESSAGE from " << msg.senderAddress << " on port " << msg.senderPort;
+					LOG_INFO(stream.str());
 					SendUdpMessage(BroadcastMessage(), msg.senderAddress, msg.senderPort);
+				}
+				else if (msg.message.GetHeader().type == MessageType::MOVEMENT)
+				{
+					MovementMessage* message = static_cast<MovementMessage*>(&msg.message);
+					LOG_TRACE("Recieved Movement message from entity:" + std::to_string(message->WorldID()));
+					//update world state with the new entity pos
+					m_worldState->MoveEntity(message->WorldID(), message->GetPosition());
 				}
 				else
 				{
-					std::cout << "UDP::Received '" << msg.message.ToString() << "' " << msg.message.GetHeader().size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
-
+					std::stringstream stream;
+					stream << "UDP::Received '" << msg.message.ToString() << "' " << msg.message.GetHeader().size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort;
+					LOG_TRACE(stream.str());
 					//echo to all the other clients
 					SendToAllUDP(msg.message, msg.message.GetHeader().id);
 				}
@@ -65,11 +79,26 @@ void Network::Start()
 				{
 					ConnectionMessage* message = static_cast<ConnectionMessage*>(&msg.message);
 					m_connections[message->GetClientID()]->m_portUDP = message->GetUdpPort();
-					std::cout << "Set Client " << message->GetClientID() << " UDP port to " << message->GetUdpPort() << std::endl;
+					std::stringstream stream;
+					stream << "Set Client " << message->GetClientID() << " UDP port to " << message->GetUdpPort();
+					LOG_INFO(stream.str());
+
+				}
+				else if (msg.message.GetHeader().type == MessageType::DISCONNECT)
+				{
+					std::stringstream stream;
+					stream << "Disconnecting Client " << msg.message.GetHeader().id;
+					LOG_INFO(stream.str());
+
+					//received disconnect msg from a client
+					Disconnect(msg.message.GetHeader().id);
 				}
 				else
 				{
-					std::cout << "TCP::Received '" << msg.message.ToString() << "' " << msg.message.GetHeader().size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
+					std::stringstream stream;
+					stream << "TCP::Received '" << msg.message.ToString() << "' " << msg.message.GetHeader().size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort;
+					LOG_TRACE(stream.str());
+
 					//echo to all the other clients
 					SendToAllTCP(msg.message, msg.message.GetHeader().id);
 				}
@@ -91,7 +120,7 @@ void Network::SendUdpMessage(const Message& message, sf::IpAddress address, unsi
 	auto buffer = message.GetBuffer();
 	if (m_udpSocket.send(buffer.data(), buffer.size(),address,port) != sf::Socket::Done)
 	{
-		std::cerr << "Failed To send packet\n";
+		LOG_ERROR("Failed To send packet");
 	}
 }
 
@@ -107,7 +136,7 @@ void Network::receiveUDP()
 
 		if (m_udpSocket.receive(buffer, maxMessageSize, received,sender,port) != sf::Socket::Done)
 		{
-			std::cerr << "Failed To receive udp packet\n";
+			LOG_ERROR("Failed To receive udp packet");
 			continue;
 		}
 
@@ -124,11 +153,10 @@ void Network::receiveUDP()
 void Network::socketLoop()
 {
 	sf::TcpListener listener;
-	sf::SocketSelector selector;
 
 	if (listener.listen(TCP_PORT) != sf::Socket::Done)
 	{
-		std::cerr << "failed to listen on tcp\n";
+		LOG_FATAL("failed to listen on tcp");
 	}
 
 	selector.add(listener);
@@ -141,13 +169,13 @@ void Network::socketLoop()
 			if (selector.isReady(listener))
 			{
 				//add new connection (create a accept thread as the accept method is blocking)
-				std::thread([&listener,&selector, this]
+				std::thread([&listener, this]
 				{
-					std::unique_ptr<Connection> connection = std::unique_ptr<Connection>(new Connection);
+					std::unique_ptr<Connection> connection = std::unique_ptr<Connection>(new Connection(this));
 					//accept new client
 					if (listener.accept(*connection->GetTcpSocket()) == sf::Socket::Done)
 					{
-						std::unique_lock<std::mutex> l(m_acceptMutex);
+						std::unique_lock<std::mutex> l(m_connectionMutex);
 
 						//TODO: check if client with that id already exists if so reconnect with it
 						const unsigned int id = m_connectionIdCount++;
@@ -163,6 +191,7 @@ void Network::socketLoop()
 			else
 			{
 				//the socket was not ready so test all the other connections
+				std::unique_lock<std::mutex> l(m_connectionMutex);
 				for (auto& connection : m_connections)
 				{
 					sf::TcpSocket& client = *connection.second->GetTcpSocket();
@@ -215,13 +244,57 @@ void Network::SendSpawnMessage(unsigned int worldID, unsigned int entityID, sf::
 {
 	SpawnMessage message{ worldID, entityID,position,ownershipID };
 	SendToAllTCP(message);
-	std::cout << "Spawning entity: worldID:" << worldID << " entityID:" << entityID << " ownershipID:" << ownershipID;
+	std::stringstream stream;
+	stream << "Spawning entity: worldID:" << worldID << " entityID:" << entityID << " ownershipID:" << ownershipID;
+	LOG_INFO(stream.str());
 }
 
 void Network::SendMovementMessage(unsigned worldID, sf::Vector2f newPosition)
 {
 	MovementMessage message{ worldID,newPosition,sf::Vector2f{0,0} };
 	SendToAllUDP(message);
-	std::cout << "Sending movement message to all connections\n";
+	LOG_TRACE("Sending movement message to all connections");
 
+}
+
+void Network::Disconnect(unsigned connectionID)
+{
+	std::unique_lock<std::mutex> l(m_connectionMutex);
+
+	selector.remove(*m_connections[connectionID]->GetTcpSocket());
+	selector.remove(*m_connections[connectionID]->GetUdpSocket());
+	//disconect client
+	m_connections[connectionID]->Disconnect();
+
+	//remove connection from connection list
+	m_connections.erase(connectionID);
+	l.unlock();
+
+	std::vector<std::shared_ptr<Entity>> entitiesToRemove;
+	//remove all entities with the ownership associated with the connectionID
+	for (auto& entity : m_worldState->GetEntities())
+	{
+		if(entity.second->OwnershipID == connectionID)
+		{
+			entitiesToRemove.push_back(entity.second);
+		}
+	}
+
+	//sent entity state updates to other clients
+	if(entitiesToRemove.size() > 1)
+	{
+		//batch messages
+		MessageBatch<EntityStateMessage> batch(MessageType::BATCH,(int)entitiesToRemove.size());
+		for (int i = 0; i < entitiesToRemove.size(); ++i)
+		{
+			EntityStateMessage entityState(entitiesToRemove[i]->WorldID, sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false);
+			batch[i] = entityState;
+		}
+		SendToAllTCP(batch);
+	}
+	else if(!entitiesToRemove.empty())
+	{
+		EntityStateMessage entityState(entitiesToRemove[0]->WorldID, sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false);
+		SendToAllTCP(entityState);
+	}
 }

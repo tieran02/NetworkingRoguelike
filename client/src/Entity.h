@@ -2,6 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include <memory>
 
+class World;
 class ServerConnection;
 class Entity
 {
@@ -12,7 +13,7 @@ public:
     virtual void Start() = 0;
     virtual void Update() = 0;
     virtual void Draw(sf::RenderWindow & window) = 0;
-    virtual std::shared_ptr<Entity> Clone(unsigned int worldID, unsigned int ownership, ServerConnection* connection) = 0;
+    virtual std::shared_ptr<Entity> Clone(unsigned int worldID, unsigned int ownership, ServerConnection* connection, World* world) = 0;
 
     void SetPosition(const sf::Vector2f& position);
 	sf::Vector2f GetPosition() const { return m_position; }
@@ -24,6 +25,7 @@ public:
 protected:
 	unsigned int m_worldID;
 	ServerConnection* m_connection;
+	World* m_world;
 	unsigned int m_ownership;
     sf::Sprite m_sprite;
     sf::Vector2f m_position;

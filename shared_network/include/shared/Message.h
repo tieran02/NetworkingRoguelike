@@ -14,7 +14,10 @@ enum class MessageType
 	CONNECTION_ID,
 	SPAWN,
 	TEXT,
-	MOVEMENT
+	MOVEMENT,
+	ENTITY_STATE,
+	BATCH,
+	DISCONNECT
 };
 
 struct Header

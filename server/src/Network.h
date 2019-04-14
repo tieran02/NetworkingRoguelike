@@ -21,18 +21,23 @@ public:
 
 	void SendSpawnMessage(unsigned int worldID, unsigned int entityID, sf::Vector2f position, unsigned int ownershipID = 0);
 	void SendMovementMessage(unsigned int worldID, sf::Vector2f newPosition);
+
+	void Disconnect(unsigned int connectionID);
 private:
 	WorldState* m_worldState;
 	bool m_running{ false };
 	const unsigned short UDP_PORT;
 	const unsigned short TCP_PORT;
 
+	sf::SocketSelector selector;
+
+
 	sf::UdpSocket m_udpSocket;
 	std::unordered_map<unsigned int,std::unique_ptr<Connection>> m_connections;
 	unsigned int m_connectionIdCount{ 1 };
 	Queue<ServerMessage> m_serverMessages;
 
-	std::mutex m_acceptMutex;
+	std::mutex m_connectionMutex;
 
 	//Recieve and send broadcasts
 	void receiveUDP();

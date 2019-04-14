@@ -23,8 +23,11 @@ public:
 	void UpdateEntityPosition(unsigned int worldID, sf::Vector2f newPosition);
 
 	bool IsGenerated() const { return m_generated; }
-	const std::unordered_map<unsigned int, std::shared_ptr<Entity>>& GetEntities() const { return m_entities; }
+	std::unordered_map<unsigned int, std::shared_ptr<Entity>>& GetEntities() { return m_entities; }
+	void SetWindowFocused(bool focused);
+	bool IsWindowFocused() const;
 private:
+	bool m_windowFocused{ true };
 	bool m_generated{ false };
 	unsigned int m_seed{0};
 	std::unique_ptr<Dungeon> m_dungeon;

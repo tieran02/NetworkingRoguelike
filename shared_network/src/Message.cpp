@@ -15,6 +15,7 @@ Message::Message(MessageType type, char* src, size_t size, uint16_t id)
 {
 	header.type = type;
 	header.size = (int16_t)size;
+	header.id = id;
 
 	//copy data to message data
 	data.resize(header.size);

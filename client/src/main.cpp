@@ -2,9 +2,11 @@
 #include "shared/DungeonGeneration/Dungeon.h"
 #include "Networking/ServerConnection.h"
 #include "World.h"
+#include "shared/Utility/Log.h"
 
 int main()
 {
+	Log::Init();
 	//World
 	World world;
 	//networking
@@ -35,13 +37,17 @@ int main()
 			// Request for closing the window
 			if (event.type == sf::Event::Closed)
 				window.close();
-			if(event.type == sf::Event::Resized)
+			else if(event.type == sf::Event::Resized)
 			{
 				sf::View view(sf::FloatRect(0.0f, 0.0f, (float)event.size.width, (float)event.size.height));
 				view.setCenter(64 / 2 * 16 * DUNGEON_SIZE, 64 / 2 * 16 * DUNGEON_SIZE);
 				view.zoom(-2.5);
 				window.setView(view);
 			}
+			else if (event.type == sf::Event::GainedFocus)
+				world.SetWindowFocused(true);
+			else if (event.type == sf::Event::LostFocus)
+				world.SetWindowFocused(false);
 		}
 
 		world.Update();

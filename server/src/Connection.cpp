@@ -2,10 +2,15 @@
 #include <iostream>
 #include "shared/ConnectionMessage.h"
 #include "WorldState.h"
+#include <sstream>
+#include "shared/Utility/Log.h"
+#include "Network.h"
 
 
-Connection::Connection(): m_connectionID(0), m_portTCP(0)
+Connection::Connection(Network* network): m_connectionID(0), m_portTCP(0)
 {
+	m_network = network;
+
 	m_tcpSocket = std::unique_ptr<sf::TcpSocket>(new sf::TcpSocket());
 	m_udpSocket = std::unique_ptr<sf::UdpSocket>(new sf::UdpSocket());
 }
@@ -18,7 +23,9 @@ void Connection::Connect(unsigned int id, int seed)
 {
 	if(m_isConnected)
 	{
-		std::cout << "Client @" << m_address << ":" << m_portTCP << " is already connected!" << std::endl;
+		std::stringstream stream;
+		stream << "Client @" << m_address << ":" << m_portTCP << " is already connected!" ;
+		LOG_INFO(stream.str());
 		return;
 	}
 
@@ -33,21 +40,22 @@ void Connection::Connect(unsigned int id, int seed)
 
 	//bind udp for this client
 	m_udpSocket = std::unique_ptr<sf::UdpSocket>(new sf::UdpSocket());
-	if (m_udpSocket->bind(m_tcpSocket->getLocalPort() + 1) != sf::Socket::Done)
-	{
-		std::cerr << "failed to bind upd socket\n";
-	}
 
-	std::cout << "Client Connected @" << m_address << ":" << m_portTCP << std::endl;
 
+	std::stringstream stream;
+	stream << "Client Connected @" << m_address << ":" << m_portTCP ;
+	LOG_INFO(stream.str());
 }
 
 void Connection::Disconnect()
 {
-	m_receiveThread->detach();
 	m_tcpSocket->disconnect();
 	m_isConnected = false;
-	std::cout << "Client Disconnected @" << m_address << ":" << m_portTCP << std::endl;
+
+
+	std::stringstream stream;
+	stream << "Client Disconnected @" << m_address << ":" << m_portTCP ;
+	LOG_INFO(stream.str());
 
 }
 
@@ -65,11 +73,13 @@ void Connection::ReceiveTCP(Queue<ServerMessage>& messageBuffer)
 			//Disconnect();
 			return;;
 		}
-		std::cerr << "Failed To receive tcp packet\n";
+		LOG_ERROR("Failed To receive tcp packet");
 	}
 	else
 	{
-		std::cout << "Recieved TCP message from client:" << m_connectionID << std::endl;
+		std::stringstream stream;
+		stream << "Recieved TCP message from client:" << m_connectionID ;
+		LOG_TRACE(stream.str());
 	}
 	const Message message{ buffer };
 
@@ -90,11 +100,13 @@ void Connection::ReceiveUDP(Queue<ServerMessage>& messageBuffer)
 
 	if (m_udpSocket->receive(buffer, maxMessageSize, received, sender, port) != sf::Socket::Done)
 	{
-		std::cerr << "Failed To receive udp packet\n";
+		LOG_ERROR("Failed To receive udp packet");
 	}
 	else
 	{
-		std::cout << "Recieved TCP message from client:" << m_connectionID << std::endl;
+		std::stringstream stream;
+		stream << "Recieved UDP message from client:" << m_connectionID ;
+		LOG_TRACE(stream.str());
 	}
 
 	//check if client udp port has been set
@@ -117,7 +129,9 @@ void Connection::SendTCP(const Message& msg) const
 	auto buffer = msg.GetBuffer();
 	if (m_tcpSocket->send(buffer.data(), buffer.size()) != sf::Socket::Done)
 	{
-		std::cerr << "Failed To send message over TCP to client: " << m_connectionID << std::endl;;
+		std::stringstream stream;
+		stream << "Failed To send message over TCP to client: " << m_connectionID ;
+		LOG_ERROR(stream.str());
 	}
 }
 
@@ -126,6 +140,8 @@ void Connection::SendUDP(const Message& msg) const
 	auto buffer = msg.GetBuffer();
 	if(m_udpSocket->send(buffer.data(), buffer.size(),m_address, m_portUDP) != sf::Socket::Done)
 	{
-		std::cerr << "Failed To send message over UDP to client: " << m_connectionID << std::endl;;
+		std::stringstream stream;
+		stream << "Failed To send message over UDP to client: " << m_connectionID ;
+		LOG_ERROR(stream.str());
 	}
 }

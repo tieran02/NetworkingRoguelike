@@ -7,6 +7,9 @@
 #include "shared/SpawnMessage.h"
 #include "shared/MovementMessage.h"
 #include "shared/Utility/Math.h"
+#include "shared/Utility/Log.h"
+#include <sstream>
+#include "shared/EntityStateMessage.h"
 
 
 ServerConnection::ServerConnection(unsigned short port, World* world) : m_world(world), m_broadcastUdpPort(port)
@@ -18,21 +21,20 @@ ServerConnection::ServerConnection(unsigned short port, World* world) : m_world(
 
 ServerConnection::~ServerConnection()
 {
-	updRecieve.detach();
-	tcpRecieve.detach();
+
 }
 
 void ServerConnection::FindServer()
 {
 	while (!FoundServer())
 	{
-		std::cout << "Finding a server...\n";
+		LOG_INFO("Finding a server...");
 		//send broadcast message
 		const Message message(MessageType::BROADCAST, nullptr, 0, m_clientID);
 		auto buffer = message.GetBuffer();
 		if (m_serverUdpSocket.send(buffer.data(), buffer.size(), sf::IpAddress::Broadcast, m_broadcastUdpPort) != sf::Socket::Done)
 		{
-			std::cerr << "Failed To send broadcast message\n";
+			LOG_FATAL("Failed To send broadcast message");
 		}
 
 		sf::sleep(sf::milliseconds(100));
@@ -53,7 +55,7 @@ void ServerConnection::Connect()
 	sf::Socket::Status status = m_serverTcpSocket.connect(m_serverAddress, m_broadcastUdpPort+1);
 	if (status != sf::Socket::Done)
 	{
-		std::cerr << "Failed to connect to sever TCP socket\n";
+		LOG_FATAL("Failed to connect to sever TCP socket");
 		return;
 	}
 
@@ -74,7 +76,7 @@ void ServerConnection::PollMessages()
 		switch (msg.protocol)
 		{
 		case Protocol::UPD:
-			std::cout << "UDP::Received " << msg.message.GetHeader().size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
+			LOG_TRACE("UDP::Received " + std::to_string(msg.message.GetHeader().size) + " bytes from server on port " + std::to_string(msg.senderPort));
 
 			if (msg.message.GetHeader().type == MessageType::MOVEMENT)
 			{
@@ -83,14 +85,14 @@ void ServerConnection::PollMessages()
 			}
 			break;
 		case Protocol::TCP:
-			std::cout << "TCP::Received " << msg.message.GetHeader().size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort << std::endl;
+			LOG_TRACE("TCP::Received " + std::to_string(msg.message.GetHeader().size) + " bytes from server on port " + std::to_string(msg.senderPort));
 
 			if(msg.message.GetHeader().type == MessageType::CONNECTION_ID)
 			{
 				ConnectionMessage* message = static_cast<ConnectionMessage*>(&msg.message);
-				std::cout << "Client ID = " << message->GetClientID() << " World Seed = " << message->GetSeed() << std::endl;
+				LOG_INFO("Client ID = " + std::to_string(message->GetClientID()) + " World Seed = " + std::to_string(message->GetSeed()));
+
 				m_world->SetSeed(message->GetSeed());
-				m_serverUdpPort = message->GetUdpPort();
 				m_serverTcpPort = m_serverTcpSocket.getRemotePort();
 				m_serverIP = m_serverTcpSocket.getRemoteAddress();
 				m_isConnected = true;
@@ -102,8 +104,17 @@ void ServerConnection::PollMessages()
 			else if(msg.message.GetHeader().type == MessageType::SPAWN)
 			{
 				SpawnMessage* spawnMessage = static_cast<SpawnMessage*>(&msg.message);
-				std::cout << "Spawning Entity with ID = " << spawnMessage->GetEntityID() << " and ownership of connection " << spawnMessage->GetOwnershipID() << " @" << spawnMessage->GetPosition().x << "," << spawnMessage->GetPosition().y  << std::endl;
+				LOG_INFO("Spawning Entity with ID = " + std::to_string(spawnMessage->GetEntityID()) + " and ownership of connection " + std::to_string(spawnMessage->GetOwnershipID())
+					+ " @" + std::to_string(spawnMessage->GetPosition().x) + "," + std::to_string(spawnMessage->GetPosition().y));
 				m_world->SpawnEntity(spawnMessage->GetEntityID(), spawnMessage->GetWorldID(), spawnMessage->GetPosition(), spawnMessage->GetOwnershipID());
+			}
+			else if (msg.message.GetHeader().type == MessageType::ENTITY_STATE)
+			{
+				EntityStateMessage* entityState = static_cast<EntityStateMessage*>(&msg.message);
+				if(!entityState->IsActive())
+				{
+					m_world->GetEntities().erase(entityState->WorldID());
+				}
 			}
 			
 		}
@@ -128,22 +139,33 @@ bool ServerConnection::IsConnected() const
 
 void ServerConnection::Disconnect()
 {
-	m_serverTcpSocket.disconnect();
+	if (!m_isConnected)
+		return;
+
+	const Message disconnectMessage(MessageType::DISCONNECT, nullptr, 0, m_clientID);
+	SendTcpMessage(disconnectMessage);
 	m_isConnected = false;
-	std::cout << "Disconnected from Sever @" << m_serverAddress << ":" << m_serverTcpPort << std::endl;
+
+	updRecieve.detach();
+	tcpRecieve.detach();
+
+	std::stringstream stream;
+	stream << "Disconnected from Sever @" << m_serverAddress << ":" << m_serverTcpPort;
+	LOG_INFO(stream.str());
 
 }
 
 void ServerConnection::SendUdpMessage(const Message& message)
 {
     auto buffer = message.GetBuffer();
-    if (m_serverUdpSocket.send(buffer.data(), buffer.size(), m_serverAddress, m_serverUdpPort) != sf::Socket::Done)
+    if (m_serverUdpSocket.send(buffer.data(), buffer.size(), m_serverAddress, m_broadcastUdpPort) != sf::Socket::Done)
 	{
-		std::cerr << "Failed To send packet\n";
+		LOG_ERROR("Failed To send packet over UDP");
 	}else
 	{
-		std::cout << "Sent UDP message of size " << message.GetHeader().size << " to server" << std::endl;
-
+		std::stringstream stream;
+		stream << "Sent UDP message of size " << message.GetHeader().size << " to server";
+		LOG_TRACE(stream.str());
 	}
 }
 
@@ -155,17 +177,19 @@ void ServerConnection::SendTcpMessage(const Message& message)
 	auto buffer = message.GetBuffer();
 	if (m_serverTcpSocket.send(buffer.data(), buffer.size()) != sf::Socket::Done)
 	{
-		std::cerr << "Failed To send packet over TCP\n";
+		LOG_ERROR("Failed To send packet over TCP");
 	}
 	else
 	{
-		std::cout << "Sent TCP message of size " << message.GetHeader().size << " to server" << std::endl;
+		std::stringstream stream;
+		stream << "Sent TCP message of size " << message.GetHeader().size << " to server";
+		LOG_TRACE(stream.str());
 	}
 }
 
 void ServerConnection::NotifyWorldGeneration()
 {
-	m_waitTillGenerated.notify_all();
+	m_waitTillGenerated.notify_one();
 }
 
 void ServerConnection::SendMovementMessage(unsigned int worldID, sf::Vector2f newPosition)
@@ -185,9 +209,12 @@ void ServerConnection::SendMovementMessage(unsigned int worldID, sf::Vector2f ne
 }
 
 void ServerConnection::receiveUDP()
-{
+{		
 	while (true)
 	{
+		if (m_serverUdpSocket.getLocalPort() == 0)
+			continue;
+
 		sf::IpAddress sender;
 		unsigned short port;
 		size_t received;
@@ -197,7 +224,7 @@ void ServerConnection::receiveUDP()
 		const auto receive = m_serverUdpSocket.receive(buffer, maxMessageSize, received, sender, port);
 		if (receive != sf::Socket::Done)
 		{
-			std::cerr << "Failed To receive udp packet\n";
+			LOG_ERROR("Failed To receive udp packet");
 			continue;
 		}
 
@@ -230,7 +257,7 @@ void ServerConnection::receiveTCP()
 				Disconnect();
 				continue;
 			}
-			std::cerr << "Failed To receive tcp packet\n";
+			LOG_ERROR("Failed To receive tcp packet");
 			continue;
 
 		}
@@ -244,7 +271,8 @@ void ServerConnection::receiveTCP()
 		//if the message is not a connection message we wait till the map has been generated
 		if(serverMessage.message.GetHeader().type != MessageType::CONNECTION_ID)
 		{
-			std::unique_lock<std::mutex> lk(m_mutex);
+			std::mutex mutex;
+			std::unique_lock<std::mutex> lk(mutex);
 			m_waitTillGenerated.wait(lk, [this] {return m_world->IsGenerated(); });
 		}
 

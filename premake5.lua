@@ -143,7 +143,7 @@ project "shared_network"
 	files { "shared_network/src/**.*",
 			"shared_network/include/shared/**.*"	}
 
-	includedirs { "%{prj.name}/include/shared" }
+	includedirs { "%{prj.name}/include/shared", "dependencies/spdlog/include" }
 	links
 	{	
 		"sfml-system",

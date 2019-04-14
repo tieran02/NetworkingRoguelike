@@ -2,6 +2,7 @@
 #include <complex>
 #include "DungeonGeneration/DungeonChunkCave.h"
 #include "DungeonGeneration/CellularAutomata.h"
+#include "Utility/Log.h"
 
 void DungeonChunkCave::Generate()
 {
@@ -23,5 +24,5 @@ void DungeonChunkCave::Generate()
 	}
 
 	processMap();
-	std::cout << "Generated Cave Chunk\n";
+	LOG_TRACE("Generated Cave Chunk");
 }

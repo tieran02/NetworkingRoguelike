@@ -1,6 +1,7 @@
 #include "WorldState.h"
 #include "Network.h"
 #include "shared/Random.h"
+#include <memory>
 
 
 WorldState::WorldState(unsigned int seed) : m_seed(seed)
@@ -35,25 +36,33 @@ void WorldState::SpawnPlayer(Connection& connection)
 	//send all entities to the new player
 	SpawnAllEntities();
 	//spawn the player
-	SpawnEntity(0, findValidSpawnPos(), connection.GetConnectionID());
+	SpawnNewEntity(0, findValidSpawnPos(), connection.GetConnectionID());
 }
 
 void WorldState::SpawnAllEntities()
 {
 	for (auto& entity : m_entities)
 	{
-		SpawnEntity(entity.second.EntityID, entity.second.Position, entity.second.OwnershipID);
+		SpawnEntity(entity.first);
 	}
 }
 
-void WorldState::SpawnEntity(const int entityID, const sf::Vector2f position, unsigned int ownership)
+void WorldState::SpawnNewEntity(const int entityID, const sf::Vector2f position, unsigned int ownership)
 {
-	unsigned int worldID = entityIdCounter;
+	unsigned int worldID = entityIdCounter++;
 	m_network->SendSpawnMessage(worldID,entityID, position, ownership);
 	//add to entity list
-	Entity entity{ worldID,entityID,position,ownership };
+	auto entity = std::make_shared<Entity>(worldID, entityID, position, ownership);
 	m_entities.insert(std::make_pair(worldID, entity));
-	entityIdCounter++;
+}
+
+void WorldState::SpawnEntity(int worldID)
+{
+	if (m_entities.find(worldID) != m_entities.end())
+	{
+		auto& entity = m_entities.at(worldID);
+		m_network->SendSpawnMessage(entity->WorldID, entity->EntityID, entity->Position, entity->OwnershipID);
+	}
 }
 
 void WorldState::MoveEntity(int worldID, sf::Vector2f newPosition)
@@ -61,7 +70,7 @@ void WorldState::MoveEntity(int worldID, sf::Vector2f newPosition)
 	//check if entity exists in the world state
 	if(m_entities.find(worldID) != m_entities.end())
 	{
-		m_entities.at(worldID).Position = newPosition;
+		m_entities.at(worldID)->Position = newPosition;
 		//send pos to all clients
 		m_network->SendMovementMessage(worldID, newPosition);
 	}

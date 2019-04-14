@@ -35,7 +35,6 @@ private:
 	const unsigned short m_broadcastUdpPort;
 	sf::IpAddress m_serverIP;
 	unsigned short m_serverTcpPort;
-	unsigned short m_serverUdpPort;
 
 
 	sf::TcpSocket m_serverTcpSocket;
@@ -51,7 +50,6 @@ private:
 	void receiveUDP();
 	void receiveTCP();
 
-	std::mutex m_mutex;
 	std::condition_variable m_waitTillGenerated;
 };
 
