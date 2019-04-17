@@ -7,6 +7,7 @@
 class EntityStateMessage : public Message
 {
 public:
+	EntityStateMessage() = default;;
 	EntityStateMessage(char* buffer);
 	EntityStateMessage(unsigned int worldID, sf::Vector2f position, sf::Vector2f direction, bool active);
 	unsigned int WorldID() const;

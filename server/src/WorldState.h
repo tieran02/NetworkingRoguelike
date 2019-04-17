@@ -8,12 +8,14 @@
 
 struct Entity
 {
-	Entity(unsigned int worldID, unsigned int entityID, sf::Vector2f pos, unsigned int ownership) : WorldID(worldID), EntityID(entityID), Position(pos),OwnershipID(ownership){}
+	Entity(unsigned int worldID, unsigned int entityID, sf::Vector2f pos,sf::Vector2f dir, unsigned int ownership) : WorldID(worldID), EntityID(entityID), Position(pos), Direction(dir),OwnershipID(ownership), IsActive(true){}
 	Entity(){}
 	unsigned int WorldID;
 	unsigned int EntityID;
 	sf::Vector2f Position;
+	sf::Vector2f Direction;
 	unsigned int OwnershipID;
+	bool IsActive;
 };
 
 class Network;
@@ -32,6 +34,7 @@ public:
 	void SpawnEntity(int worldID);
 	void MoveEntity(int worldID, sf::Vector2f newPosition);
 	std::unordered_map<unsigned int, std::shared_ptr<Entity>>& GetEntities() { return m_entities; }
+	std::shared_mutex& GetEntityMutex() { return m_entityMapMutex; }
 private:
 	Network* m_network;
 	unsigned int m_seed{ 0 };

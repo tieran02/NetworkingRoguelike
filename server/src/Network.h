@@ -25,6 +25,7 @@ public:
 
 	void Connect(Connection* connection);
 	void Disconnect(unsigned int connectionID);
+
 private:
 	WorldState* m_worldState;
 	bool m_running{ false };
@@ -44,5 +45,7 @@ private:
 	//Recieve and send broadcasts
 	void receiveUDP();
 	void acceptTCP();
+
+	void sendWorldState();
 };
 

@@ -57,7 +57,7 @@ void WorldState::SpawnNewEntity(const int entityID, const sf::Vector2f position,
 	unsigned int worldID = entityIdCounter++;
 	m_network->SendSpawnMessage(worldID,entityID, position, ownership);
 	//add to entity list
-	auto entity = std::make_shared<Entity>(worldID, entityID, position, ownership);
+	auto entity = std::make_shared<Entity>(worldID, entityID, position, sf::Vector2f{ 0,0 }, ownership);
 	m_entities.insert(std::make_pair(worldID, entity));
 }
 

@@ -5,6 +5,7 @@
 class SpawnMessage : public Message
 {
 public:
+	SpawnMessage() = default;;
     SpawnMessage(char* buffer);
     SpawnMessage(unsigned int worldID, unsigned int entityID, sf::Vector2f position, unsigned int ownerID);
 	unsigned int GetWorldID() const;

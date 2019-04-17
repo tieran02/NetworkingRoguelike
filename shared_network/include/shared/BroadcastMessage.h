@@ -5,6 +5,6 @@
 class BroadcastMessage : public Message
 {
 public:
+	BroadcastMessage() = default;;
     BroadcastMessage(char* buffer);
-    BroadcastMessage();
 };

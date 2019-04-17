@@ -13,7 +13,8 @@
 #include "shared/Utility/Log.h"
 #include <sstream>
 #include "shared/EntityStateMessage.h"
-#include "shared/MessageBatch.h"
+#include "shared/BatchMessage.h"
+#include "shared/MessageBatcher.h"
 
 Network::Network(WorldState& world, unsigned short port) :m_worldState(&world), UDP_PORT(port), TCP_PORT(port+1)
 {
@@ -37,8 +38,10 @@ void Network::Start()
 	std::thread acceptTCP(&Network::acceptTCP, this);
 	std::thread updRecieve(&Network::receiveUDP, this);
 
+	sf::Clock clock;
 	while (m_running)
 	{
+		//poll messages
 		while (!m_serverMessages.empty())
 		{
 			//Get GetData
@@ -102,6 +105,13 @@ void Network::Start()
 			default:
 				break;
 			}
+		}
+
+		//every 10 seconds update entire world state
+		if(clock.getElapsedTime().asSeconds() >= 10.0f)
+		{
+			sendWorldState();
+			clock.restart();
 		}
 
 	}
@@ -168,6 +178,25 @@ void Network::acceptTCP()
 			delete connection;
 		}
 	}
+}
+
+void Network::sendWorldState()
+{
+	std::shared_lock<std::shared_mutex> lock{ m_worldState->GetEntityMutex() };
+	//loop through all entities in the world
+	auto& entities = m_worldState->GetEntities();
+	MessageBatcher<EntityStateMessage> messageBatcher{ (int)entities.size() };
+
+	int i = 0;
+	for (auto& entity : entities)
+	{
+		EntityStateMessage msg{ entity.second->WorldID,entity.second->Position,sf::Vector2f{0,0},entity.second->IsActive };
+		messageBatcher.AddMessage(msg);
+		i++;
+	}
+
+	LOG_INFO("Sending World State Update To All Clients");
+	messageBatcher.SentToAllTCP(*this);
 }
 
 void Network::SendToAllUDP(const Message& message, unsigned int ignore)
@@ -258,7 +287,7 @@ void Network::Disconnect(unsigned connectionID)
 	if(entitiesToRemove.size() > 1)
 	{
 		//batch messages
-		MessageBatch<EntityStateMessage> batch(MessageType::BATCH,(int)entitiesToRemove.size());
+		BatchMessage<EntityStateMessage> batch(MessageType::BATCH,(int)entitiesToRemove.size());
 		for (int i = 0; i < entitiesToRemove.size(); ++i)
 		{
 			EntityStateMessage entityState(entitiesToRemove[i]->WorldID, sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false);

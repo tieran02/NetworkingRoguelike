@@ -5,6 +5,7 @@
 class MovementMessage : public Message
 {
 public:
+	MovementMessage() = default;;
     MovementMessage(char* buffer);
     MovementMessage(unsigned int worldID, sf::Vector2f position, sf::Vector2f direction);
 	unsigned int WorldID() const;
