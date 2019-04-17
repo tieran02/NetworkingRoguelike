@@ -113,6 +113,10 @@ project "server"
 		includedirs { "dependencies/linux/SFML/include" }
 		libdirs { "dependencies/linux/SFML/lib" }
 		linkoptions { '-Wl,-rpath=\\$$ORIGIN' }
+		links
+		{	
+			"jpeg"
+		}
 
 		postbuildcommands
 		{

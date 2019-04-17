@@ -3,6 +3,8 @@
 #include <memory>
 #include "Connection.h"
 #include <unordered_map>
+#include <mutex>
+#include <shared_mutex>
 
 struct Entity
 {
@@ -36,6 +38,7 @@ private:
 	std::unique_ptr<Dungeon> m_dungeon;
 	unsigned int entityIdCounter{ 1 };
 	std::unordered_map<unsigned int, std::shared_ptr<Entity>> m_entities; // world entity id as key, a pair with postition and ownership id as the key
+	std::shared_mutex m_entityMapMutex;
     unsigned int m_clientTurnID{0};
 
 	sf::Vector2f findValidSpawnPos() const;

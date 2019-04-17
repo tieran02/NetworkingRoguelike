@@ -41,6 +41,9 @@ void WorldState::SpawnPlayer(Connection& connection)
 
 void WorldState::SpawnAllEntities()
 {
+	std::shared_lock<std::shared_mutex> lock{ m_entityMapMutex };
+	//TODO: only send messages once the client has generated the level
+
 	for (auto& entity : m_entities)
 	{
 		SpawnEntity(entity.first);
@@ -49,6 +52,8 @@ void WorldState::SpawnAllEntities()
 
 void WorldState::SpawnNewEntity(const int entityID, const sf::Vector2f position, unsigned int ownership)
 {
+	std::unique_lock<std::shared_mutex> lock{ m_entityMapMutex };
+
 	unsigned int worldID = entityIdCounter++;
 	m_network->SendSpawnMessage(worldID,entityID, position, ownership);
 	//add to entity list
@@ -58,6 +63,8 @@ void WorldState::SpawnNewEntity(const int entityID, const sf::Vector2f position,
 
 void WorldState::SpawnEntity(int worldID)
 {
+	std::shared_lock<std::shared_mutex> lock{ m_entityMapMutex };
+
 	if (m_entities.find(worldID) != m_entities.end())
 	{
 		auto& entity = m_entities.at(worldID);
@@ -67,6 +74,8 @@ void WorldState::SpawnEntity(int worldID)
 
 void WorldState::MoveEntity(int worldID, sf::Vector2f newPosition)
 {
+	std::shared_lock<std::shared_mutex> lock{ m_entityMapMutex };
+
 	//check if entity exists in the world state
 	if(m_entities.find(worldID) != m_entities.end())
 	{

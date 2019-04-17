@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include "shared/CircularBuffer.h"
 #include "shared/Queue.h"
+#include <shared_mutex>
 
 class WorldState;
 class Network
@@ -22,6 +23,7 @@ public:
 	void SendSpawnMessage(unsigned int worldID, unsigned int entityID, sf::Vector2f position, unsigned int ownershipID = 0);
 	void SendMovementMessage(unsigned int worldID, sf::Vector2f newPosition);
 
+	void Connect(Connection* connection);
 	void Disconnect(unsigned int connectionID);
 private:
 	WorldState* m_worldState;
@@ -41,6 +43,6 @@ private:
 
 	//Recieve and send broadcasts
 	void receiveUDP();
-	void socketLoop();
+	void acceptTCP();
 };
 

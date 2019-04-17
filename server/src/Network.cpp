@@ -28,17 +28,13 @@ void Network::Start()
 	m_running = true;
 	LOG_INFO("Running Server");
 
-
-
 	//BIND UPD
 	if (m_udpSocket.bind(UDP_PORT) != sf::Socket::Done)
 	{
 		LOG_FATAL("failed to bind upd socket");
 	}
 
-	//thread to wait for new connections
-	std::thread socketLoop(&Network::socketLoop, this);
-
+	std::thread acceptTCP(&Network::acceptTCP, this);
 	std::thread updRecieve(&Network::receiveUDP, this);
 
 	while (m_running)
@@ -111,7 +107,7 @@ void Network::Start()
 	}
 	m_running = false;
 
-	socketLoop.detach();
+	acceptTCP.detach();
 	updRecieve.detach();
 }
 
@@ -150,7 +146,7 @@ void Network::receiveUDP()
 	}
 }
 
-void Network::socketLoop()
+void Network::acceptTCP()
 {
 	sf::TcpListener listener;
 
@@ -159,57 +155,17 @@ void Network::socketLoop()
 		LOG_FATAL("failed to listen on tcp");
 	}
 
-	selector.add(listener);
 	while (true)
 	{
-		//Make the selecotr wait for any data on any socket
-		if (selector.wait())
+		Connection* connection = new Connection(this);
+		//accept new client
+		if (listener.accept(*connection->GetTcpSocket()) == sf::Socket::Done)
 		{
-			//check the listener
-			if (selector.isReady(listener))
-			{
-				//add new connection (create a accept thread as the accept method is blocking)
-				std::thread([&listener, this]
-				{
-					std::unique_ptr<Connection> connection = std::unique_ptr<Connection>(new Connection(this));
-					//accept new client
-					if (listener.accept(*connection->GetTcpSocket()) == sf::Socket::Done)
-					{
-						std::unique_lock<std::mutex> l(m_connectionMutex);
-
-						//TODO: check if client with that id already exists if so reconnect with it
-						const unsigned int id = m_connectionIdCount++;
-						connection->Connect(id, m_worldState->GetSeed());
-						m_connections[id] = std::move(connection);
-						//Spawn the player
-						m_worldState->SpawnPlayer(*m_connections[id]);
-						selector.add(*m_connections[id]->GetTcpSocket());
-						selector.add(*m_connections[id]->GetUdpSocket());
-					}
-				}).join();
-			}
-			else
-			{
-				//the socket was not ready so test all the other connections
-				std::unique_lock<std::mutex> l(m_connectionMutex);
-				for (auto& connection : m_connections)
-				{
-					sf::TcpSocket& client = *connection.second->GetTcpSocket();
-					if (selector.isReady(client))
-					{
-						std::thread([&connection, this] {
-							connection.second->ReceiveTCP(m_serverMessages);
-						}).join();
-					}
-					sf::UdpSocket& udpClient = *connection.second->GetUdpSocket();
-					if (selector.isReady(udpClient))
-					{
-						std::thread([&connection, this] {
-						connection.second->ReceiveUDP(m_serverMessages);
-						}).join();
-					}
-				}
-			}
+			Connect(connection);
+		}
+		else
+		{
+			delete connection;
 		}
 	}
 }
@@ -257,18 +213,36 @@ void Network::SendMovementMessage(unsigned worldID, sf::Vector2f newPosition)
 
 }
 
+void Network::Connect(Connection* connection)
+{
+	std::unique_lock<std::mutex> l(m_connectionMutex);
+
+	//TODO: check if client with that id already exists if so reconnect with it
+	const unsigned int id = m_connectionIdCount++;
+	m_connections[id] = std::unique_ptr<Connection>(connection);
+	m_connections[id]->Connect(id, m_worldState->GetSeed(),m_serverMessages);
+	selector.add(*m_connections[id]->GetTcpSocket());
+	l.unlock();
+
+	//Send client connection data
+	const ConnectionMessage message(id, m_worldState->GetSeed(), 0); //send the seed to the client (UDP port of the client will be sent back)
+	m_connections[id]->SendTCP(message);
+
+	//Spawn the player when the client is setup
+	std::unique_lock<std::mutex> lock{ m_connections[id]->m_setupMutex };
+	m_connections[id]->m_cv.wait(lock, [this,&id]() { return m_connections[id]->IsSetup(); });
+	m_worldState->SpawnPlayer(*m_connections[id]);
+}
+
 void Network::Disconnect(unsigned connectionID)
 {
 	std::unique_lock<std::mutex> l(m_connectionMutex);
 
-	selector.remove(*m_connections[connectionID]->GetTcpSocket());
-	selector.remove(*m_connections[connectionID]->GetUdpSocket());
 	//disconect client
 	m_connections[connectionID]->Disconnect();
 
 	//remove connection from connection list
 	m_connections.erase(connectionID);
-	l.unlock();
 
 	std::vector<std::shared_ptr<Entity>> entitiesToRemove;
 	//remove all entities with the ownership associated with the connectionID
@@ -289,6 +263,7 @@ void Network::Disconnect(unsigned connectionID)
 		{
 			EntityStateMessage entityState(entitiesToRemove[i]->WorldID, sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false);
 			batch[i] = entityState;
+            m_worldState->GetEntities().erase(entitiesToRemove[i]->WorldID);
 		}
 		SendToAllTCP(batch);
 	}
@@ -296,5 +271,6 @@ void Network::Disconnect(unsigned connectionID)
 	{
 		EntityStateMessage entityState(entitiesToRemove[0]->WorldID, sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false);
 		SendToAllTCP(entityState);
+		m_worldState->GetEntities().erase(entitiesToRemove[0]->WorldID);
 	}
 }

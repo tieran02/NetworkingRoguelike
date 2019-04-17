@@ -17,7 +17,8 @@ enum class MessageType
 	MOVEMENT,
 	ENTITY_STATE,
 	BATCH,
-	DISCONNECT
+	DISCONNECT,
+	CLIENT_SETUP,
 };
 
 struct Header

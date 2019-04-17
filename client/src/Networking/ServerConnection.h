@@ -50,6 +50,5 @@ private:
 	void receiveUDP();
 	void receiveTCP();
 
-	std::condition_variable m_waitTillGenerated;
 };
 

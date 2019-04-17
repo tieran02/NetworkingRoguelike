@@ -97,6 +97,7 @@ void ServerConnection::PollMessages()
 				m_serverIP = m_serverTcpSocket.getRemoteAddress();
 				m_isConnected = true;
 				m_clientID = message->GetClientID();
+
 				//send client udp port to server 
 				ConnectionMessage updPortMessage{ m_clientID ,0,m_serverUdpSocket.getLocalPort() };
 				SendTcpMessage(updPortMessage);
@@ -171,11 +172,9 @@ void ServerConnection::SendUdpMessage(const Message& message)
 
 void ServerConnection::SendTcpMessage(const Message& message)
 {
-    if (m_serverTcpSocket.getLocalPort() == 0)
-		return;
-
 	auto buffer = message.GetBuffer();
-	if (m_serverTcpSocket.send(buffer.data(), buffer.size()) != sf::Socket::Done)
+	sf::Socket::Status status = m_serverTcpSocket.send(buffer.data(), buffer.size());
+	if (status != sf::Socket::Done)
 	{
 		LOG_ERROR("Failed To send packet over TCP");
 	}
@@ -189,7 +188,10 @@ void ServerConnection::SendTcpMessage(const Message& message)
 
 void ServerConnection::NotifyWorldGeneration()
 {
-	m_waitTillGenerated.notify_one();
+	//send server a message over TCP confirming the client is setup
+	Message setupMsg{ MessageType::CLIENT_SETUP, nullptr,0,(uint16_t)m_clientID };
+	LOG_INFO("Notifying the server that the client has generated the level");
+	SendTcpMessage(setupMsg);
 }
 
 void ServerConnection::SendMovementMessage(unsigned int worldID, sf::Vector2f newPosition)
@@ -268,13 +270,7 @@ void ServerConnection::receiveTCP()
 		serverMessage.senderAddress = m_serverTcpSocket.getRemoteAddress();
 		serverMessage.senderPort = m_serverTcpSocket.getRemotePort();
 
-		//if the message is not a connection message we wait till the map has been generated
-		if(serverMessage.message.GetHeader().type != MessageType::CONNECTION_ID)
-		{
-			std::mutex mutex;
-			std::unique_lock<std::mutex> lk(mutex);
-			m_waitTillGenerated.wait(lk, [this] {return m_world->IsGenerated(); });
-		}
+
 
 		m_serverMessages.enqueue(serverMessage);
 	}
