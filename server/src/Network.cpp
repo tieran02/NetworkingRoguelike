@@ -244,23 +244,26 @@ void Network::SendMovementMessage(unsigned worldID, sf::Vector2f newPosition)
 
 void Network::Connect(Connection* connection)
 {
-	std::unique_lock<std::mutex> l(m_connectionMutex);
+	std::thread([this, &connection]
+	{
+		std::unique_lock<std::mutex> l(m_connectionMutex);
 
-	//TODO: check if client with that id already exists if so reconnect with it
-	const unsigned int id = m_connectionIdCount++;
-	m_connections[id] = std::unique_ptr<Connection>(connection);
-	m_connections[id]->Connect(id, m_worldState->GetSeed(),m_serverMessages);
-	selector.add(*m_connections[id]->GetTcpSocket());
-	l.unlock();
+		//TODO: check if client with that id already exists if so reconnect with it
+		const unsigned int id = m_connectionIdCount++;
+		m_connections[id] = std::unique_ptr<Connection>(connection);
+		m_connections[id]->Connect(id, m_worldState->GetSeed(), m_serverMessages);
+		selector.add(*m_connections[id]->GetTcpSocket());
+		l.unlock();
 
-	//Send client connection data
-	const ConnectionMessage message(id, m_worldState->GetSeed(), 0); //send the seed to the client (UDP port of the client will be sent back)
-	m_connections[id]->SendTCP(message);
+		//Send client connection data
+		const ConnectionMessage message(id, m_worldState->GetSeed(), 0); //send the seed to the client (UDP port of the client will be sent back)
+		m_connections[id]->SendTCP(message);
 
-	//Spawn the player when the client is setup
-	std::unique_lock<std::mutex> lock{ m_connections[id]->m_setupMutex };
-	m_connections[id]->m_cv.wait(lock, [this,&id]() { return m_connections[id]->IsSetup(); });
-	m_worldState->SpawnPlayer(*m_connections[id]);
+		//Spawn the player when the client is setup
+		std::unique_lock<std::mutex> lock{ m_connections[id]->m_setupMutex };
+		m_connections[id]->m_cv.wait(lock, [this, &id]() { return m_connections[id]->IsSetup(); });
+		m_worldState->SpawnPlayer(*m_connections[id]);
+	}).detach();
 }
 
 void Network::Disconnect(unsigned connectionID)
