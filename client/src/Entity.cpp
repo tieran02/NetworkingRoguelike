@@ -2,6 +2,7 @@
 #include "Networking/ServerConnection.h"
 #include "shared/Utility/Math.h"
 #include "shared/MovementMessage.h"
+#include "shared/Utility/Log.h"
 
 Entity::Entity()
 {
@@ -46,10 +47,26 @@ void Entity::SetNetworkVelocity(const sf::Vector2f& velocity)
 	m_networkVelocity = velocity;
 }
 
-void Entity::UpdatePosition()
+sf::Vector2f Entity::CalculatePredictedPosition() const
 {
-	m_lastPosition = m_position;
-	m_position += m_velocity;
+	return m_position + m_velocity;
+}
+
+void Entity::UpdatePosition(float deltaTime)
+{
+	if (Math::SqrMagnitude(m_velocity) == 0.0f)
+		return;
+
+	SetPosition(m_position + m_velocity);
+}
+
+void Entity::UpdatePredictedPosition(float deltaTime)
+{
+	if (Math::Distance(m_position, m_networkPosition) <= 0.5f)
+		return;
+
+	sf::Vector2f newPos = Math::MoveTowards(m_position, m_networkPosition, deltaTime * m_movementSpeed);
+	SetPosition(newPos);
 }
 
 

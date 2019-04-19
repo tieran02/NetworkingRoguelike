@@ -44,16 +44,16 @@ std::shared_ptr<Entity> World::SpawnEntity(unsigned int entityID, unsigned int w
     return nullptr;
 }
 
-void World::UpdateEntityPosition(unsigned worldID, sf::Vector2f newPosition, sf::Vector2f velocity)
-{
-	if(m_entities.find(worldID) != m_entities.end())
-	{
-		m_entities.at(worldID)->SetPosition(newPosition);
-		m_entities.at(worldID)->SetNetworkPosition(newPosition);
-		m_entities.at(worldID)->SetVelocity(velocity);
-		m_entities.at(worldID)->SetNetworkVelocity(velocity);
-	}
-}
+//void World::UpdateEntityPosition(unsigned worldID, sf::Vector2f newPosition, sf::Vector2f velocity)
+//{
+//	if(m_entities.find(worldID) != m_entities.end())
+//	{
+//		m_entities.at(worldID)->SetPosition(newPosition);
+//		m_entities.at(worldID)->SetNetworkPosition(newPosition);
+//		m_entities.at(worldID)->SetVelocity(velocity);
+//		m_entities.at(worldID)->SetNetworkVelocity(velocity);
+//	}
+//}
 
 void World::SetWindowFocused(bool focused)
 {
@@ -66,14 +66,14 @@ bool World::IsWindowFocused() const
 }
 
 
-void World::Update()
+void World::Update(float deltaTime)
 {
 	if (!m_serverConnection->IsConnected() && !m_generated)
 		return;
 
 	for (auto& entity : m_entities)
 	{
-		entity.second->Update();
+		entity.second->Update(deltaTime);
 	}
 }
 

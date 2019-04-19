@@ -58,10 +58,10 @@ void Connection::ReceiveTCP(Queue<ServerMessage>& messageBuffer)
 {
 	const size_t maxMessageSize = 256;
 	char buffer[maxMessageSize];
+	size_t received;
 
 	while (true)
 	{
-		size_t received;
 		std::memset(buffer, 0, maxMessageSize);
 
 		auto data = m_tcpSocket->receive(buffer, maxMessageSize, received);

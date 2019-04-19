@@ -16,11 +16,11 @@ public:
 	void Generate(ServerConnection* connection);
 	void SetSeed(unsigned int);
 
-    void Update();
+    void Update(float deltaTime);
 	void Draw(sf::RenderWindow & window);
 
 	std::shared_ptr<Entity> SpawnEntity(unsigned int entityID, unsigned int worldID, sf::Vector2f pos, sf::Vector2f velocity, unsigned int ownership);
-	void UpdateEntityPosition(unsigned int worldID, sf::Vector2f newPosition, sf::Vector2f velocity);
+	//void UpdateEntityPosition(unsigned int worldID, sf::Vector2f newPosition, sf::Vector2f velocity);
 
 	bool IsGenerated() const { return m_generated; }
 	std::unordered_map<unsigned int, std::shared_ptr<Entity>>& GetEntities() { return m_entities; }

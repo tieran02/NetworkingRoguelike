@@ -11,7 +11,7 @@ public:
     virtual ~Entity();
 
     virtual void Start() = 0;
-    virtual void Update() = 0;
+    virtual void Update(float deltaTime) = 0;
     virtual void Draw(sf::RenderWindow & window) = 0;
     virtual std::shared_ptr<Entity> Clone(unsigned int worldID, unsigned int ownership, ServerConnection* connection, World* world) = 0;
 
@@ -20,16 +20,21 @@ public:
 	sf::Vector2f GetPosition() const { return m_position; }
 	void SetNetworkPosition(const sf::Vector2f& position);
 	sf::Vector2f GetNetworkPosition() const { return m_networkPosition; }
+
 	sf::Vector2f GetDirection() const;
 	void SetVelocity(sf::Vector2f velocity);
 	sf::Vector2f GetVelocity() const;
 	void SetNetworkVelocity(const sf::Vector2f& velocity);
 	sf::Vector2f GetNetworkVelocity() const { return m_networkVelocity; }
 
+	sf::Vector2f CalculatePredictedPosition() const;
 
-	void UpdatePosition();
+
+	void UpdatePosition(float deltaTime);
+	void UpdatePredictedPosition(float deltaTime);
 	void Translate(const sf::Vector2f& position);
 
+	bool hasOwnership() const;
 
 protected:
 	unsigned int m_worldID;
@@ -40,9 +45,10 @@ protected:
     sf::Vector2f m_position;
 	sf::Vector2f m_lastPosition;
 	sf::Vector2f m_networkPosition;
+	float m_movementSpeed{0.0f};
+
 	sf::Vector2f m_velocity{0.0f,0.0f};
 	sf::Vector2f m_networkVelocity{ 0.0f,0.0f };
 	bool m_movemnetUpdate{ false };
 
-	bool hasOwnership() const;
 };

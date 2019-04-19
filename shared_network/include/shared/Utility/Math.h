@@ -7,6 +7,11 @@ namespace Math {
 		return v1.x * v2.x + v1.y * v2.y;
 	}
 
+	static float SqrMagnitude(const sf::Vector2f& v)
+	{
+		return v.x * v.x + v.y * v.y;
+	}
+
 	static float Magnitude(const sf::Vector2f& v)
 	{
 		return std::sqrt(v.x * v.x + v.y * v.y);
@@ -40,5 +45,16 @@ namespace Math {
 		float X = Lerp(v1.x, v2.x, t);
 		float Y = Lerp(v1.y, v2.y, t);
 		return sf::Vector2f{ X,Y };
+	}
+
+	static sf::Vector2f MoveTowards(sf::Vector2f current, sf::Vector2f target, float maxDistanceDelta)
+	{
+		sf::Vector2f a = target - current;
+		float magnitude = Magnitude(a);
+		if (magnitude <= maxDistanceDelta || magnitude == 0.0f)
+		{
+			return target;
+		}
+		return current + a / magnitude * maxDistanceDelta;
 	}
 }

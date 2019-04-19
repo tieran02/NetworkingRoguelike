@@ -23,18 +23,22 @@ public:
 
     void SendUdpMessage(const Message& message);
     void SendTcpMessage(const Message& message);
+	float GetPing() const { return  m_ping; }
 
 	void NotifyWorldGeneration();
 
 	unsigned int GetColientID() const { return m_clientID; }
 
 	void SendMovementMessage(unsigned int worldID, sf::Vector2f newPosition, sf::Vector2f velocity);
+
+	sf::Time TimeSinceLastMessage() const;
 private:
 	//server tick rate in milliseconds
 	const float TICK_RATE{ 1.0f/64.0f };
 	sf::Time m_lastTick;
 	sf::Clock m_tickClock;
 	float m_ping;
+	sf::Clock m_timeSinceLastMessage;
 
 	World* m_world{ nullptr };
 	sf::IpAddress m_serverAddress{sf::IpAddress::None};
@@ -58,6 +62,7 @@ private:
 	void receiveTCP();
 
 	void sendEntityStates();
+	void updateEntityNetworkState(unsigned int worldID, sf::Vector2f newPosition, sf::Vector2f velocity);
 	void calculatePing(long long  serverTimestamp);
 
 };

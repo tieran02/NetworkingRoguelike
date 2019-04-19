@@ -5,7 +5,7 @@
 
 Player::Player()
 {
-
+	m_movementSpeed = 100.0f;
 }
 
 Player::~Player()
@@ -18,37 +18,38 @@ void Player::Start()
 
 }
 
-void Player::Update()
+void Player::Update(float deltaTime)
 {
-	sf::Vector2f newVelocity;
-
 	if(hasOwnership() && m_world->IsWindowFocused())
 	{
+		sf::Vector2f newVelocity;
 
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
 		{
 			// left key is pressed: move our character
-			newVelocity += sf::Vector2f(m_movementSpeed, 0.0f);
+			newVelocity += sf::Vector2f(m_movementSpeed * deltaTime, 0.0f);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
 		{
 			// left key is pressed: move our character
-			newVelocity += sf::Vector2f(-m_movementSpeed, 0.0f);
+			newVelocity += sf::Vector2f(-m_movementSpeed * deltaTime, 0.0f);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
 		{
 			// left key is pressed: move our character
-			newVelocity += sf::Vector2f(0.0f, m_movementSpeed);
+			newVelocity += sf::Vector2f(0.0f, m_movementSpeed * deltaTime);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
 		{
 			// left key is pressed: move our character
-			newVelocity += sf::Vector2f(0.0f, -m_movementSpeed);
+			newVelocity += sf::Vector2f(0.0f, -m_movementSpeed * deltaTime);
 		}
 		SetVelocity(newVelocity);
-
+		UpdatePosition(deltaTime);
+	}else
+	{
+		UpdatePredictedPosition(deltaTime); //network player
 	}
-	UpdatePosition();
 }
 
 void Player::Draw(sf::RenderWindow & window)

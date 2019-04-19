@@ -26,6 +26,9 @@ int main()
 	size_t size = sizeof(DungeonChunk);
 
 	window.setView(view);
+
+	sf::Clock deltaClock;
+	float deltaTime{ 0.0f };
 	while (window.isOpen())
 	{
 		// Event processing
@@ -48,7 +51,7 @@ int main()
 				world.SetWindowFocused(false);
 		}
 
-		world.Update();
+		world.Update(deltaTime);
 		server_connection.UpdateTick();
 		window.clear();
 
@@ -56,7 +59,7 @@ int main()
 		window.display();
 
 		server_connection.PollMessages();
-
+		deltaTime = deltaClock.restart().asSeconds();
 	}
 
 	server_connection.Disconnect();

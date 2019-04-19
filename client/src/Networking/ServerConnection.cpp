@@ -81,6 +81,8 @@ void ServerConnection::PollMessages()
 	{
 		//Get Data
 		ServerMessage msg = m_serverMessages.dequeue();
+		m_timeSinceLastMessage.restart();
+
 
 		switch (msg.protocol)
 		{
@@ -96,12 +98,12 @@ void ServerConnection::PollMessages()
 			else if (msg.message.GetHeader().type == MessageType::MOVEMENT)
 			{
 				MovementMessage* message = static_cast<MovementMessage*>(&msg.message);
-				m_world->UpdateEntityPosition(message->WorldID(), message->GetPosition(),message->GetVelocity());
+				updateEntityNetworkState(message->WorldID(), message->GetPosition(),message->GetVelocity());
 			}
 			else if	(msg.message.GetHeader().type == MessageType::ENTITY_STATE)
 			{
 				EntityStateMessage* message = static_cast<EntityStateMessage*>(&msg.message);
-				m_world->UpdateEntityPosition(message->WorldID(), message->GetPosition(), message->GetVelocity());
+				updateEntityNetworkState(message->WorldID(), message->GetPosition(), message->GetVelocity());
 
 			}
 			break;
@@ -220,16 +222,30 @@ void ServerConnection::sendEntityStates()
 	//for each world entity update the entity state
 	for (auto entity : m_world->GetEntities())
 	{
-		//check if the enity has exceeded its threshold
-		const float distance = std::abs(Math::Distance(entity.second->GetNetworkPosition(), entity.second->GetPosition()));
-		if (distance >= 16.0f || entity.second->GetVelocity() != entity.second->GetNetworkVelocity())
-		{
-			EntityStateMessage state{ entity.second->GetWorldID(),entity.second->GetPosition(),entity.second->GetVelocity(),true, m_clientID };
-			SendUdpMessage(state);
-			//Set network position and velocity to what we just sent to the server (This may get corrected later on when we receive a message)
-			entity.second->SetNetworkPosition(entity.second->GetPosition());
-			entity.second->SetNetworkVelocity(entity.second->GetVelocity());
+		//onlu send movement of the entity if the client has ownership of it
+		if (entity.second->hasOwnership()) {
+			//check if the enity has exceeded its threshold
+			const float distance = std::abs(Math::Distance(entity.second->GetNetworkPosition(), entity.second->GetPosition()));
+			if (distance >= 16.0f || entity.second->GetVelocity() != entity.second->GetNetworkVelocity())
+			{
+				EntityStateMessage state{ entity.second->GetWorldID(),entity.second->GetPosition(),entity.second->GetVelocity(),true, m_clientID };
+				SendUdpMessage(state);
+				//Set network position and velocity to what we just sent to the server (This may get corrected later on when we receive a message)
+				entity.second->SetNetworkPosition(entity.second->GetPosition());
+				entity.second->SetNetworkVelocity(entity.second->GetVelocity());
+			}
 		}
+	}
+}
+
+void ServerConnection::updateEntityNetworkState(unsigned worldID, sf::Vector2f newPosition, sf::Vector2f velocity)
+{
+	auto entities = m_world->GetEntities();
+	if (entities.find(worldID) != entities.end())
+	{
+		entities.at(worldID)->SetNetworkPosition(newPosition);
+		entities.at(worldID)->SetVelocity(velocity);
+		entities.at(worldID)->SetNetworkVelocity(velocity);
 	}
 }
 
@@ -258,6 +274,11 @@ void ServerConnection::SendMovementMessage(unsigned int worldID, sf::Vector2f ne
 			SendUdpMessage(message);
 		}
 	}
+}
+
+sf::Time ServerConnection::TimeSinceLastMessage() const
+{
+	return m_timeSinceLastMessage.getElapsedTime();
 }
 
 void ServerConnection::receiveUDP()

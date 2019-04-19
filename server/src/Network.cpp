@@ -45,9 +45,9 @@ void Network::Start()
 	while (m_running)
 	{
 		//Send message to clients
-		if (m_tickClock.getElapsedTime().asMilliseconds() >= m_lastTick.asMilliseconds() + TICK_RATE)
+		if (m_tickClock.getElapsedTime().asSeconds() >= m_lastTick.asSeconds() + TICK_RATE)
 		{
-			if(m_tickClock.getElapsedTime().asMilliseconds() >= m_lastPing.asMilliseconds() + 1000)
+			if(m_tickClock.getElapsedTime().asSeconds() >= m_lastPing.asSeconds() + 1)
 			{
 				//ping all clients every second
 				auto timestamp = std::chrono::system_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
