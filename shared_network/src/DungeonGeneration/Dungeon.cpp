@@ -5,7 +5,7 @@
 #include "DungeonGeneration/DungeonChunkCave.h"
 
 
-Dungeon::Dungeon(int width, int height, int seed) : WIDTH(width), HEIGHT(height), m_chunks(width*height), m_seed(seed)
+Dungeon::Dungeon(int width, int height, int tileSize, int seed) : WIDTH(width), HEIGHT(height),m_tileSize(tileSize), m_chunks(width*height), m_seed(seed)
 {
 
 }
@@ -53,7 +53,7 @@ void Dungeon::Draw(sf::RenderWindow & window)
 {
 	for (auto& chunk : m_chunks)
 	{
-		chunk->Draw(window);
+		chunk->Draw(window, m_tileSize);
 	}
 }
 

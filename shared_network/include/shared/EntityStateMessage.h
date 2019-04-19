@@ -9,9 +9,9 @@ class EntityStateMessage : public Message
 public:
 	EntityStateMessage() = default;;
 	EntityStateMessage(char* buffer);
-	EntityStateMessage(unsigned int worldID, sf::Vector2f position, sf::Vector2f direction, bool active);
+	EntityStateMessage(unsigned int worldID, sf::Vector2f position, sf::Vector2f velocity, bool active);
 	unsigned int WorldID() const;
 	sf::Vector2f GetPosition() const;
-	sf::Vector2f GetDirection() const;
+	sf::Vector2f GetVelocity() const;
 	bool IsActive() const;
 };

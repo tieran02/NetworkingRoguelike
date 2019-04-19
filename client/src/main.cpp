@@ -20,16 +20,14 @@ int main()
 	int width{ 1280 }, height{ 720 };
 	sf::RenderWindow window(sf::VideoMode(width, height), "SFML window");
 	sf::View view(sf::FloatRect(0.0f, 0.0f, (float)width, (float)height));
-	view.setCenter(64 / 2 * 16 * DUNGEON_SIZE, 64 / 2 * 16* DUNGEON_SIZE);
-	view.zoom(-2.5);
+	view.setCenter(64 / 2 * 32 * DUNGEON_SIZE, 64 / 2 * 32* DUNGEON_SIZE);
+	view.zoom(-5.0);
 
 	size_t size = sizeof(DungeonChunk);
 
 	window.setView(view);
 	while (window.isOpen())
 	{
-		server_connection.PollMessages();
-
 		// Event processing
 		sf::Event event;
 		while (window.pollEvent(event))
@@ -40,8 +38,8 @@ int main()
 			else if(event.type == sf::Event::Resized)
 			{
 				sf::View view(sf::FloatRect(0.0f, 0.0f, (float)event.size.width, (float)event.size.height));
-				view.setCenter(64 / 2 * 16 * DUNGEON_SIZE, 64 / 2 * 16 * DUNGEON_SIZE);
-				view.zoom(-2.5);
+				view.setCenter(64 / 2 * 32 * DUNGEON_SIZE, 64 / 2 * 32 * DUNGEON_SIZE);
+				view.zoom(-5);
 				window.setView(view);
 			}
 			else if (event.type == sf::Event::GainedFocus)
@@ -51,11 +49,14 @@ int main()
 		}
 
 		world.Update();
+		server_connection.UpdateTick();
 		window.clear();
 
 		world.Draw(window);
-
 		window.display();
+
+		server_connection.PollMessages();
+
 	}
 
 	server_connection.Disconnect();

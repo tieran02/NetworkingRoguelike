@@ -16,7 +16,7 @@ WorldState::~WorldState()
 
 void WorldState::GenerateWorld()
 {
-	m_dungeon = std::unique_ptr<Dungeon>(new Dungeon(2, 2, m_seed));
+	m_dungeon = std::unique_ptr<Dungeon>(new Dungeon(2, 2,32, m_seed));
 	m_dungeon->Generate();
 }
 
@@ -36,7 +36,7 @@ void WorldState::SpawnPlayer(Connection& connection)
 	//send all entities to the new player
 	SpawnAllEntities();
 	//spawn the player
-	SpawnNewEntity(0, findValidSpawnPos(), connection.GetConnectionID());
+	SpawnNewEntity(0, findValidSpawnPos(),sf::Vector2f(), connection.GetConnectionID());
 }
 
 void WorldState::SpawnAllEntities()
@@ -50,12 +50,12 @@ void WorldState::SpawnAllEntities()
 	}
 }
 
-void WorldState::SpawnNewEntity(const int entityID, const sf::Vector2f position, unsigned int ownership)
+void WorldState::SpawnNewEntity(const int entityID, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownership)
 {
 	std::unique_lock<std::shared_mutex> lock{ m_entityMapMutex };
 
 	unsigned int worldID = entityIdCounter++;
-	m_network->SendSpawnMessage(worldID,entityID, position, ownership);
+	m_network->SendSpawnMessage(worldID,entityID, position,velocity, ownership);
 	//add to entity list
 	auto entity = std::make_shared<Entity>(worldID, entityID, position, sf::Vector2f{ 0,0 }, ownership);
 	m_entities.insert(std::make_pair(worldID, entity));
@@ -68,11 +68,11 @@ void WorldState::SpawnEntity(int worldID)
 	if (m_entities.find(worldID) != m_entities.end())
 	{
 		auto& entity = m_entities.at(worldID);
-		m_network->SendSpawnMessage(entity->WorldID, entity->EntityID, entity->Position, entity->OwnershipID);
+		m_network->SendSpawnMessage(entity->WorldID, entity->EntityID, entity->Position, entity->Velocity, entity->OwnershipID);
 	}
 }
 
-void WorldState::MoveEntity(int worldID, sf::Vector2f newPosition)
+void WorldState::MoveEntity(int worldID, sf::Vector2f newPosition, sf::Vector2f velocity)
 {
 	std::shared_lock<std::shared_mutex> lock{ m_entityMapMutex };
 
@@ -80,8 +80,9 @@ void WorldState::MoveEntity(int worldID, sf::Vector2f newPosition)
 	if(m_entities.find(worldID) != m_entities.end())
 	{
 		m_entities.at(worldID)->Position = newPosition;
+		m_entities.at(worldID)->Velocity = velocity;
 		//send pos to all clients
-		m_network->SendMovementMessage(worldID, newPosition);
+		m_network->SendMovementMessage(worldID, newPosition,velocity);
 	}
 }
 

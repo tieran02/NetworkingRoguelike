@@ -20,8 +20,8 @@ public:
 	void SendToAllUDP(const Message& message, unsigned int ignore = 0);
 	void SendToAllTCP(const Message& message, unsigned int ignore = 0);
 
-	void SendSpawnMessage(unsigned int worldID, unsigned int entityID, sf::Vector2f position, unsigned int ownershipID = 0);
-	void SendMovementMessage(unsigned int worldID, sf::Vector2f newPosition);
+	void SendSpawnMessage(unsigned int worldID, unsigned int entityID, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownershipID = 0);
+	void SendMovementMessage(unsigned int worldID, sf::Vector2f newPosition, sf::Vector2f velocity);
 
 	void Connect(Connection* connection);
 	void Disconnect(unsigned int connectionID);

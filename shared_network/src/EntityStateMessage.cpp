@@ -6,16 +6,16 @@ EntityStateMessage::EntityStateMessage(char* buffer) : Message(buffer)
 
 }
 
-EntityStateMessage::EntityStateMessage(unsigned int worldID, sf::Vector2f position, sf::Vector2f direction, bool active)
+EntityStateMessage::EntityStateMessage(unsigned int worldID, sf::Vector2f position, sf::Vector2f velocity, bool active)
 {
 	header.type = MessageType::ENTITY_STATE;
-	header.size = sizeof(unsigned int) + sizeof(sf::Vector2f) * 2 + sizeof(bool);
+	header.size = sizeof(unsigned int) + sizeof(sf::Vector2f) + sizeof(sf::Vector2f) + sizeof(bool);
 
 	data.resize(header.size);
 	memcpy(data.data(), &worldID, sizeof(unsigned int));
 	memcpy(data.data() + sizeof(unsigned int), &position, sizeof(sf::Vector2f));
-	memcpy(data.data() + sizeof(unsigned int) + sizeof(sf::Vector2f), &direction, sizeof(sf::Vector2f));
-	memcpy(data.data() + sizeof(unsigned int) + sizeof(sf::Vector2f) + sizeof(bool), &active, sizeof(bool));
+	memcpy(data.data() + sizeof(unsigned int) + sizeof(sf::Vector2f), &velocity, sizeof(sf::Vector2f));
+	memcpy(data.data() + sizeof(unsigned int) + sizeof(sf::Vector2f) + sizeof(sf::Vector2f), &active, sizeof(bool));
 }
 
 unsigned EntityStateMessage::WorldID() const
@@ -28,9 +28,9 @@ sf::Vector2f EntityStateMessage::GetPosition() const
 	return *((sf::Vector2f*)(data.data() + sizeof(unsigned int)));
 }
 
-sf::Vector2f EntityStateMessage::GetDirection() const
+sf::Vector2f EntityStateMessage::GetVelocity() const
 {
-	return *((sf::Vector2f*)(data.data() + sizeof(unsigned int) + sizeof(sf::Vector2f)));
+	return *((sf::Vector2f*)(data.data() + sizeof(unsigned int) + sizeof(sf::Vector2f)));;
 }
 
 bool EntityStateMessage::IsActive() const

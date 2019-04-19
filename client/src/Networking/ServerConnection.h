@@ -14,6 +14,7 @@ public:
 
 	void FindServer();
 	void Connect();
+	void UpdateTick();
 	void PollMessages();
 
 	bool FoundServer() const;
@@ -27,8 +28,13 @@ public:
 
 	unsigned int GetColientID() const { return m_clientID; }
 
-	void SendMovementMessage(unsigned int worldID, sf::Vector2f newPosition);
+	void SendMovementMessage(unsigned int worldID, sf::Vector2f newPosition, sf::Vector2f velocity);
 private:
+	//server tick rate in milliseconds
+	const float TICK_RATE{ 48 };
+	sf::Time m_lastTick;
+	sf::Clock m_tickClock;
+
 	World* m_world{ nullptr };
 	sf::IpAddress m_serverAddress{sf::IpAddress::None};
 
@@ -49,6 +55,8 @@ private:
 	std::thread tcpRecieve;
 	void receiveUDP();
 	void receiveTCP();
+
+	void computeServerTick();
 
 };
 

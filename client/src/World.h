@@ -19,13 +19,14 @@ public:
     void Update();
 	void Draw(sf::RenderWindow & window);
 
-	std::shared_ptr<Entity> SpawnEntity(unsigned int entityID, unsigned int worldID, sf::Vector2f pos, unsigned int ownership);
-	void UpdateEntityPosition(unsigned int worldID, sf::Vector2f newPosition);
+	std::shared_ptr<Entity> SpawnEntity(unsigned int entityID, unsigned int worldID, sf::Vector2f pos, sf::Vector2f velocity, unsigned int ownership);
+	void UpdateEntityPosition(unsigned int worldID, sf::Vector2f newPosition, sf::Vector2f velocity);
 
 	bool IsGenerated() const { return m_generated; }
 	std::unordered_map<unsigned int, std::shared_ptr<Entity>>& GetEntities() { return m_entities; }
 	void SetWindowFocused(bool focused);
 	bool IsWindowFocused() const;
+
 private:
 	bool m_windowFocused{ true };
 	bool m_generated{ false };

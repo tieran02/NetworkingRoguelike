@@ -62,7 +62,14 @@ void Network::Start()
 					MovementMessage* message = static_cast<MovementMessage*>(&msg.message);
 					LOG_TRACE("Recieved Movement message from entity:" + std::to_string(message->WorldID()));
 					//update world state with the new entity pos
-					m_worldState->MoveEntity(message->WorldID(), message->GetPosition());
+					m_worldState->MoveEntity(message->WorldID(), message->GetPosition(), message->GetVelocity());
+				}
+				else if (msg.message.GetHeader().type == MessageType::ENTITY_STATE)
+				{
+					EntityStateMessage* message = static_cast<EntityStateMessage*>(&msg.message);
+					LOG_TRACE("Recieved Entity state message from entity:" + std::to_string(message->WorldID()));
+					//update world state with the new entity pos
+					m_worldState->MoveEntity(message->WorldID(), message->GetPosition(), message->GetVelocity());
 				}
 				else
 				{
@@ -225,18 +232,18 @@ void Network::SendToAllTCP(const Message& message, unsigned int ignore)
 	}
 }
 
-void Network::SendSpawnMessage(unsigned int worldID, unsigned int entityID, sf::Vector2f position, unsigned int ownershipID)
+void Network::SendSpawnMessage(unsigned int worldID, unsigned int entityID, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownershipID)
 {
-	SpawnMessage message{ worldID, entityID,position,ownershipID };
+	SpawnMessage message{ worldID, entityID,position,velocity,ownershipID };
 	SendToAllTCP(message);
 	std::stringstream stream;
 	stream << "Spawning entity: worldID:" << worldID << " entityID:" << entityID << " ownershipID:" << ownershipID;
 	LOG_INFO(stream.str());
 }
 
-void Network::SendMovementMessage(unsigned worldID, sf::Vector2f newPosition)
+void Network::SendMovementMessage(unsigned worldID, sf::Vector2f newPosition,sf::Vector2f velocity)
 {
-	MovementMessage message{ worldID,newPosition,sf::Vector2f{0,0} };
+	MovementMessage message{ worldID,newPosition,velocity};
 	SendToAllUDP(message);
 	LOG_TRACE("Sending movement message to all connections");
 

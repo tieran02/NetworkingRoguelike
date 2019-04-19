@@ -40,19 +40,19 @@ DungeonChunk::~DungeonChunk()
 	delete[] m_tiles;
 }
 
-void DungeonChunk::Draw(sf::RenderWindow& window)
+void DungeonChunk::Draw(sf::RenderWindow& window, int tileSize)
 {
 	sf::RectangleShape rectangle;
-	rectangle.setSize(sf::Vector2f(16, 16));
+	rectangle.setSize(sf::Vector2f(tileSize, tileSize));
 	rectangle.setFillColor(sf::Color::Blue);
 
-	sf::Vector2i offset{ chunkX * (int)CHUNK_SIZE * 16, chunkY * (int)CHUNK_SIZE * 16 };
+	sf::Vector2i offset{ chunkX * (int)CHUNK_SIZE * tileSize, chunkY * (int)CHUNK_SIZE * tileSize };
 
 	for (int y = 0; y < (int)CHUNK_SIZE; ++y)
 	{
 		for (int x = 0; x < (int)CHUNK_SIZE; ++x)
 		{
-			sf::Vector2f position = sf::Vector2f((x*16.0f), (y*16.0f)) + (sf::Vector2f)offset;
+			sf::Vector2f position = sf::Vector2f((x*(float)tileSize), (y*float(tileSize))) + (sf::Vector2f)offset;
 			rectangle.setPosition(position);
 
 			switch (m_tiles[y][x].type)

@@ -8,12 +8,12 @@
 
 struct Entity
 {
-	Entity(unsigned int worldID, unsigned int entityID, sf::Vector2f pos,sf::Vector2f dir, unsigned int ownership) : WorldID(worldID), EntityID(entityID), Position(pos), Direction(dir),OwnershipID(ownership), IsActive(true){}
+	Entity(unsigned int worldID, unsigned int entityID, sf::Vector2f pos,sf::Vector2f velocity, unsigned int ownership) : WorldID(worldID), EntityID(entityID), Position(pos), Velocity(velocity),OwnershipID(ownership), IsActive(true){}
 	Entity(){}
 	unsigned int WorldID;
 	unsigned int EntityID;
 	sf::Vector2f Position;
-	sf::Vector2f Direction;
+	sf::Vector2f Velocity;
 	unsigned int OwnershipID;
 	bool IsActive;
 };
@@ -30,9 +30,9 @@ public:
 	unsigned int GetSeed();
 	void SpawnPlayer(Connection& connection);
 	void SpawnAllEntities();
-	void SpawnNewEntity(int entityID, sf::Vector2f position, unsigned int ownership = 0);
+	void SpawnNewEntity(int entityID, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownership = 0);
 	void SpawnEntity(int worldID);
-	void MoveEntity(int worldID, sf::Vector2f newPosition);
+	void MoveEntity(int worldID, sf::Vector2f newPosition, sf::Vector2f velocity);
 	std::unordered_map<unsigned int, std::shared_ptr<Entity>>& GetEntities() { return m_entities; }
 	std::shared_mutex& GetEntityMutex() { return m_entityMapMutex; }
 private:

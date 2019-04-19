@@ -64,6 +64,18 @@ void ServerConnection::Connect()
 	{
 		PollMessages();
 	}
+
+	m_tickClock.restart();
+	m_lastTick = m_tickClock.getElapsedTime();
+}
+
+void ServerConnection::UpdateTick()
+{
+	if(m_isConnected && m_tickClock.getElapsedTime().asMilliseconds() >= m_lastTick.asMilliseconds() + TICK_RATE )
+	{
+		computeServerTick();
+		m_lastTick = m_tickClock.getElapsedTime();
+	}
 }
 
 void ServerConnection::PollMessages()
@@ -81,7 +93,13 @@ void ServerConnection::PollMessages()
 			if (msg.message.GetHeader().type == MessageType::MOVEMENT)
 			{
 				MovementMessage* message = static_cast<MovementMessage*>(&msg.message);
-				m_world->UpdateEntityPosition(message->WorldID(), message->GetPosition());
+				m_world->UpdateEntityPosition(message->WorldID(), message->GetPosition(),message->GetVelocity());
+			}
+			else if	(msg.message.GetHeader().type == MessageType::ENTITY_STATE)
+			{
+				EntityStateMessage* message = static_cast<EntityStateMessage*>(&msg.message);
+				m_world->UpdateEntityPosition(message->WorldID(), message->GetPosition(), message->GetVelocity());
+
 			}
 			break;
 		case Protocol::TCP:
@@ -107,7 +125,7 @@ void ServerConnection::PollMessages()
 				SpawnMessage* spawnMessage = static_cast<SpawnMessage*>(&msg.message);
 				LOG_INFO("Spawning Entity with ID = " + std::to_string(spawnMessage->GetEntityID()) + " and ownership of connection " + std::to_string(spawnMessage->GetOwnershipID())
 					+ " @" + std::to_string(spawnMessage->GetPosition().x) + "," + std::to_string(spawnMessage->GetPosition().y));
-				m_world->SpawnEntity(spawnMessage->GetEntityID(), spawnMessage->GetWorldID(), spawnMessage->GetPosition(), spawnMessage->GetOwnershipID());
+				m_world->SpawnEntity(spawnMessage->GetEntityID(), spawnMessage->GetWorldID(), spawnMessage->GetPosition(), spawnMessage->GetVelocity(), spawnMessage->GetOwnershipID());
 			}
 			else if (msg.message.GetHeader().type == MessageType::ENTITY_STATE)
 			{
@@ -194,7 +212,21 @@ void ServerConnection::NotifyWorldGeneration()
 	SendTcpMessage(setupMsg);
 }
 
-void ServerConnection::SendMovementMessage(unsigned int worldID, sf::Vector2f newPosition)
+void ServerConnection::computeServerTick()
+{
+	//for each world entity update the entity state
+	for (auto entity : m_world->GetEntities())
+	{
+		const float distance = std::abs(Math::Distance(entity.second->GetNetworkPosition(), entity.second->GetPosition()));
+		if (distance >= 16.0f || entity.second->GetVelocity() != entity.second->GetNetworkVelocity())
+		{
+			EntityStateMessage state{ entity.second->GetWorldID(),entity.second->GetPosition(),entity.second->GetVelocity(),true };
+			SendUdpMessage(state);
+		}
+	}
+}
+
+void ServerConnection::SendMovementMessage(unsigned int worldID, sf::Vector2f newPosition, sf::Vector2f velocity)
 {
 	//get entity
 	if (m_world->GetEntities().find(worldID) != m_world->GetEntities().end())
@@ -203,8 +235,8 @@ void ServerConnection::SendMovementMessage(unsigned int worldID, sf::Vector2f ne
 
 		//check if distance is greater than threshold
 		const float distance = std::abs(Math::Distance(entity->GetNetworkPosition(), entity->GetPosition()));
-		if (distance >= 16.0f) {
-			MovementMessage message{ worldID,newPosition,sf::Vector2f{0.0f,0.0f} };
+		if (distance >= 16.0f || entity->GetVelocity() != entity->GetNetworkVelocity()) {
+			MovementMessage message{ worldID,newPosition,velocity };
 			SendUdpMessage(message);
 		}
 	}
