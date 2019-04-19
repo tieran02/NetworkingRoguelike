@@ -10,6 +10,7 @@
 #include "shared/Utility/Log.h"
 #include <sstream>
 #include "shared/EntityStateMessage.h"
+#include "shared/PingMessage.h"
 
 
 ServerConnection::ServerConnection(unsigned short port, World* world) : m_world(world), m_broadcastUdpPort(port)
@@ -86,7 +87,13 @@ void ServerConnection::PollMessages()
 		case Protocol::UPD:
 			LOG_TRACE("UDP::Received " + std::to_string(msg.message.GetHeader().size) + " bytes from server on port " + std::to_string(msg.senderPort));
 
-			if (msg.message.GetHeader().type == MessageType::MOVEMENT)
+			if (msg.message.GetHeader().type == MessageType::PING)
+			{
+				PingMessage* message = static_cast<PingMessage*>(&msg.message);
+				calculatePing(message->GetTimeStamp());
+
+			}
+			else if (msg.message.GetHeader().type == MessageType::MOVEMENT)
 			{
 				MovementMessage* message = static_cast<MovementMessage*>(&msg.message);
 				m_world->UpdateEntityPosition(message->WorldID(), message->GetPosition(),message->GetVelocity());
@@ -217,13 +224,24 @@ void ServerConnection::sendEntityStates()
 		const float distance = std::abs(Math::Distance(entity.second->GetNetworkPosition(), entity.second->GetPosition()));
 		if (distance >= 16.0f || entity.second->GetVelocity() != entity.second->GetNetworkVelocity())
 		{
-			EntityStateMessage state{ entity.second->GetWorldID(),entity.second->GetPosition(),entity.second->GetVelocity(),true };
+			EntityStateMessage state{ entity.second->GetWorldID(),entity.second->GetPosition(),entity.second->GetVelocity(),true, m_clientID };
 			SendUdpMessage(state);
 			//Set network position and velocity to what we just sent to the server (This may get corrected later on when we receive a message)
 			entity.second->SetNetworkPosition(entity.second->GetPosition());
 			entity.second->SetNetworkVelocity(entity.second->GetVelocity());
 		}
 	}
+}
+
+void ServerConnection::calculatePing(long long  serverTimestamp)
+{
+	const long long now = std::chrono::system_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
+	const long long milliseconds = now - serverTimestamp;
+	m_ping = milliseconds;;
+	LOG_TRACE("Ping = " + std::to_string(m_ping));
+
+	//send ping back to server
+	SendUdpMessage(PingMessage{ serverTimestamp, m_clientID });
 }
 
 void ServerConnection::SendMovementMessage(unsigned int worldID, sf::Vector2f newPosition, sf::Vector2f velocity)
@@ -236,7 +254,7 @@ void ServerConnection::SendMovementMessage(unsigned int worldID, sf::Vector2f ne
 		//check if distance is greater than threshold
 		const float distance = std::abs(Math::Distance(entity->GetNetworkPosition(), entity->GetPosition()));
 		if (distance >= 16.0f || entity->GetVelocity() != entity->GetNetworkVelocity()) {
-			MovementMessage message{ worldID,newPosition,velocity };
+			MovementMessage message{ worldID,newPosition,velocity, m_clientID };
 			SendUdpMessage(message);
 		}
 	}

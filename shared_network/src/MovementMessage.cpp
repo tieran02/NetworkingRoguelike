@@ -5,10 +5,11 @@ MovementMessage::MovementMessage(char* buffer) : Message(buffer)
 
 }
 
-MovementMessage::MovementMessage(unsigned int worldID, sf::Vector2f position, sf::Vector2f velocity)
+MovementMessage::MovementMessage(unsigned int worldID, sf::Vector2f position, sf::Vector2f velocity, unsigned int senderID)
 {
     header.type = MessageType::MOVEMENT;
 	header.size = sizeof(unsigned int) + sizeof(sf::Vector2f)*2 + sizeof(float);
+	header.id = senderID;
 
 	data.resize(header.size);
 	memcpy(data.data(), &worldID, sizeof(unsigned int));

@@ -34,6 +34,7 @@ private:
 	const float TICK_RATE{ 1.0f/64.0f };
 	sf::Time m_lastTick;
 	sf::Clock m_tickClock;
+	float m_ping;
 
 	World* m_world{ nullptr };
 	sf::IpAddress m_serverAddress{sf::IpAddress::None};
@@ -56,7 +57,8 @@ private:
 	void receiveUDP();
 	void receiveTCP();
 
-	void computeServerTick();
+	void sendEntityStates();
+	void calculatePing(long long  serverTimestamp);
 
 };
 

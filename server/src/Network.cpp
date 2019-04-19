@@ -15,6 +15,7 @@
 #include "shared/EntityStateMessage.h"
 #include "shared/BatchMessage.h"
 #include "shared/MessageBatcher.h"
+#include "shared/PingMessage.h"
 
 Network::Network(WorldState& world, unsigned short port) :m_worldState(&world), UDP_PORT(port), TCP_PORT(port+1)
 {
@@ -40,11 +41,20 @@ void Network::Start()
 
 	Queue<std::tuple<unsigned int,Protocol,Message>> messagesToSend;
 
+	sf::Time m_lastPing;
 	while (m_running)
 	{
 		//Send message to clients
 		if (m_tickClock.getElapsedTime().asMilliseconds() >= m_lastTick.asMilliseconds() + TICK_RATE)
 		{
+			if(m_tickClock.getElapsedTime().asMilliseconds() >= m_lastPing.asMilliseconds() + 1000)
+			{
+				//ping all clients every second
+				auto timestamp = std::chrono::system_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
+				messagesToSend.enqueue(std::make_tuple(0, Protocol::UPD, PingMessage(timestamp,0)));
+				m_lastPing = m_tickClock.getElapsedTime();
+			}
+
 			while (!messagesToSend.empty())
 			{
 				auto messageData = messagesToSend.dequeue();
@@ -77,6 +87,7 @@ void Network::Start()
 				default:;
 				}
 			}
+
 			m_lastTick = m_tickClock.getElapsedTime();
 		}
 
@@ -95,6 +106,11 @@ void Network::Start()
 					stream << "BROADCAST_MESSAGE from " << msg.senderAddress << " on port " << msg.senderPort;
 					LOG_INFO(stream.str());
 					SendUdpMessage(BroadcastMessage(), msg.senderAddress, msg.senderPort);
+				}
+				else if (msg.message.GetHeader().type == MessageType::PING)
+				{
+					PingMessage* message = static_cast<PingMessage*>(&msg.message);
+					calculateClientPing(message->GetHeader().id, message->GetTimeStamp());
 				}
 				else if (msg.message.GetHeader().type == MessageType::MOVEMENT)
 				{
@@ -233,13 +249,20 @@ void Network::sendWorldState()
 	int i = 0;
 	for (auto& entity : entities)
 	{
-		EntityStateMessage msg{ entity.second->WorldID,entity.second->Position,sf::Vector2f{0,0},entity.second->IsActive };
+		EntityStateMessage msg{ entity.second->WorldID,entity.second->Position,sf::Vector2f{0,0},entity.second->IsActive,0 };
 		messageBatcher.AddMessage(msg);
 		i++;
 	}
 
 	LOG_INFO("Sending World State Update To All Clients");
 	messageBatcher.SentToAllTCP(*this);
+}
+
+void Network::calculateClientPing(unsigned id, long long clientTimestamp)
+{
+	const long long now = std::chrono::system_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
+	const long long milliseconds = now - clientTimestamp;
+	m_connections.at(id)->m_ping = milliseconds /2.0f;
 }
 
 void Network::SendToAllUDP(const Message& message, unsigned int ignore)
@@ -279,7 +302,7 @@ void Network::SendSpawnMessage(unsigned int worldID, unsigned int entityID, sf::
 
 void Network::SendMovementMessage(unsigned worldID, sf::Vector2f newPosition,sf::Vector2f velocity)
 {
-	MovementMessage message{ worldID,newPosition,velocity};
+	MovementMessage message{ worldID,newPosition,velocity, 0};
 	SendToAllUDP(message);
 	LOG_TRACE("Sending movement message to all connections");
 
@@ -335,7 +358,7 @@ void Network::Disconnect(unsigned connectionID)
 		BatchMessage<EntityStateMessage> batch(MessageType::BATCH,(int)entitiesToRemove.size());
 		for (int i = 0; i < entitiesToRemove.size(); ++i)
 		{
-			EntityStateMessage entityState(entitiesToRemove[i]->WorldID, sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false);
+			EntityStateMessage entityState(entitiesToRemove[i]->WorldID, sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false, 0);
 			batch[i] = entityState;
             m_worldState->GetEntities().erase(entitiesToRemove[i]->WorldID);
 		}
@@ -343,7 +366,7 @@ void Network::Disconnect(unsigned connectionID)
 	}
 	else if(!entitiesToRemove.empty())
 	{
-		EntityStateMessage entityState(entitiesToRemove[0]->WorldID, sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false);
+		EntityStateMessage entityState(entitiesToRemove[0]->WorldID, sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false, 0);
 		SendToAllTCP(entityState);
 		m_worldState->GetEntities().erase(entitiesToRemove[0]->WorldID);
 	}

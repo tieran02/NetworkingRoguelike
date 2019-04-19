@@ -49,5 +49,6 @@ private:
 	void acceptTCP();
 
 	void sendWorldState();
+	void calculateClientPing(unsigned int id, long long clientTimestamp);
 };
 

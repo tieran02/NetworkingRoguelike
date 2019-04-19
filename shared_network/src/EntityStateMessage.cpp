@@ -6,10 +6,11 @@ EntityStateMessage::EntityStateMessage(char* buffer) : Message(buffer)
 
 }
 
-EntityStateMessage::EntityStateMessage(unsigned int worldID, sf::Vector2f position, sf::Vector2f velocity, bool active)
+EntityStateMessage::EntityStateMessage(unsigned int worldID, sf::Vector2f position, sf::Vector2f velocity, bool active, unsigned int senderID)
 {
 	header.type = MessageType::ENTITY_STATE;
 	header.size = sizeof(unsigned int) + sizeof(sf::Vector2f) + sizeof(sf::Vector2f) + sizeof(bool);
+	header.id = senderID;
 
 	data.resize(header.size);
 	memcpy(data.data(), &worldID, sizeof(unsigned int));

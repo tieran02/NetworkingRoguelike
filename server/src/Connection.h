@@ -41,6 +41,7 @@ private:
 	unsigned short m_portTCP;
 	unsigned short m_portUDP{0};
 	unsigned int m_entityID{0};
+	float m_ping;
 
 	std::unique_ptr<sf::TcpSocket> m_tcpSocket;
 	std::unique_ptr<sf::UdpSocket> m_udpSocket;

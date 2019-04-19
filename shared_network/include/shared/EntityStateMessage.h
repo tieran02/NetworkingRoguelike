@@ -9,7 +9,7 @@ class EntityStateMessage : public Message
 public:
 	EntityStateMessage() = default;;
 	EntityStateMessage(char* buffer);
-	EntityStateMessage(unsigned int worldID, sf::Vector2f position, sf::Vector2f velocity, bool active);
+	EntityStateMessage(unsigned int worldID, sf::Vector2f position, sf::Vector2f velocity, bool active, unsigned int senderID);
 	unsigned int WorldID() const;
 	sf::Vector2f GetPosition() const;
 	sf::Vector2f GetVelocity() const;
