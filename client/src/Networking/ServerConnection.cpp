@@ -71,11 +71,7 @@ void ServerConnection::Connect()
 
 void ServerConnection::UpdateTick()
 {
-	if(m_isConnected && m_tickClock.getElapsedTime().asMilliseconds() >= m_lastTick.asMilliseconds() + TICK_RATE )
-	{
-		computeServerTick();
-		m_lastTick = m_tickClock.getElapsedTime();
-	}
+	sendEntityStates();
 }
 
 void ServerConnection::PollMessages()
@@ -212,16 +208,20 @@ void ServerConnection::NotifyWorldGeneration()
 	SendTcpMessage(setupMsg);
 }
 
-void ServerConnection::computeServerTick()
+void ServerConnection::sendEntityStates()
 {
 	//for each world entity update the entity state
 	for (auto entity : m_world->GetEntities())
 	{
+		//check if the enity has exceeded its threshold
 		const float distance = std::abs(Math::Distance(entity.second->GetNetworkPosition(), entity.second->GetPosition()));
 		if (distance >= 16.0f || entity.second->GetVelocity() != entity.second->GetNetworkVelocity())
 		{
 			EntityStateMessage state{ entity.second->GetWorldID(),entity.second->GetPosition(),entity.second->GetVelocity(),true };
 			SendUdpMessage(state);
+			//Set network position and velocity to what we just sent to the server (This may get corrected later on when we receive a message)
+			entity.second->SetNetworkPosition(entity.second->GetPosition());
+			entity.second->SetNetworkVelocity(entity.second->GetVelocity());
 		}
 	}
 }

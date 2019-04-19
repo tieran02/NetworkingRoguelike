@@ -38,9 +38,48 @@ void Network::Start()
 	std::thread acceptTCP(&Network::acceptTCP, this);
 	std::thread updRecieve(&Network::receiveUDP, this);
 
-	sf::Clock clock;
+	Queue<std::tuple<unsigned int,Protocol,Message>> messagesToSend;
+
 	while (m_running)
 	{
+		//Send message to clients
+		if (m_tickClock.getElapsedTime().asMilliseconds() >= m_lastTick.asMilliseconds() + TICK_RATE)
+		{
+			while (!messagesToSend.empty())
+			{
+				auto messageData = messagesToSend.dequeue();
+				unsigned int clientID = std::get<0>(messageData);
+				Protocol protocol = std::get<1>(messageData);
+				Message& message = std::get<2>(messageData);
+
+				switch (protocol)
+				{
+				case Protocol::UPD:
+					if (clientID == 0)
+					{
+						SendToAllUDP(message);
+					}
+					else
+					{
+						m_connections.at(clientID)->SendUDP(message);
+					}
+					break;
+				case Protocol::TCP:
+					if (clientID == 0)
+					{
+						SendToAllTCP(message);
+					}
+					else
+					{
+						m_connections.at(clientID)->SendTCP(message);
+					}
+					break;
+				default:;
+				}
+			}
+			m_lastTick = m_tickClock.getElapsedTime();
+		}
+
 		//poll messages
 		while (!m_serverMessages.empty())
 		{
@@ -63,6 +102,8 @@ void Network::Start()
 					LOG_TRACE("Recieved Movement message from entity:" + std::to_string(message->WorldID()));
 					//update world state with the new entity pos
 					m_worldState->MoveEntity(message->WorldID(), message->GetPosition(), message->GetVelocity());
+					//send movement message back to all clients (including itself)
+					messagesToSend.enqueue(std::make_tuple(0, Protocol::UPD, *message));
 				}
 				else if (msg.message.GetHeader().type == MessageType::ENTITY_STATE)
 				{
@@ -70,6 +111,8 @@ void Network::Start()
 					LOG_TRACE("Recieved Entity state message from entity:" + std::to_string(message->WorldID()));
 					//update world state with the new entity pos
 					m_worldState->MoveEntity(message->WorldID(), message->GetPosition(), message->GetVelocity());
+					//send entity state message back to all clients (including itself)
+					messagesToSend.enqueue(std::make_tuple(0, Protocol::UPD, *message));
 				}
 				else
 				{
@@ -77,7 +120,7 @@ void Network::Start()
 					stream << "UDP::Received '" << msg.message.ToString() << "' " << msg.message.GetHeader().size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort;
 					LOG_TRACE(stream.str());
 					//echo to all the other clients
-					SendToAllUDP(msg.message, msg.message.GetHeader().id);
+					messagesToSend.enqueue(std::make_tuple(0, Protocol::UPD, msg.message));
 				}
 				break;
 			case Protocol::TCP:
@@ -106,19 +149,12 @@ void Network::Start()
 					LOG_TRACE(stream.str());
 
 					//echo to all the other clients
-					SendToAllTCP(msg.message, msg.message.GetHeader().id);
+					messagesToSend.enqueue(std::make_tuple(0, Protocol::TCP, msg.message));
 				}
 				break;
 			default:
 				break;
 			}
-		}
-
-		//every 10 seconds update entire world state
-		if(clock.getElapsedTime().asSeconds() >= 10.0f)
-		{
-			sendWorldState();
-			clock.restart();
 		}
 
 	}
@@ -259,7 +295,6 @@ void Network::Connect(Connection* connection)
 		const unsigned int id = m_connectionIdCount++;
 		m_connections[id] = std::unique_ptr<Connection>(connection);
 		m_connections[id]->Connect(id, m_worldState->GetSeed(), m_serverMessages);
-		selector.add(*m_connections[id]->GetTcpSocket());
 		l.unlock();
 
 		//Send client connection data

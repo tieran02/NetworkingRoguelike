@@ -32,8 +32,10 @@ private:
 	const unsigned short UDP_PORT;
 	const unsigned short TCP_PORT;
 
-	sf::SocketSelector selector;
-
+	//server tick rate in milliseconds
+	const float TICK_RATE{ 1.0f / 64.0f };
+	sf::Time m_lastTick;
+	sf::Clock m_tickClock;
 
 	sf::UdpSocket m_udpSocket;
 	std::unordered_map<unsigned int,std::unique_ptr<Connection>> m_connections;

@@ -81,8 +81,6 @@ void WorldState::MoveEntity(int worldID, sf::Vector2f newPosition, sf::Vector2f 
 	{
 		m_entities.at(worldID)->Position = newPosition;
 		m_entities.at(worldID)->Velocity = velocity;
-		//send pos to all clients
-		m_network->SendMovementMessage(worldID, newPosition,velocity);
 	}
 }
 
