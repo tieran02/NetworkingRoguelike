@@ -2,15 +2,9 @@
 #include <iostream>
 #include <thread>
 #include <cstring>
-#include "shared/Message.h"
-#include "shared/ConnectionMessage.h"
-#include "shared/SpawnMessage.h"
-#include "shared/MovementMessage.h"
 #include "shared/Utility/Math.h"
 #include "shared/Utility/Log.h"
 #include <sstream>
-#include "shared/EntityStateMessage.h"
-#include "shared/PingMessage.h"
 
 
 ServerConnection::ServerConnection(unsigned short port, World* world) : m_world(world), m_broadcastUdpPort(port)
@@ -226,7 +220,8 @@ void ServerConnection::sendEntityStates()
 		if (entity.second->hasOwnership()) {
 			//check if the enity has exceeded its threshold
 			const float distance = std::abs(Math::Distance(entity.second->GetNetworkPosition(), entity.second->GetPosition()));
-			if (distance >= 16.0f || entity.second->GetVelocity() != entity.second->GetNetworkVelocity())
+			constexpr float threshold = 5.0f;
+			if (distance >= threshold)
 			{
 				EntityStateMessage state{ entity.second->GetWorldID(),entity.second->GetPosition(),entity.second->GetVelocity(),true, m_clientID };
 				SendUdpMessage(state);

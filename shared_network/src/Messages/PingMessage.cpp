@@ -1,4 +1,4 @@
-#include "PingMessage.h"
+#include "Messages/PingMessage.h"
 
 PingMessage::PingMessage(char* buffer) : Message(buffer)
 {

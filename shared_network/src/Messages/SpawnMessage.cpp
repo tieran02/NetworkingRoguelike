@@ -1,4 +1,4 @@
-#include "SpawnMessage.h"
+#include "Messages/SpawnMessage.h"
 
 SpawnMessage::SpawnMessage(char* buffer)
 {

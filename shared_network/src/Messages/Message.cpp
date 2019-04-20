@@ -1,4 +1,4 @@
-#include "Message.h"
+#include "Messages/Message.h"
 
 Message::Message(char* buffer)
 {

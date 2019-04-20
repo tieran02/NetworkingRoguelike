@@ -4,18 +4,10 @@
 #include <SFML/Network.hpp>
 #include <thread>
 #include <string.h>
-#include "shared/Message.h"
-#include "shared/ConnectionMessage.h"
-#include "shared/BroadcastMessage.h"
 #include "WorldState.h"
-#include "shared/SpawnMessage.h"
-#include "shared/MovementMessage.h"
 #include "shared/Utility/Log.h"
 #include <sstream>
-#include "shared/EntityStateMessage.h"
-#include "shared/BatchMessage.h"
-#include "shared/MessageBatcher.h"
-#include "shared/PingMessage.h"
+
 
 Network::Network(WorldState& world, unsigned short port) :m_worldState(&world), UDP_PORT(port), TCP_PORT(port+1)
 {
@@ -267,7 +259,7 @@ void Network::sendWorldState()
 	}
 
 	LOG_INFO("Sending World State Update To All Clients");
-	messageBatcher.SentToAllTCP(*this);
+	messageBatcher.SentToAllTCP(this);
 }
 
 void Network::calculateClientPing(unsigned id, long long clientTimestamp)

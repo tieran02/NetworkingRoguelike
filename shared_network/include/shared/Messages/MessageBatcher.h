@@ -1,8 +1,9 @@
 #pragma once
 #include <vector>
 #include "Message.h"
-#include "../../../server/src/Network.h"
 #include "BatchMessage.h"
+
+class Network;
 
 template <typename T>
 class MessageBatcher
@@ -12,8 +13,8 @@ public:
 
 	void AddMessage(const T& message);
 
-	void SentToAllTCP(Network& network);
-	void SentToAllUDP(Network& network);
+	void SentToAllTCP(Network* network);
+	void SentToAllUDP(Network* network);
 private:
 	std::vector<T> m_messages;
 
@@ -33,22 +34,22 @@ void MessageBatcher<T>::AddMessage(const T& message)
 }
 
 template <typename T>
-void MessageBatcher<T>::SentToAllTCP(Network& network)
+void MessageBatcher<T>::SentToAllTCP(Network* network)
 {
 	auto batches = createBatches();
 	for (auto& batch : batches)
 	{
-		network.SendToAllTCP(batch);
+		network->SendToAllTCP(batch);
 	}
 }
 
 template <typename T>
-void MessageBatcher<T>::SentToAllUDP(Network& network)
+void MessageBatcher<T>::SentToAllUDP(Network* network)
 {
 	auto batches = createBatches();
 	for (auto& batch : batches)
 	{
-		network.SendToAllTCP(batch);
+		network->SendToAllTCP(batch);
 	}
 }
 

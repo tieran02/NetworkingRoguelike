@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Message.h"
+#include "Messages/Message.h"
 #include <queue>
 #include <mutex>
 #include <condition_variable>

@@ -7,6 +7,8 @@
 #include "shared/Queue.h"
 #include <shared_mutex>
 #include "shared/ThreadPool.h"
+#include <shared/Messages/NetworkMessages.h>
+
 
 class WorldState;
 class Network

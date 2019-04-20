@@ -1,5 +1,4 @@
-#include "EntityStateMessage.h"
-#include "MovementMessage.h"
+#include "Messages/EntityStateMessage.h"
 
 EntityStateMessage::EntityStateMessage(char* buffer) : Message(buffer)
 {

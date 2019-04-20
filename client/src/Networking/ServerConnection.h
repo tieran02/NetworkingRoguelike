@@ -1,7 +1,7 @@
 #pragma once
 #include <SFML/Network.hpp>
 #include <thread>
-#include <shared/Message.h>
+#include <shared/Messages/NetworkMessages.h>
 #include "shared/CircularBuffer.h"
 #include "World.h"
 #include "shared/Queue.h"

@@ -1,4 +1,4 @@
-#include "MovementMessage.h"
+#include "Messages/MovementMessage.h"
 
 MovementMessage::MovementMessage(char* buffer) : Message(buffer)
 {

@@ -18,6 +18,8 @@ public:
 	unsigned int GetWorldID() const { return m_worldID; }
     void SetPosition(const sf::Vector2f& position);
 	sf::Vector2f GetPosition() const { return m_position; }
+	sf::Vector2f GetLastPosition() const { return m_lastPosition; }
+
 	void SetNetworkPosition(const sf::Vector2f& position);
 	sf::Vector2f GetNetworkPosition() const { return m_networkPosition; }
 

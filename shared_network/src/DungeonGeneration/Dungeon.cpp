@@ -72,7 +72,7 @@ sf::Vector2f Dungeon::ChunckToWorldSpace(int chunkID, sf::Vector2f chunckPos) co
 	sf::Vector2f chunkWorldPos{ chunk->GetX() * (float)chunkSize, chunk->GetY() * (float)chunkSize };
 
 	pos = chunckPos + chunkWorldPos;
-	return pos * 16.0f; //16.0f is the tile size
+	return pos * (float)m_tileSize; //16.0f is the tile size
 }
 
 void Dungeon::assignNeighbours(DungeonChunk* chunk)

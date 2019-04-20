@@ -1,7 +1,6 @@
 #include "Entity.h"
 #include "Networking/ServerConnection.h"
 #include "shared/Utility/Math.h"
-#include "shared/MovementMessage.h"
 #include "shared/Utility/Log.h"
 
 Entity::Entity()

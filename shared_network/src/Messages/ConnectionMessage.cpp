@@ -1,4 +1,4 @@
-#include "ConnectionMessage.h"
+#include "Messages/ConnectionMessage.h"
 
 ConnectionMessage::ConnectionMessage(char* buffer) : Message(buffer)
 {

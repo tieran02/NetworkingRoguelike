@@ -2,7 +2,7 @@
 #include <SFML/Network.hpp>
 #include <memory>
 #include <thread>
-#include "shared/Message.h"
+#include "shared/Messages/NetworkMessages.h"
 #include "shared/Queue.h"
 
 class WorldState;

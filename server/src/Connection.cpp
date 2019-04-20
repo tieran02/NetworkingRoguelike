@@ -1,6 +1,5 @@
 #include "Connection.h"
 #include <iostream>
-#include "shared/ConnectionMessage.h"
 #include "WorldState.h"
 #include <sstream>
 #include "shared/Utility/Log.h"

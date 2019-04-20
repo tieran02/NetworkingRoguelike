@@ -2,7 +2,6 @@
 #include <iostream>
 #include "shared/Random.h"
 #include "Networking/ServerConnection.h"
-#include "shared/EntityStateMessage.h"
 #include "shared/Utility/Math.h"
 
 World::World()
