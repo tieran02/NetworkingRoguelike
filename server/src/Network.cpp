@@ -36,28 +36,40 @@ void Network::Start()
 		LOG_FATAL("failed to bind upd socket");
 	}
 
+	m_threadPool.enqueue([this]
+	{
+		LOG_INFO("THREAD POOL TASK RAN 1");
+	});
+
 	std::thread acceptTCP(&Network::acceptTCP, this);
 	std::thread updRecieve(&Network::receiveUDP, this);
 
-	Queue<std::tuple<unsigned int,Protocol,Message>> messagesToSend;
+	std::queue<std::tuple<unsigned int,Protocol,Message>> messagesToSend;
 
-	sf::Time m_lastPing;
+	float m_lastTickTime{0.0};
+	float m_lastPing{ 0.0 };
+
 	while (m_running)
 	{
+		m_currentTime = std::chrono::duration<float>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+
 		//Send message to clients
-		if (m_tickClock.getElapsedTime().asSeconds() >= m_lastTick.asSeconds() + TICK_RATE)
+		if (m_currentTime >= m_lastTickTime + TICK_RATE)
 		{
-			if(m_tickClock.getElapsedTime().asSeconds() >= m_lastPing.asSeconds() + 1)
+			if(m_currentTime >= m_lastPing + 1)
 			{
 				//ping all clients every second
 				auto timestamp = std::chrono::system_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
-				messagesToSend.enqueue(std::make_tuple(0, Protocol::UPD, PingMessage(timestamp,0)));
-				m_lastPing = m_tickClock.getElapsedTime();
+				messagesToSend.push(std::make_tuple(0, Protocol::UPD, PingMessage(timestamp,0)));
+				m_lastPing = m_currentTime;
+				LOG_INFO("Server ms = " + std::to_string(m_currentTime - m_lastTickTime));
 			}
 
 			while (!messagesToSend.empty())
 			{
-				auto messageData = messagesToSend.dequeue();
+				auto messageData = messagesToSend.front();
+				messagesToSend.pop();
+
 				unsigned int clientID = std::get<0>(messageData);
 				Protocol protocol = std::get<1>(messageData);
 				Message& message = std::get<2>(messageData);
@@ -88,11 +100,11 @@ void Network::Start()
 				}
 			}
 
-			m_lastTick = m_tickClock.getElapsedTime();
+			m_lastTickTime = m_currentTime;
 		}
 
 		//poll messages
-		while (!m_serverMessages.empty())
+		while(!m_serverMessages.empty())
 		{
 			//Get GetData
             ServerMessage msg = m_serverMessages.dequeue();
@@ -119,7 +131,7 @@ void Network::Start()
 					//update world state with the new entity pos
 					m_worldState->MoveEntity(message->WorldID(), message->GetPosition(), message->GetVelocity());
 					//send movement message back to all clients (including itself)
-					messagesToSend.enqueue(std::make_tuple(0, Protocol::UPD, *message));
+					messagesToSend.push(std::make_tuple(0, Protocol::UPD, *message));
 				}
 				else if (msg.message.GetHeader().type == MessageType::ENTITY_STATE)
 				{
@@ -128,7 +140,7 @@ void Network::Start()
 					//update world state with the new entity pos
 					m_worldState->MoveEntity(message->WorldID(), message->GetPosition(), message->GetVelocity());
 					//send entity state message back to all clients (including itself)
-					messagesToSend.enqueue(std::make_tuple(0, Protocol::UPD, *message));
+					messagesToSend.push(std::make_tuple(0, Protocol::UPD, *message));
 				}
 				else
 				{
@@ -136,7 +148,7 @@ void Network::Start()
 					stream << "UDP::Received '" << msg.message.ToString() << "' " << msg.message.GetHeader().size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort;
 					LOG_TRACE(stream.str());
 					//echo to all the other clients
-					messagesToSend.enqueue(std::make_tuple(0, Protocol::UPD, msg.message));
+					messagesToSend.push(std::make_tuple(0, Protocol::UPD, msg.message));
 				}
 				break;
 			case Protocol::TCP:
@@ -165,7 +177,7 @@ void Network::Start()
 					LOG_TRACE(stream.str());
 
 					//echo to all the other clients
-					messagesToSend.enqueue(std::make_tuple(0, Protocol::TCP, msg.message));
+					messagesToSend.push(std::make_tuple(0, Protocol::TCP, msg.message));
 				}
 				break;
 			default:
@@ -176,8 +188,8 @@ void Network::Start()
 	}
 	m_running = false;
 
-	acceptTCP.detach();
-	updRecieve.detach();
+	acceptTCP.join();
+	updRecieve.join();
 }
 
 void Network::SendUdpMessage(const Message& message, sf::IpAddress address, unsigned short port)
@@ -224,7 +236,7 @@ void Network::acceptTCP()
 		LOG_FATAL("failed to listen on tcp");
 	}
 
-	while (true)
+	while (m_running)
 	{
 		Connection* connection = new Connection(this);
 		//accept new client
@@ -267,28 +279,33 @@ void Network::calculateClientPing(unsigned id, long long clientTimestamp)
 
 void Network::SendToAllUDP(const Message& message, unsigned int ignore)
 {
-	for (auto& connection : m_connections)
+	m_threadPool.enqueue([=]
 	{
-		if (ignore != 0 && m_connections.find(ignore) != m_connections.end())
+		for (auto& connection : m_connections)
 		{
-			continue;
-		}
+			if (ignore != 0 && m_connections.find(ignore) != m_connections.end())
+			{
+				continue;
+			}
 
-		connection.second->SendUDP(message);
-	}
+			connection.second->SendUDP(message);
+		}
+	});
 }
 
 void Network::SendToAllTCP(const Message& message, unsigned int ignore)
 {
-	for (auto& connection : m_connections)
-	{
-		if (ignore != 0 && m_connections.find(ignore) != m_connections.end())
+	m_threadPool.enqueue([=] {
+		for (auto& connection : m_connections)
 		{
-			continue;
-		}
+			if (ignore != 0 && m_connections.find(ignore) != m_connections.end())
+			{
+				continue;
+			}
 
-		connection.second->SendTCP(message);
-	}
+			connection.second->SendTCP(message);
+		}
+	});
 }
 
 void Network::SendSpawnMessage(unsigned int worldID, unsigned int entityID, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownershipID)

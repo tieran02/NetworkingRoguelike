@@ -6,6 +6,7 @@
 #include "shared/CircularBuffer.h"
 #include "shared/Queue.h"
 #include <shared_mutex>
+#include "shared/ThreadPool.h"
 
 class WorldState;
 class Network
@@ -26,16 +27,18 @@ public:
 	void Connect(Connection* connection);
 	void Disconnect(unsigned int connectionID);
 
+	ThreadPool& GetThreadPool() { return m_threadPool; }
 private:
 	WorldState* m_worldState;
 	bool m_running{ false };
 	const unsigned short UDP_PORT;
 	const unsigned short TCP_PORT;
 
+	ThreadPool m_threadPool{ 32 };
+
 	//server tick rate in milliseconds
-	const float TICK_RATE{ 1.0f / 64.0f };
-	sf::Time m_lastTick;
-	sf::Clock m_tickClock;
+	const float TICK_RATE{ (1.0f / 64.0f)  };
+	float m_currentTime;
 
 	sf::UdpSocket m_udpSocket;
 	std::unordered_map<unsigned int,std::unique_ptr<Connection>> m_connections;

@@ -98,22 +98,28 @@ void Connection::ReceiveTCP(Queue<ServerMessage>& messageBuffer)
 
 void Connection::SendTCP(const Message& msg) const
 {
-	auto buffer = msg.GetBuffer();
-	if (m_tcpSocket->send(buffer.data(), buffer.size()) != sf::Socket::Done)
+	m_network->GetThreadPool().enqueue([=]
 	{
-		std::stringstream stream;
-		stream << "Failed To send message over TCP to client: " << m_connectionID ;
-		LOG_ERROR(stream.str());
-	}
+		auto buffer = msg.GetBuffer();
+		if (m_tcpSocket->send(buffer.data(), buffer.size()) != sf::Socket::Done)
+		{
+			std::stringstream stream;
+			stream << "Failed To send message over TCP to client: " << m_connectionID;
+			LOG_ERROR(stream.str());
+		}
+	});;
 }
 
 void Connection::SendUDP(const Message& msg) const
 {
-	auto buffer = msg.GetBuffer();
-	if(m_udpSocket->send(buffer.data(), buffer.size(),m_address, m_portUDP) != sf::Socket::Done)
+	m_network->GetThreadPool().enqueue([=]
 	{
-		std::stringstream stream;
-		stream << "Failed To send message over UDP to client: " << m_connectionID ;
-		LOG_ERROR(stream.str());
-	}
+		auto buffer = msg.GetBuffer();
+		if (m_udpSocket->send(buffer.data(), buffer.size(), m_address, m_portUDP) != sf::Socket::Done)
+		{
+			std::stringstream stream;
+			stream << "Failed To send message over UDP to client: " << m_connectionID;
+			LOG_ERROR(stream.str());
+		}
+	});
 }

@@ -10,7 +10,6 @@ public:
 
 	bool empty()
 	{
-		std::unique_lock<std::mutex> lock(m_mutex);
 		return m_queue.empty();
 	}
 
@@ -24,7 +23,7 @@ public:
 	}
 
 	//Non blocking deque
-	T dequeue(T& item)
+	void dequeue(T& item)
 	{
 		std::unique_lock<std::mutex> lock(m_mutex);
 		if (m_queue.empty())
@@ -50,5 +49,3 @@ private:
 	std::mutex m_mutex;
 	std::condition_variable m_cv;
 };
-
-
