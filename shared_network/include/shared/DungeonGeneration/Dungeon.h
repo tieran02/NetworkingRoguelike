@@ -1,7 +1,7 @@
 #pragma once
 #include <unordered_set>
 #include "DungeonChunk.h"
-#include <SFML/System/Vector2.hpp>
+#include <SFML/Graphics.hpp>
 
 namespace sf {
 	class RenderWindow;
@@ -19,6 +19,8 @@ public:
 
 	const std::vector<DungeonChunk*>& GetChunks() const;
 	sf::Vector2f ChunckToWorldSpace(int chunkID, sf::Vector2f chunckPos) const;
+
+	std::vector<sf::RectangleShape> GetTileRectangles();
 
 private:
 	const unsigned int WIDTH{ 0 }, HEIGHT{ 0 };

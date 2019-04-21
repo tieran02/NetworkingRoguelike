@@ -20,6 +20,15 @@ void World::Generate(ServerConnection* connection)
 
 	m_dungeon = std::unique_ptr<Dungeon>(new Dungeon(2,2,32,m_seed));
 	m_dungeon->Generate();
+
+	//Set dungeon colliders
+	auto rects = m_dungeon->GetTileRectangles();
+	for (auto& rect : rects)
+	{
+		auto collider = std::make_shared<Collider>(rect);
+		m_colliders.insert(collider);
+	}
+
 	m_generated = true;
 	connection->NotifyWorldGeneration();
 }
@@ -37,22 +46,16 @@ std::shared_ptr<Entity> World::SpawnEntity(unsigned int entityID, unsigned int w
 		entity->SetPosition(pos);
 		entity->SetNetworkPosition(pos);
 		entity->SetNetworkVelocity(velocity);
+		//add entity collider to the collider vector
+		m_colliders.insert(entity->GetCollider());
+
 		m_entities.insert((std::make_pair(worldID, entity)));
+
+		entity->Start();
         return entity;
     }
     return nullptr;
 }
-
-//void World::UpdateEntityPosition(unsigned worldID, sf::Vector2f newPosition, sf::Vector2f velocity)
-//{
-//	if(m_entities.find(worldID) != m_entities.end())
-//	{
-//		m_entities.at(worldID)->SetPosition(newPosition);
-//		m_entities.at(worldID)->SetNetworkPosition(newPosition);
-//		m_entities.at(worldID)->SetVelocity(velocity);
-//		m_entities.at(worldID)->SetNetworkVelocity(velocity);
-//	}
-//}
 
 void World::SetWindowFocused(bool focused)
 {
@@ -62,6 +65,24 @@ void World::SetWindowFocused(bool focused)
 bool World::IsWindowFocused() const
 {
 	return m_windowFocused;
+}
+
+void World::collisionDetection()
+{
+	std::unordered_set<std::shared_ptr<Collider>> toRemove;
+
+	for (auto& entity : m_entities)
+	{
+		for (auto& other : m_colliders)
+		{
+			if(entity.second->GetCollider().get() == other.get())
+				continue;
+
+			other->CheckCollision(*entity.second->GetCollider());
+		}
+		//set entity pos to collider pos
+		entity.second->SetPosition(entity.second->GetCollider()->GetPosition());
+	}
 }
 
 
@@ -74,6 +95,8 @@ void World::Update(float deltaTime)
 	{
 		entity.second->Update(deltaTime);
 	}
+
+	collisionDetection();
 }
 
 
@@ -88,4 +111,10 @@ void World::Draw(sf::RenderWindow & window)
 	{
 		entity.second->Draw(window);
 	}
+
+	////draw colliders
+	//for (auto& collider : m_colliders)
+	//{
+	//	window.draw(collider->GetRect());
+	//}
 }

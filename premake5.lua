@@ -17,6 +17,8 @@ project "client"
 	language "C++"
 	cppdialect "C++11"
 	systemversion "latest"
+	defines { "CLIENT" }
+
 
 	targetdir "bin/%{cfg.buildcfg}"
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
@@ -98,6 +100,8 @@ project "server"
 	language "C++"
 	cppdialect "C++11"
 	systemversion "latest"
+	defines { "SERVER" }
+
 
 	targetdir "bin/%{cfg.buildcfg}"
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
@@ -192,12 +196,14 @@ project "shared_network"
 		filter "configurations:Debug"
 			links
 			{
+				"sfml-graphics-d",
 				"sfml-system-d",
 				"sfml-network-d"
 			}
 		filter "configurations:Release"
 			links
 			{	
+				"sfml-graphics",
 				"sfml-system",
 				"sfml-network"
 			}

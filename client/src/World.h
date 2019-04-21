@@ -20,7 +20,6 @@ public:
 	void Draw(sf::RenderWindow & window);
 
 	std::shared_ptr<Entity> SpawnEntity(unsigned int entityID, unsigned int worldID, sf::Vector2f pos, sf::Vector2f velocity, unsigned int ownership);
-	//void UpdateEntityPosition(unsigned int worldID, sf::Vector2f newPosition, sf::Vector2f velocity);
 
 	bool IsGenerated() const { return m_generated; }
 	std::unordered_map<unsigned int, std::shared_ptr<Entity>>& GetEntities() { return m_entities; }
@@ -36,5 +35,9 @@ private:
 	std::unordered_map<unsigned int, std::shared_ptr<Entity>> m_entities;
 	EntityFactory m_entityFactory;
 	ServerConnection* m_serverConnection;
+
+	std::unordered_set<std::shared_ptr<Collider>> m_colliders;
+
+	void collisionDetection();
 };
 

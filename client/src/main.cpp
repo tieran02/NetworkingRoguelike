@@ -3,10 +3,16 @@
 #include "Networking/ServerConnection.h"
 #include "World.h"
 #include "shared/Utility/Log.h"
+#include "Graphics/SpriteManager.h"
 
 int main()
 {
 	Log::Init();
+
+	LOG_INFO("Loading Resouces...");
+	SpriteManager::Instance().LoadTexture("Player", "player.png");
+	LOG_INFO("Resouces Loaded");
+
 	//World
 	World world;
 	//networking

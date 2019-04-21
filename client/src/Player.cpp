@@ -3,7 +3,7 @@
 #include "World.h"
 #include "shared/Utility/Math.h"
 
-Player::Player()
+Player::Player() : Entity("Player")
 {
 	m_movementSpeed = 100.0f;
 }
@@ -15,7 +15,10 @@ Player::~Player()
 
 void Player::Start()
 {
-
+	if (hasOwnership())
+	{
+		m_collider->SetMoveable(true);
+	}
 }
 
 void Player::Update(float deltaTime)
@@ -54,10 +57,7 @@ void Player::Update(float deltaTime)
 
 void Player::Draw(sf::RenderWindow & window)
 {
-    sf::CircleShape shape(10);
-    shape.setFillColor(sf::Color(100, 250, 50));
-    shape.setPosition(m_position);
-    window.draw(shape);
+    window.draw(*m_sprite);
 }
 
 std::shared_ptr<Entity> Player::Clone(unsigned int worldID, unsigned int ownership, ServerConnection* connection, World* world)

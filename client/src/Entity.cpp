@@ -1,23 +1,25 @@
 #include "Entity.h"
-#include "Networking/ServerConnection.h"
 #include "shared/Utility/Math.h"
 #include "shared/Utility/Log.h"
+#include "Networking/ServerConnection.h"
+#include "Graphics/SpriteManager.h"
 
-Entity::Entity()
+Entity::Entity(const std::string& spriteName)
 {
-    //ctor
+	m_sprite = SpriteManager::Instance().CreateSprite(spriteName);
+	m_collider = std::make_shared<Collider>(m_position,sf::Vector2f{ m_sprite->getGlobalBounds().width,m_sprite->getGlobalBounds().height});
 }
 
 Entity::~Entity()
 {
-    //dtor
 }
 
 void Entity::SetPosition(const sf::Vector2f& position)
 {
 	m_lastPosition = m_position;
 
-    m_sprite.setPosition(position);
+    m_sprite->setPosition(position);
+	m_collider->SetPosition(position);
     m_position = position;
 }
 
@@ -71,10 +73,7 @@ void Entity::UpdatePredictedPosition(float deltaTime)
 
 void Entity::Translate(const sf::Vector2f& position)
 {
-	m_lastPosition = m_position;
-
-	m_position += position;
-	m_sprite.setPosition(m_position);
+	SetPosition(m_position + position);
 }
 
 bool Entity::hasOwnership() const
