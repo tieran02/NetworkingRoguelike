@@ -83,22 +83,34 @@ std::vector<sf::RectangleShape> Dungeon::GetTileRectangles()
 	{
 		auto& tiles = m_chunks[i]->m_tiles;
 
-
-		for (int y = 0; y < m_chunks[i]->GetSize(); ++y)
+		for (auto& tile : m_chunks[i]->edgeTiles)
 		{
-			for (int x = 0; x < m_chunks[i]->GetSize(); ++x)
-			{
-				auto& tile = tiles[y][x];
-				if(tile.type == DungeonTileType::EMPTY)
-					continue;
-				sf::RectangleShape rect;
-				sf::Vector2f chunkPos = ChunckToWorldSpace(i, sf::Vector2f{ (float)m_chunks[i]->GetX() ,(float)m_chunks[i]->GetY() });
-				sf::Vector2f worldPos = sf::Vector2f{ chunkPos.x + (tile.x * m_tileSize),chunkPos.y + (tile.y * m_tileSize) };
-				rect.setPosition(worldPos.x, worldPos.y);
-				rect.setSize(sf::Vector2f{ (float)m_tileSize,(float)m_tileSize });
-				rects.push_back(rect);
-			}
+			if (tile->type == DungeonTileType::EMPTY)
+				continue;
+			sf::RectangleShape rect;
+			sf::Vector2f chunkPos = ChunckToWorldSpace(i, sf::Vector2f{ (float)m_chunks[i]->GetX() ,(float)m_chunks[i]->GetY() });
+			sf::Vector2f worldPos = sf::Vector2f{ chunkPos.x + (tile->x * m_tileSize),chunkPos.y + (tile->y * m_tileSize) };
+			rect.setPosition(worldPos.x, worldPos.y);
+			rect.setSize(sf::Vector2f{ (float)m_tileSize,(float)m_tileSize });
+			rects.push_back(rect);
 		}
+
+
+		//for (int y = 0; y < m_chunks[i]->GetSize(); ++y)
+		//{
+		//	for (int x = 0; x < m_chunks[i]->GetSize(); ++x)
+		//	{
+		//		auto& tile = tiles[y][x];
+		//		if(tile.type == DungeonTileType::EMPTY)
+		//			continue;
+		//		sf::RectangleShape rect;
+		//		sf::Vector2f chunkPos = ChunckToWorldSpace(i, sf::Vector2f{ (float)m_chunks[i]->GetX() ,(float)m_chunks[i]->GetY() });
+		//		sf::Vector2f worldPos = sf::Vector2f{ chunkPos.x + (tile.x * m_tileSize),chunkPos.y + (tile.y * m_tileSize) };
+		//		rect.setPosition(worldPos.x, worldPos.y);
+		//		rect.setSize(sf::Vector2f{ (float)m_tileSize,(float)m_tileSize });
+		//		rects.push_back(rect);
+		//	}
+		//}
 	}
 
 	return rects;

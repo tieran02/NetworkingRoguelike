@@ -8,7 +8,7 @@ class DungeonRoom
 {
 	friend DungeonChunk;
 public:
-	DungeonRoom(const std::vector<DungeonTile*>& tiles, DungeonTile** map, unsigned int chunkSize);
+	DungeonRoom(const std::vector<DungeonTile*>& tiles, const std::vector<DungeonTile*>& edgeWalls, DungeonTile** map, unsigned int chunkSize);
 	~DungeonRoom();
 
 	int RoomSize() const { return (int)tiles.size(); }

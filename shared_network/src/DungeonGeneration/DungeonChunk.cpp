@@ -48,6 +48,32 @@ void DungeonChunk::Draw(sf::RenderWindow& window, int tileSize)
 
 	sf::Vector2i offset{ chunkX * (int)CHUNK_SIZE * tileSize, chunkY * (int)CHUNK_SIZE * tileSize };
 
+	//draw rooms only
+	//int i = 0;
+	//for (auto& room : m_rooms)
+	//{
+
+	//	for (auto& tile : room.GetEdgeTiles())
+	//	{
+	//		sf::Vector2f position = sf::Vector2f((tile->x*(float)tileSize), (tile->y*float(tileSize))) + (sf::Vector2f)offset;
+	//		rectangle.setPosition(position);
+	//		rectangle.setFillColor(m_roomColours[i]);
+
+	//		switch (m_tiles[tile->y][tile->x].type)
+	//		{
+	//		case DungeonTileType::EMPTY:
+	//			window.draw(rectangle);
+	//			break;
+	//		case DungeonTileType::WALL:
+	//			window.draw(rectangle);
+	//			break;
+	//		default:
+	//			break;
+	//		}
+	//	}
+	//	i++;
+	//}
+
 	for (int y = 0; y < (int)CHUNK_SIZE; ++y)
 	{
 		for (int x = 0; x < (int)CHUNK_SIZE; ++x)
@@ -142,6 +168,9 @@ void DungeonChunk::connectRoom(DungeonRoom& roomA, DungeonRoom& roomB)
 			DungeonTile* tileB = roomB.GetEdgeTiles()[tileIndexB];
 			int distance = (int)(pow(tileA->x - tileB->x, 2) + pow(tileA->y - tileB->y, 2));
 
+			if(distance == 0)
+				continue;
+
 			if (distance < bestDistance || !possibleConnectionFound)
 			{
 				bestDistance = distance;
@@ -217,6 +246,42 @@ void DungeonChunk::processMap()
 	detectRooms();
 
 	connectRooms();
+
+	for (int i = 0; i < m_rooms.size(); ++i)
+	{
+		m_roomColours.push_back(sf::Color(rand() % 255, rand() % 255, rand() % 255));
+	}
+	//get edge tiles
+	findEdgeTiles();
+}
+
+void DungeonChunk::findEdgeTiles()
+{
+	for (int y = 0; y < CHUNK_SIZE; ++y)
+	{
+		for (int x = 0; x < CHUNK_SIZE; ++x)
+		{
+
+			const auto tile = &m_tiles[y][x];
+			if(tile->type == DungeonTileType::WALL)
+				continue;
+
+			//loop through all tiles and check if the surrounding tiles is a wall
+			for (int chunkY = tile->y - 1; chunkY <= tile->y + 1; ++chunkY)
+			{
+				for (int chunkX = tile->x - 1; chunkX <= tile->x + 1; ++chunkX)
+				{
+					if (chunkX < 0 || chunkY < 0 || chunkY >= CHUNK_SIZE || chunkX >= CHUNK_SIZE)
+						continue;
+
+					if (m_tiles[chunkY][chunkX].type == DungeonTileType::WALL)
+					{
+						edgeTiles.push_back(&m_tiles[chunkY][chunkX]);
+					}
+				}
+			}
+		}
+	}
 }
 
 void DungeonChunk::detectRooms()
@@ -248,10 +313,11 @@ void DungeonChunk::detectRooms()
 DungeonRoom DungeonChunk::getRoom(int startX, int startY)
 {
 	std::vector<DungeonTile*> tiles;
+	std::vector<DungeonTile*> edgeWalls;
 
 	std::unordered_set<int> visitedNodes;
 
-	DungeonTileType tileType = m_tiles[startY][startX].type;
+	DungeonTileType tileType = DungeonTileType::EMPTY;
 
 	std::queue<DungeonTile*> queue;
 	queue.push(&m_tiles[startY][startX]);
@@ -263,30 +329,54 @@ DungeonRoom DungeonChunk::getRoom(int startX, int startY)
 		queue.pop();
 		tiles.push_back(tile);
 
-		for (auto& neighbour : getNeighbours(tile->x, tile->y))
+		auto neighbours = getNeighbours(tile->x, tile->y);
+		for (auto& neighbour : neighbours)
 		{
 			if (neighbour->type == tileType && visitedNodes.find(neighbour->id) == visitedNodes.end()) {
 				visitedNodes.insert(neighbour->id);
 				queue.push(neighbour);
+			}else if(neighbour->type == DungeonTileType::WALL && std::find(edgeWalls.begin(), edgeWalls.end(), neighbour) == edgeWalls.end())
+			{
+				edgeWalls.push_back(neighbour);
 			}
 		}
 	}
 
-	return DungeonRoom(tiles, m_tiles, CHUNK_SIZE);
+	return DungeonRoom(tiles, edgeWalls, m_tiles, CHUNK_SIZE);
 }
 
 std::vector<DungeonTile*> DungeonChunk::getNeighbours(int startX, int startY)
 {
 	std::vector<DungeonTile*> tiles;
-	for (int y = startY - 1; y <= startY + 1; ++y)
+	//for (int y = startY - 1; y <= startY + 1; ++y)
+	//{
+	//	for (int x = startX - 1; x <= startX + 1; ++x)
+	//	{
+	//		if((x == y) || (x == startX - 1 && y == startY - 1) || (x == startX - 1 && y == startY + 1) || (x == startX + 1 && y == startY - 1) || (x == startX + 1 && y == startY + 1))
+	//			continue;
+
+	//		if (InBounds(x, y))
+	//		{
+	//			tiles.push_back(&m_tiles[y][x]);
+	//		}
+	//	}
+	//}
+
+	if (InBounds(startY - 1, startX))
 	{
-		for (int x = startX - 1; x <= startX + 1; ++x)
-		{
-			if (InBounds(x, y) && (y == startY || x == startX))
-			{
-				tiles.push_back(&m_tiles[y][x]);
-			}
-		}
+		tiles.push_back(&m_tiles[startY - 1][startX]);
+	}
+	if (InBounds(startY + 1, startX))
+	{
+		tiles.push_back(&m_tiles[startY + 1][startX]);
+	}
+	if (InBounds(startY, startX - 1))
+	{
+		tiles.push_back(&m_tiles[startY][startX - 1]);
+	}
+	if (InBounds(startY, startX + 1))
+	{
+		tiles.push_back(&m_tiles[startY][startX + 1]);
 	}
 	return tiles;
 }

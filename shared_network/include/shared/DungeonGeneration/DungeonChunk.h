@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include "DungeonRoom.h"
+#include <SFML/Graphics.hpp>
 
 class Dungeon;
 
@@ -43,7 +44,9 @@ protected:
 	DungeonTile** m_tiles;
 	std::vector<DungeonRoom> m_rooms;
 	std::vector<DungeonChunk*> m_neighbourChunks;
+	std::vector<DungeonTile*> edgeTiles;
 	void processMap();
+	void findEdgeTiles();
 private:
 	void connectRooms();
 	void connectRoom(DungeonRoom& roomA, DungeonRoom& roomB);
@@ -54,4 +57,7 @@ private:
 	std::vector<DungeonTile*> getLine(const DungeonTile& from, const DungeonTile& to);
 	void createPassage(const DungeonTile& tileA, const DungeonTile& tileB);
 	void drawCircle(const DungeonTile& tile, int r);
+
+	//debug colour rooms
+	std::vector<sf::Color> m_roomColours;
 };

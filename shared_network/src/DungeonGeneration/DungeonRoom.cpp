@@ -2,24 +2,9 @@
 #include "DungeonGeneration/DungeonRoom.h"
 #include "DungeonGeneration/Dungeon.h"
 
-DungeonRoom::DungeonRoom(const std::vector<DungeonTile*>& tiles, DungeonTile** map, unsigned int chunkSize) : tiles(tiles)
+DungeonRoom::DungeonRoom(const std::vector<DungeonTile*>& tiles, const std::vector<DungeonTile*>& edgeWalls, DungeonTile** map, unsigned int chunkSize) : tiles(tiles), edgeTiles(edgeWalls)
 {
-	for (auto& tile : tiles)
-	{
-		for (int y = tile->y - 1; y < tile->y + 1; ++y)
-		{
-			for (int x = tile->x - 1; x < tile->x + 1; ++x)
-			{
-				if(x < 0 || y < 0)
-					continue;
 
-				if((x == tile->x || y == tile->y ) && map[y][x].type == DungeonTileType::WALL)
-				{
-					edgeTiles.push_back(tile);
-				}
-			}
-		}
-	}
 }
 
 DungeonRoom::~DungeonRoom()
