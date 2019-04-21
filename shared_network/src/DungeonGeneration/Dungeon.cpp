@@ -70,9 +70,10 @@ sf::Vector2f Dungeon::ChunckToWorldSpace(int chunkID, sf::Vector2f chunckPos) co
 	auto& chunk = m_chunks[chunkID];
 	unsigned int chunkSize = chunk->GetSize();
 	//sf::Vector2f chunkWorldPos{ chunk->GetX() * (float)chunkSize, chunk->GetY() * (float)chunkSize };
-	sf::Vector2f chunkWorldPos{ chunk->GetX() * (float)chunkSize * (float)m_tileSize, chunk->GetY() * (float)chunkSize * (float)m_tileSize };
+	sf::Vector2f chunkWorldPos{ chunk->GetX() * ((float)chunkSize-1), chunk->GetY() * ((float)chunkSize-1) };
+	sf::Vector2f tileWorldPos = chunkWorldPos + sf::Vector2f{ chunckPos.x  , chunckPos.y };
 
-	return chunkWorldPos;
+	return tileWorldPos * (float)m_tileSize;
 }
 
 std::vector<sf::RectangleShape> Dungeon::GetTileRectangles()

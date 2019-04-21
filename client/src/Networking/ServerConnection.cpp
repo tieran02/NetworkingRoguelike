@@ -124,6 +124,7 @@ void ServerConnection::PollMessages()
 				SpawnMessage* spawnMessage = static_cast<SpawnMessage*>(&msg.message);
 				LOG_INFO("Spawning Entity with ID = " + std::to_string(spawnMessage->GetEntityID()) + " and ownership of connection " + std::to_string(spawnMessage->GetOwnershipID())
 					+ " @" + std::to_string(spawnMessage->GetPosition().x) + "," + std::to_string(spawnMessage->GetPosition().y));
+				auto pos = spawnMessage->GetPosition();
 				m_world->SpawnEntity(spawnMessage->GetEntityID(), spawnMessage->GetWorldID(), spawnMessage->GetPosition(), spawnMessage->GetVelocity(), spawnMessage->GetOwnershipID());
 			}
 			else if (msg.message.GetHeader().type == MessageType::ENTITY_STATE)
@@ -238,6 +239,7 @@ void ServerConnection::updateEntityNetworkState(unsigned worldID, sf::Vector2f n
 	auto entities = m_world->GetEntities();
 	if (entities.find(worldID) != entities.end())
 	{
+		entities.at(worldID)->SetLastNetworkPosition(entities.at(worldID)->GetNetworkPosition());
 		entities.at(worldID)->SetNetworkPosition(newPosition);
 		entities.at(worldID)->SetVelocity(velocity);
 		entities.at(worldID)->SetNetworkVelocity(velocity);

@@ -45,6 +45,7 @@ std::shared_ptr<Entity> World::SpawnEntity(unsigned int entityID, unsigned int w
     {
 		entity->SetPosition(pos);
 		entity->SetNetworkPosition(pos);
+		entity->SetLastNetworkPosition(pos);
 		entity->SetNetworkVelocity(velocity);
 		//add entity collider to the collider vector
 		m_colliders.insert(entity->GetCollider());

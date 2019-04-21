@@ -24,6 +24,8 @@ public:
 
 	void SetNetworkPosition(const sf::Vector2f& position);
 	sf::Vector2f GetNetworkPosition() const { return m_networkPosition; }
+	void SetLastNetworkPosition(const sf::Vector2f& position);
+	sf::Vector2f GetLastNetworkPosition() const { return m_lastNetworkPosition; }
 
 	sf::Vector2f GetDirection() const;
 	void SetVelocity(sf::Vector2f velocity);
@@ -52,6 +54,8 @@ protected:
     sf::Vector2f m_position;
 	sf::Vector2f m_lastPosition;
 	sf::Vector2f m_networkPosition;
+	sf::Vector2f m_lastNetworkPosition;
+
 	float m_movementSpeed{0.0f};
 
 	sf::Vector2f m_velocity{0.0f,0.0f};
