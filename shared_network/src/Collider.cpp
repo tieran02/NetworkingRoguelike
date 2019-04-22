@@ -1,20 +1,23 @@
 #include "Collider.h"
 #include "Utility/Math.h"
+#include "Utility/Log.h"
 
 
 Collider::Collider(const sf::Vector2f& pos, const sf::Vector2f& size)
 {
 	m_rect = sf::RectangleShape{ size };
 	m_rect.setPosition(pos);
-	m_rect.setFillColor(sf::Color::Green);
+	m_rect.setFillColor(sf::Color{ 0,255,0,200 });
 	m_halfSize = size / 2.0f;
+	m_rect.setOrigin(m_halfSize);
+
 }
 
 Collider::Collider(const sf::RectangleShape& rect) : m_rect(rect)
 {
 	m_halfSize = m_rect.getSize() / 2.0f;
-	m_rect.setFillColor(sf::Color::Green);
-
+	m_rect.setFillColor(sf::Color{0,255,0,200 });
+	m_rect.setOrigin(m_halfSize);
 }
 
 
@@ -36,11 +39,14 @@ bool Collider::CheckCollision(Collider& other)
 
 	sf::Vector2f d{ otherPos.x - thisPos.x ,otherPos.y - thisPos.y };
 
-	float intersectX = std::fabs(d.x) - (otherHalfSize.x + thisHalfSize.x);
-	float intersectY = std::fabs(d.y) - (otherHalfSize.y + thisHalfSize.y);
+	const float intersectX = std::abs(d.x) - (otherHalfSize.x + thisHalfSize.x);
+	const float intersectY = std::abs(d.y) - (otherHalfSize.y + thisHalfSize.y);
+
 	float push = 1.0f;
 	if (m_moveable)
+	{
 		push = 0.0f;
+	}
 
 	if(intersectX < 0.0f && intersectY < 0.0f)
 	{
@@ -71,7 +77,7 @@ bool Collider::CheckCollision(Collider& other)
 				other.Move(0.0f, intersectX * push);
 			}
 		}
-
+		LOG_INFO("Collided");
 		return true;
 	}
 

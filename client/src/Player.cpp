@@ -5,7 +5,7 @@
 
 Player::Player() : Entity("Player")
 {
-	m_movementSpeed = 100.0f;
+	m_movementSpeed = 200.0f;
 }
 
 Player::~Player()
@@ -30,25 +30,28 @@ void Player::Update(float deltaTime)
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
 		{
 			// left key is pressed: move our character
-			newVelocity += sf::Vector2f(m_movementSpeed * deltaTime, 0.0f);
+			newVelocity += sf::Vector2f(-m_movementSpeed * deltaTime, 0.0f);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
 		{
 			// left key is pressed: move our character
-			newVelocity += sf::Vector2f(-m_movementSpeed * deltaTime, 0.0f);
+			newVelocity += sf::Vector2f(m_movementSpeed * deltaTime, 0.0f);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
 		{
 			// left key is pressed: move our character
-			newVelocity += sf::Vector2f(0.0f, m_movementSpeed * deltaTime);
+			newVelocity += sf::Vector2f(0.0f, -m_movementSpeed * deltaTime);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
 		{
 			// left key is pressed: move our character
-			newVelocity += sf::Vector2f(0.0f, -m_movementSpeed * deltaTime);
+			newVelocity += sf::Vector2f(0.0f, m_movementSpeed * deltaTime);
 		}
 		SetVelocity(newVelocity);
 		UpdatePosition(deltaTime);
+
+		//set camera pos
+		m_world->GetCamera().SetPosition(m_position);
 	}else
 	{
 		UpdatePredictedPosition(deltaTime); //network player

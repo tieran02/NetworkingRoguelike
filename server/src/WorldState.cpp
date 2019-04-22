@@ -16,7 +16,7 @@ WorldState::~WorldState()
 
 void WorldState::GenerateWorld()
 {
-	m_dungeon = std::unique_ptr<Dungeon>(new Dungeon(2, 2,32, m_seed));
+	m_dungeon = std::unique_ptr<Dungeon>(new Dungeon(2, 2,64, m_seed));
 	m_dungeon->Generate();
 }
 

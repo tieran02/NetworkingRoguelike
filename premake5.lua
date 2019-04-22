@@ -48,7 +48,7 @@ project "client"
 
 		filter "configurations:Debug"
 			links
-			{
+			{	
 				"sfml-graphics-d",
 				"sfml-window-d",
 				"sfml-system-d",
@@ -76,6 +76,7 @@ project "client"
 			"sfml-window",
 			"sfml-system",
 			"sfml-audio",
+			"sfml-network",
 			"jpeg"
 		}
 
@@ -88,7 +89,6 @@ project "client"
 	filter "configurations:Debug"
 		defines { "DEBUG" }
 		symbols "On"
-
 
 	filter "configurations:Release"
 		defines { "NDEBUG" }
@@ -155,6 +155,7 @@ project "server"
 			"sfml-window",
 			"sfml-system",
 			"sfml-audio",
+			"sfml-network",
 			"jpeg"
 		}
 
@@ -166,8 +167,6 @@ project "server"
 	filter "configurations:Debug"
 		defines { "DEBUG" }
 		symbols "On"
-
-
 	filter "configurations:Release"
 		defines { "NDEBUG" }
 		optimize "On"
@@ -195,7 +194,7 @@ project "shared_network"
 
 		filter "configurations:Debug"
 			links
-			{
+			{	
 				"sfml-graphics-d",
 				"sfml-system-d",
 				"sfml-network-d"

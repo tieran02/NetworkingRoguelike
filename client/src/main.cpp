@@ -7,6 +7,8 @@
 
 int main()
 {
+	unsigned int width{ 1280 }, height{ 720 };
+
 	Log::Init();
 
 	LOG_INFO("Loading Resouces...");
@@ -15,23 +17,18 @@ int main()
 
 	//World
 	World world;
+	world.SetWindowSize(sf::Vector2u(width,height));
+
 	//networking
 	ServerConnection server_connection{4305, &world};
 	server_connection.FindServer();
 	server_connection.Connect();
-
+	//Generate World
 	const int DUNGEON_SIZE{ 2 };
 	world.Generate(&server_connection);
 
-	int width{ 1280 }, height{ 720 };
-	sf::RenderWindow window(sf::VideoMode(width, height), "SFML window");
-	sf::View view(sf::FloatRect(0.0f, 0.0f, (float)width, (float)height));
-	view.setCenter(64 / 2 * 32 * DUNGEON_SIZE, 64 / 2 * 32* DUNGEON_SIZE);
-	view.zoom(-5.0);
-
-	size_t size = sizeof(DungeonChunk);
-
-	window.setView(view);
+	//Create window
+	sf::RenderWindow window(sf::VideoMode(width, height), "SFML window");;
 
 	float lastTime{ 0.0f };
 	float deltaTime{ 0.0f };
@@ -48,10 +45,9 @@ int main()
 				window.close();
 			else if(event.type == sf::Event::Resized)
 			{
-				sf::View view(sf::FloatRect(0.0f, 0.0f, (float)event.size.width, (float)event.size.height));
-				view.setCenter(64 / 2 * 32 * DUNGEON_SIZE, 64 / 2 * 32 * DUNGEON_SIZE);
-				view.zoom(-5);
-				window.setView(view);
+				width = event.size.width;
+				height = event.size.height;
+				world.SetWindowSize(sf::Vector2u(width, height));
 			}
 			else if (event.type == sf::Event::GainedFocus)
 				world.SetWindowFocused(true);
@@ -68,8 +64,9 @@ int main()
 
 		server_connection.PollMessages();
 		deltaTime = currentTime - lastTime;
-		lastTime = currentTime;
+		LOG_INFO("FPS = " + std::to_string(1.0f / (currentTime - lastTime)));
 
+		lastTime = currentTime;
 	}
 
 	server_connection.Disconnect();

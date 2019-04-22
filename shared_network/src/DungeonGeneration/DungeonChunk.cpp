@@ -45,6 +45,8 @@ void DungeonChunk::Draw(sf::RenderWindow& window, int tileSize)
 	sf::RectangleShape rectangle;
 	rectangle.setSize(sf::Vector2f(tileSize, tileSize));
 	rectangle.setFillColor(sf::Color::Blue);
+	sf::FloatRect spriteBounds = rectangle.getGlobalBounds();
+	rectangle.setOrigin(spriteBounds.width / 2.0f, spriteBounds.height / 2.0f);
 
 	sf::Vector2i offset{ chunkX * (int)CHUNK_SIZE * tileSize, chunkY * (int)CHUNK_SIZE * tileSize };
 

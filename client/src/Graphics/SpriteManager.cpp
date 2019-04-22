@@ -1,4 +1,5 @@
 #include "SpriteManager.h"
+#include "shared/Utility/Log.h"
 
 bool SpriteManager::LoadTexture(const std::string& name, const std::string& path)
 {
@@ -8,6 +9,7 @@ bool SpriteManager::LoadTexture(const std::string& name, const std::string& path
 		m_textures.insert(std::make_pair(name, texture));
 		return true;
 	}
+	LOG_FATAL("FAILED TO LOAD TEXTURE AT: 'resources/" + path + "'");
 	return false;
 }
 

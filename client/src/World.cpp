@@ -4,7 +4,7 @@
 #include "Networking/ServerConnection.h"
 #include "shared/Utility/Math.h"
 
-World::World()
+World::World() : m_camera( sf::Vector2f{ 0.0f,0.0f }, GetWindowSize(),1024 )
 {
 }
 
@@ -18,7 +18,7 @@ void World::Generate(ServerConnection* connection)
 	m_serverConnection = connection;
     m_entityFactory.Setup();
 
-	m_dungeon = std::unique_ptr<Dungeon>(new Dungeon(2,2,32,m_seed));
+	m_dungeon = std::unique_ptr<Dungeon>(new Dungeon(2,2,64,m_seed));
 	m_dungeon->Generate();
 
 	//Set dungeon colliders
@@ -31,6 +31,8 @@ void World::Generate(ServerConnection* connection)
 
 	m_generated = true;
 	connection->NotifyWorldGeneration();
+
+	m_camera.SetPosition(sf::Vector2f{ 2048.0f ,2048.0f });
 }
 
 void World::SetSeed(unsigned int seed)
@@ -68,6 +70,22 @@ bool World::IsWindowFocused() const
 	return m_windowFocused;
 }
 
+void World::SetWindowSize(sf::Vector2u size)
+{
+	m_camera.SetSize(size, m_camera.GetSize());
+	m_windowSize = size;
+}
+
+sf::Vector2u World::GetWindowSize() const
+{
+	return m_windowSize;
+}
+
+Camera& World::GetCamera()
+{
+	return m_camera;
+}
+
 void World::collisionDetection()
 {
 	std::unordered_set<std::shared_ptr<Collider>> toRemove;
@@ -98,13 +116,21 @@ void World::Update(float deltaTime)
 	}
 
 	collisionDetection();
+
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::F4))
+	{
+		m_debug = !m_debug;
+	}
 }
 
 
-void World::Draw(sf::RenderWindow & window)
+void World::Draw(sf::RenderWindow& window)
 {
 	if (!m_serverConnection->IsConnected() && !m_generated)
 		return;
+
+	window.setView(m_camera.GetView());
+
 
 	m_dungeon->Draw(window);
 
@@ -113,9 +139,11 @@ void World::Draw(sf::RenderWindow & window)
 		entity.second->Draw(window);
 	}
 
-	////draw colliders
-	//for (auto& collider : m_colliders)
-	//{
-	//	window.draw(collider->GetRect());
-	//}
+	//draw colliders
+	if (m_debug) {
+		for (auto& collider : m_colliders)
+		{
+			window.draw(collider->GetRect());
+		}
+	}
 }
