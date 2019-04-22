@@ -77,10 +77,8 @@ bool Collider::CheckCollision(Collider& other)
 				other.Move(0.0f, intersectX * push);
 			}
 		}
-		LOG_INFO("Collided");
 		return true;
 	}
-
 	return false;
 }
 

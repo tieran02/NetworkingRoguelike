@@ -15,6 +15,7 @@ public:
     virtual void Update(float deltaTime) = 0;
     virtual void Draw(sf::RenderWindow & window) = 0;
     virtual std::shared_ptr<Entity> Clone(unsigned int worldID, unsigned int ownership, ServerConnection* connection, World* world) = 0;
+	virtual  void OnCollision(Collider& other) = 0;
 
 	unsigned int GetWorldID() const { return m_worldID; }
 	const std::shared_ptr<sf::Sprite>& GetSprite() const { return m_sprite; }
@@ -33,7 +34,8 @@ public:
 	void SetNetworkVelocity(const sf::Vector2f& velocity);
 	sf::Vector2f GetNetworkVelocity() const { return m_networkVelocity; }
 	std::shared_ptr<Collider>& GetCollider() { return m_collider; }
-
+	void SetActive(bool active);
+	bool IsActive() const;
 
 	sf::Vector2f CalculatePredictedPosition() const;
 
@@ -55,6 +57,7 @@ protected:
 	sf::Vector2f m_lastPosition;
 	sf::Vector2f m_networkPosition;
 	sf::Vector2f m_lastNetworkPosition;
+	bool m_active{ true };
 
 	float m_movementSpeed{0.0f};
 

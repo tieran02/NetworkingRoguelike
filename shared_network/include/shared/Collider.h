@@ -17,6 +17,7 @@ public:
 	sf::Vector2f GetHalfSize() const;
 	const sf::RectangleShape& GetRect() const { return m_rect; }
 	void SetMoveable(bool moveable);
+
 private:
 	sf::RectangleShape m_rect;
 	sf::Vector2f m_halfSize;

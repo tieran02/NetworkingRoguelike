@@ -30,22 +30,27 @@ void Player::Update(float deltaTime)
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
 		{
 			// left key is pressed: move our character
-			newVelocity += sf::Vector2f(-m_movementSpeed * deltaTime, 0.0f);
+			newVelocity += sf::Vector2f(-m_movementSpeed, 0.0f);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
 		{
 			// left key is pressed: move our character
-			newVelocity += sf::Vector2f(m_movementSpeed * deltaTime, 0.0f);
+			newVelocity += sf::Vector2f(m_movementSpeed, 0.0f);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
 		{
 			// left key is pressed: move our character
-			newVelocity += sf::Vector2f(0.0f, -m_movementSpeed * deltaTime);
+			newVelocity += sf::Vector2f(0.0f, -m_movementSpeed);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
 		{
 			// left key is pressed: move our character
-			newVelocity += sf::Vector2f(0.0f, m_movementSpeed * deltaTime);
+			newVelocity += sf::Vector2f(0.0f, m_movementSpeed);
+		}
+
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
+		{
+			m_world->ShootBullet(m_position, sf::Vector2f(0.0f, -400.0f));
 		}
 		SetVelocity(newVelocity);
 		UpdatePosition(deltaTime);
@@ -61,6 +66,10 @@ void Player::Update(float deltaTime)
 void Player::Draw(sf::RenderWindow & window)
 {
     window.draw(*m_sprite);
+}
+
+void Player::OnCollision(Collider& other)
+{
 }
 
 std::shared_ptr<Entity> Player::Clone(unsigned int worldID, unsigned int ownership, ServerConnection* connection, World* world)

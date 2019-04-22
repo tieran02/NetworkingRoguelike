@@ -30,6 +30,8 @@ public:
 	unsigned int GetColientID() const { return m_clientID; }
 
 	void SendMovementMessage(unsigned int worldID, sf::Vector2f newPosition, sf::Vector2f velocity);
+	void SendSpawnRequestMessage(unsigned int entityID, sf::Vector2f position, sf::Vector2f velocity);
+	void SendEntityDestroyMessage(unsigned int worldID);
 
 	sf::Time TimeSinceLastMessage() const;
 private:

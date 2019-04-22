@@ -2,6 +2,7 @@
 #include <vector>
 #include "DungeonRoom.h"
 #include <SFML/Graphics.hpp>
+#include <unordered_set>
 
 class Dungeon;
 
@@ -44,7 +45,7 @@ protected:
 	DungeonTile** m_tiles;
 	std::vector<DungeonRoom> m_rooms;
 	std::vector<DungeonChunk*> m_neighbourChunks;
-	std::vector<DungeonTile*> edgeTiles;
+	std::unordered_set<DungeonTile*> edgeTiles;
 	void processMap();
 	void findEdgeTiles();
 private:

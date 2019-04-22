@@ -129,10 +129,11 @@ void ServerConnection::PollMessages()
 			}
 			else if (msg.message.GetHeader().type == MessageType::ENTITY_STATE)
 			{
+				// destroy entity
 				EntityStateMessage* entityState = static_cast<EntityStateMessage*>(&msg.message);
 				if(!entityState->IsActive())
 				{
-					m_world->GetEntities().erase(entityState->WorldID());
+					m_world->removeEntity(entityState->WorldID());
 				}
 			}
 			
@@ -215,7 +216,7 @@ void ServerConnection::NotifyWorldGeneration()
 void ServerConnection::sendEntityStates()
 {
 	//for each world entity update the entity state
-	for (auto entity : m_world->GetEntities())
+	for (const auto& entity : m_world->GetEntities())
 	{
 		//onlu send movement of the entity if the client has ownership of it
 		if (entity.second->hasOwnership()) {
@@ -267,10 +268,22 @@ void ServerConnection::SendMovementMessage(unsigned int worldID, sf::Vector2f ne
 		//check if distance is greater than threshold
 		const float distance = std::abs(Math::Distance(entity->GetNetworkPosition(), entity->GetPosition()));
 		if (distance >= 16.0f || entity->GetVelocity() != entity->GetNetworkVelocity()) {
-			MovementMessage message{ worldID,newPosition,velocity, m_clientID };
+			const MovementMessage message{ worldID,newPosition,velocity, m_clientID };
 			SendUdpMessage(message);
 		}
 	}
+}
+
+void ServerConnection::SendSpawnRequestMessage(unsigned entityID, sf::Vector2f position, sf::Vector2f velocity)
+{
+	const SpawnMessage message{ 0,entityID,position,velocity,m_clientID };
+	SendTcpMessage(message);
+}
+
+void ServerConnection::SendEntityDestroyMessage(unsigned worldID)
+{
+	const EntityStateMessage state{ worldID,sf::Vector2f(),sf::Vector2f(),true, m_clientID };
+	SendTcpMessage(state);
 }
 
 sf::Time ServerConnection::TimeSinceLastMessage() const

@@ -55,6 +55,16 @@ void Entity::SetNetworkVelocity(const sf::Vector2f& velocity)
 	m_networkVelocity = velocity;
 }
 
+void Entity::SetActive(bool active)
+{
+	m_active = active;
+}
+
+bool Entity::IsActive() const
+{
+	return m_active;
+}
+
 sf::Vector2f Entity::CalculatePredictedPosition() const
 {
 	return m_position + m_velocity;
@@ -65,7 +75,7 @@ void Entity::UpdatePosition(float deltaTime)
 	if (Math::SqrMagnitude(m_velocity) == 0.0f)
 		return;
 
-	SetPosition(m_position + m_velocity);
+	SetPosition(m_position + (m_velocity * deltaTime));
 }
 
 void Entity::UpdatePredictedPosition(float deltaTime)

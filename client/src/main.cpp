@@ -15,6 +15,7 @@ int main()
 	SpriteManager::Instance().LoadTexture("Player", "player.png");
 	SpriteManager::Instance().LoadTexture("Wall", "wall.png");
 	SpriteManager::Instance().LoadTexture("Floor", "floor.png");
+	SpriteManager::Instance().LoadTexture("Bullet", "bullet.png");
 	LOG_INFO("Resouces Loaded");
 
 	//World
@@ -65,7 +66,7 @@ int main()
 
 		server_connection.PollMessages();
 		deltaTime = currentTime - lastTime;
-		LOG_INFO("FPS = " + std::to_string(1.0f / (currentTime - lastTime)));
+		//LOG_INFO("FPS = " + std::to_string(1.0f / (currentTime - lastTime)));
 
 		lastTime = currentTime;
 	}

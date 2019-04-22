@@ -51,6 +51,7 @@ std::shared_ptr<Entity> World::SpawnEntity(unsigned int entityID, unsigned int w
 		entity->SetPosition(pos);
 		entity->SetNetworkPosition(pos);
 		entity->SetLastNetworkPosition(pos);
+		entity->SetVelocity(velocity);
 		entity->SetNetworkVelocity(velocity);
 		//add entity collider to the collider vector
 		m_colliders.insert(entity->GetCollider());
@@ -95,15 +96,50 @@ void World::collisionDetection()
 
 	for (auto& entity : m_entities)
 	{
+		if (!entity.second->IsActive())
+			continue;
 		for (auto& other : m_colliders)
 		{
-			if(entity.second->GetCollider().get() == other.get())
+			if(entity.second->GetCollider() == other)
 				continue;
 
-			other->CheckCollision(*entity.second->GetCollider());
+			if(other->CheckCollision(*entity.second->GetCollider()))
+			{
+				entity.second->OnCollision(*other);
+			}
 		}
 		//set entity pos to collider pos
 		entity.second->SetPosition(entity.second->GetCollider()->GetPosition());
+	}
+}
+
+void World::removeEntity(unsigned int worldID)
+{
+	if (m_entities.find(worldID) != m_entities.end())
+	{
+		auto& entity = m_entities.at(worldID);
+		//destroy collider
+		const auto collider = std::find(m_colliders.begin(), m_colliders.end(), entity->GetCollider());
+		if (collider != m_colliders.end())
+		{
+			m_colliders.erase(collider);
+		}
+
+		m_entities.erase(entity->GetWorldID());
+	}
+}
+
+void World::ShootBullet(sf::Vector2f startPos, sf::Vector2f velocity)
+{
+	m_serverConnection->SendSpawnRequestMessage(1, startPos, velocity);
+}
+
+void World::RequestDestroyEntity(unsigned worldID)
+{
+	if(m_entities.find(worldID) != m_entities.end())
+	{
+		m_entities.at(worldID)->SetActive(false);
+		m_serverConnection->SendEntityDestroyMessage(worldID);
 	}
 }
 
@@ -115,10 +151,12 @@ void World::Update(float deltaTime)
 
 	for (auto& entity : m_entities)
 	{
-		entity.second->Update(deltaTime);
+		if (entity.second->IsActive())
+			entity.second->Update(deltaTime);
 	}
 
 	collisionDetection();
+	//removeEntities();
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::F4))
 	{
@@ -139,7 +177,8 @@ void World::Draw(sf::RenderWindow& window)
 
 	for(auto& entity : m_entities)
 	{
-		entity.second->Draw(window);
+		if(entity.second->IsActive())
+			entity.second->Draw(window);
 	}
 
 	//draw colliders

@@ -277,7 +277,7 @@ void DungeonChunk::findEdgeTiles()
 
 					if (m_tiles[chunkY][chunkX].type == DungeonTileType::WALL)
 					{
-						edgeTiles.push_back(&m_tiles[chunkY][chunkX]);
+						edgeTiles.insert(&m_tiles[chunkY][chunkX]);
 					}
 				}
 			}

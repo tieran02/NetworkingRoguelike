@@ -162,6 +162,32 @@ void Network::Start()
 					//received disconnect msg from a client
 					Disconnect(msg.message.GetHeader().id);
 				}
+				else if (msg.message.GetHeader().type == MessageType::ENTITY_STATE)
+				{
+					EntityStateMessage* message = static_cast<EntityStateMessage*>(&msg.message);
+
+					if (message->IsActive()) {
+						LOG_TRACE("Recieved Entity state message from entity:" + std::to_string(message->WorldID()));
+						//update world state with the new entity pos
+						m_worldState->MoveEntity(message->WorldID(), message->GetPosition(), message->GetVelocity());
+						//send entity state message back to all clients (including itself)
+						messagesToSend.push(std::make_tuple(0, Protocol::TCP, *message));
+					}else
+					{
+						//delete entity
+						LOG_TRACE("Recieved Entity delete message from entity:" + std::to_string(message->WorldID()));
+						//TODO only delete if the client had ownership of the entity
+						m_worldState->GetEntities().erase(message->WorldID());
+						EntityStateMessage deleteMsg(message->WorldID(), sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false, 0);
+
+						SendToAllTCP(deleteMsg);
+					}
+				}
+				else if (msg.message.GetHeader().type == MessageType::SPAWN) //spawn request from client
+				{
+					SpawnMessage* requestMsg = static_cast<SpawnMessage*>(&msg.message);
+					m_worldState->SpawnNewEntity(requestMsg->GetEntityID(), requestMsg->GetPosition(), requestMsg->GetVelocity(), requestMsg->GetOwnershipID());
+				}
 				else
 				{
 					std::stringstream stream;

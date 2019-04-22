@@ -1,5 +1,6 @@
 #include "EntityFactory.h"
 #include "Player.h"
+#include "Bullet.h"
 
 EntityFactory::EntityFactory()
 {
@@ -15,6 +16,8 @@ void EntityFactory::Setup()
 {
     std::shared_ptr<Player> playerEntity = std::make_shared<Player>();
     AddEntity(0,std::make_shared<Player>());
+	std::shared_ptr<Bullet> bulletEntity = std::make_shared<Bullet>();
+	AddEntity(1, std::make_shared<Bullet>());
 }
 
 std::shared_ptr<Entity> EntityFactory::CreateEntity(unsigned int entityID, unsigned int worldID, unsigned int ownership, ServerConnection* connection, World* world) const
