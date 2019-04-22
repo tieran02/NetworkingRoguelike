@@ -40,13 +40,11 @@ DungeonChunk::~DungeonChunk()
 	delete[] m_tiles;
 }
 
-void DungeonChunk::Draw(sf::RenderWindow& window, int tileSize)
+void DungeonChunk::Draw(sf::RenderWindow& window, int tileSize, std::shared_ptr<sf::Sprite> wallSprite, std::shared_ptr<sf::Sprite> floorSprite)
 {
-	sf::RectangleShape rectangle;
-	rectangle.setSize(sf::Vector2f(tileSize, tileSize));
-	rectangle.setFillColor(sf::Color::Blue);
-	sf::FloatRect spriteBounds = rectangle.getGlobalBounds();
-	rectangle.setOrigin(spriteBounds.width / 2.0f, spriteBounds.height / 2.0f);
+	sf::FloatRect spriteBounds = wallSprite->getGlobalBounds();
+	wallSprite->setOrigin(spriteBounds.width / 2.0f, spriteBounds.height / 2.0f);
+	floorSprite->setOrigin(spriteBounds.width / 2.0f, spriteBounds.height / 2.0f);
 
 	sf::Vector2i offset{ chunkX * (int)CHUNK_SIZE * tileSize, chunkY * (int)CHUNK_SIZE * tileSize };
 
@@ -81,14 +79,16 @@ void DungeonChunk::Draw(sf::RenderWindow& window, int tileSize)
 		for (int x = 0; x < (int)CHUNK_SIZE; ++x)
 		{
 			sf::Vector2f position = sf::Vector2f((x*(float)tileSize), (y*float(tileSize))) + (sf::Vector2f)offset;
-			rectangle.setPosition(position);
 
 			switch (m_tiles[y][x].type)
 			{
 			case DungeonTileType::EMPTY:
+				floorSprite->setPosition(position);
+				window.draw(*floorSprite);
 				break;
 			case DungeonTileType::WALL:
-				window.draw(rectangle);
+				wallSprite->setPosition(position);
+				window.draw(*wallSprite);
 				break;
 			default:
 				break;
@@ -263,7 +263,6 @@ void DungeonChunk::findEdgeTiles()
 	{
 		for (int x = 0; x < CHUNK_SIZE; ++x)
 		{
-
 			const auto tile = &m_tiles[y][x];
 			if(tile->type == DungeonTileType::WALL)
 				continue;

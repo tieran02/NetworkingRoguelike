@@ -49,11 +49,11 @@ void Dungeon::Generate()
 
 
 
-void Dungeon::Draw(sf::RenderWindow & window)
+void Dungeon::Draw(sf::RenderWindow & window, std::shared_ptr<sf::Sprite> wallSprite, std::shared_ptr<sf::Sprite> floorSprite)
 {
 	for (auto& chunk : m_chunks)
 	{
-		chunk->Draw(window, m_tileSize);
+		chunk->Draw(window, m_tileSize,wallSprite,floorSprite);
 	}
 }
 

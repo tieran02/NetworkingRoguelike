@@ -30,7 +30,7 @@ public:
 	virtual ~DungeonChunk();
 
 	virtual void Generate() = 0;
-	void Draw(sf::RenderWindow& window, int tileSize);
+	void Draw(sf::RenderWindow& window, int tileSize, std::shared_ptr<sf::Sprite> wallSprite, std::shared_ptr<sf::Sprite> floorSprite);
 	bool InBounds(int x, int y) const;
 	int GetX() const { return chunkX; }
 	int GetY() const { return chunkY; }

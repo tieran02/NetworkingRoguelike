@@ -13,6 +13,8 @@ int main()
 
 	LOG_INFO("Loading Resouces...");
 	SpriteManager::Instance().LoadTexture("Player", "player.png");
+	SpriteManager::Instance().LoadTexture("Wall", "wall.png");
+	SpriteManager::Instance().LoadTexture("Floor", "floor.png");
 	LOG_INFO("Resouces Loaded");
 
 	//World
@@ -24,7 +26,6 @@ int main()
 	server_connection.FindServer();
 	server_connection.Connect();
 	//Generate World
-	const int DUNGEON_SIZE{ 2 };
 	world.Generate(&server_connection);
 
 	//Create window
@@ -57,7 +58,7 @@ int main()
 
 		world.Update(deltaTime);
 		server_connection.UpdateTick();
-		window.clear();
+		window.clear(sf::Color{80,64,64,255});
 
 		world.Draw(window);
 		window.display();

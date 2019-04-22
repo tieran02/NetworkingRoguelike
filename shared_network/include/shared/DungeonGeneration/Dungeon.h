@@ -15,7 +15,7 @@ public:
 	void Cleanup();
 
 	void Generate();
-	void Draw(sf::RenderWindow & window);
+	void Draw(sf::RenderWindow & window, std::shared_ptr<sf::Sprite> wallSprite, std::shared_ptr<sf::Sprite> floorSprite);
 
 	const std::vector<DungeonChunk*>& GetChunks() const;
 	sf::Vector2f ChunckToWorldSpace(int chunkID, sf::Vector2f chunckPos) const;

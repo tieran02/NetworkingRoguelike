@@ -48,5 +48,9 @@ private:
 
 	void collisionDetection();
 	bool m_debug{ false };
+
+	std::shared_ptr<sf::Sprite> m_wallSprite;
+	std::shared_ptr<sf::Sprite> m_floorSprite;
+
 };
 

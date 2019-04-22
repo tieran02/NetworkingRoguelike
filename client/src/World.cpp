@@ -3,9 +3,12 @@
 #include "shared/Random.h"
 #include "Networking/ServerConnection.h"
 #include "shared/Utility/Math.h"
+#include "Graphics/SpriteManager.h"
 
-World::World() : m_camera( sf::Vector2f{ 0.0f,0.0f }, GetWindowSize(),1024 )
+World::World() : m_camera(sf::Vector2f{ 0.0f,0.0f }, GetWindowSize(), 1024)
 {
+	m_wallSprite = SpriteManager::Instance().CreateSprite("Wall");
+	m_floorSprite = SpriteManager::Instance().CreateSprite("Floor");
 }
 
 
@@ -132,7 +135,7 @@ void World::Draw(sf::RenderWindow& window)
 	window.setView(m_camera.GetView());
 
 
-	m_dungeon->Draw(window);
+	m_dungeon->Draw(window,m_wallSprite,m_floorSprite);
 
 	for(auto& entity : m_entities)
 	{
