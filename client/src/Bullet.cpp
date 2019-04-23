@@ -1,7 +1,7 @@
 #include "Bullet.h"
 #include "World.h"
 
-Bullet::Bullet() : Entity("Bullet")
+Bullet::Bullet() : Entity("Bullet", CollisionLayer::PROJECTILE_PLAYER)
 {
 	SetMovementSpeed(400.0f);
 }

@@ -28,7 +28,7 @@ void World::Generate(ServerConnection* connection)
 	auto rects = m_dungeon->GetTileRectangles();
 	for (auto& rect : rects)
 	{
-		auto collider = std::make_shared<Collider>(rect);
+		auto collider = std::make_shared<Collider>(rect,CollisionLayer::WALL);
 		m_colliders.insert(collider);
 	}
 

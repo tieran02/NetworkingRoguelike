@@ -3,7 +3,7 @@
 #include "Utility/Log.h"
 
 
-Collider::Collider(const sf::Vector2f& pos, const sf::Vector2f& size)
+Collider::Collider(const sf::Vector2f& pos, const sf::Vector2f& size, CollisionLayer layer)
 {
 	m_rect = sf::RectangleShape{ size };
 	m_rect.setPosition(pos);
@@ -11,13 +11,18 @@ Collider::Collider(const sf::Vector2f& pos, const sf::Vector2f& size)
 	m_halfSize = size / 2.0f;
 	m_rect.setOrigin(m_halfSize);
 
+	m_layer = layer;
+	m_collideWith = AllLayers();
 }
 
-Collider::Collider(const sf::RectangleShape& rect) : m_rect(rect)
+Collider::Collider(const sf::RectangleShape& rect, CollisionLayer layer) : m_rect(rect)
 {
 	m_halfSize = m_rect.getSize() / 2.0f;
 	m_rect.setFillColor(sf::Color{0,255,0,200 });
 	m_rect.setOrigin(m_halfSize);
+
+	m_layer = layer;
+	m_collideWith = AllLayers();
 }
 
 
@@ -32,6 +37,12 @@ void Collider::Move(float x, float y)
 
 bool Collider::CheckCollision(Collider& other)
 {
+	//check the layers
+	const bool bit = (m_collideWith & other.m_layer) != 0;
+	const bool bit1 = (other.m_collideWith & m_layer) != 0;
+	if (!bit || !bit1)
+		return false;
+
 	sf::Vector2f otherPos = other.GetPosition();
 	sf::Vector2f otherHalfSize = other.GetHalfSize();
 	sf::Vector2f thisPos = GetPosition();
@@ -100,4 +111,19 @@ sf::Vector2f Collider::GetHalfSize() const
 void Collider::SetMoveable(bool moveable)
 {
 	m_moveable = moveable;
+}
+
+void Collider::SetCollideMask(unsigned collideWithMask)
+{
+	m_collideWith = collideWithMask;
+}
+
+void Collider::SetLayer(CollisionLayer layer)
+{
+	m_layer = layer;
+}
+
+unsigned int Collider::AllLayers()
+{
+	return std::numeric_limits<unsigned int>::max();
 }

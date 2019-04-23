@@ -8,7 +8,7 @@ class ServerConnection;
 class Entity
 {
 public:
-    Entity(const std::string& spriteName);
+    Entity(const std::string& spriteName, CollisionLayer layer);
     virtual ~Entity();
 
     virtual void Start() = 0;

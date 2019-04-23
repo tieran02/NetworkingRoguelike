@@ -4,14 +4,14 @@
 #include "Networking/ServerConnection.h"
 #include "Graphics/SpriteManager.h"
 
-Entity::Entity(const std::string& spriteName)
+Entity::Entity(const std::string& spriteName, CollisionLayer layer)
 {
 	m_sprite = SpriteManager::Instance().CreateSprite(spriteName);
 	sf::FloatRect spriteBounds = m_sprite->getGlobalBounds();
 	m_sprite->setOrigin(spriteBounds.width / 2.0f, spriteBounds.height / 2.0f);
 
 	//create collider
-	m_collider = std::make_shared<Collider>(m_position,sf::Vector2f{ m_sprite->getGlobalBounds().width,m_sprite->getGlobalBounds().height});
+	m_collider = std::make_shared<Collider>(m_position,sf::Vector2f{ m_sprite->getGlobalBounds().width,m_sprite->getGlobalBounds().height},layer);
 }
 
 Entity::~Entity()
