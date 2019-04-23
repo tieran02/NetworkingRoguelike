@@ -9,6 +9,8 @@ Entity::Entity(const std::string& spriteName)
 	m_sprite = SpriteManager::Instance().CreateSprite(spriteName);
 	sf::FloatRect spriteBounds = m_sprite->getGlobalBounds();
 	m_sprite->setOrigin(spriteBounds.width / 2.0f, spriteBounds.height / 2.0f);
+
+	//create collider
 	m_collider = std::make_shared<Collider>(m_position,sf::Vector2f{ m_sprite->getGlobalBounds().width,m_sprite->getGlobalBounds().height});
 }
 
@@ -55,14 +57,50 @@ void Entity::SetNetworkVelocity(const sf::Vector2f& velocity)
 	m_networkVelocity = velocity;
 }
 
+void Entity::SetMovementSpeed(float speed)
+{
+	m_movementSpeed = speed;
+}
+
+float Entity::GetMovementSpeed() const
+{
+	return m_movementSpeed;
+}
+
 void Entity::SetActive(bool active)
 {
-	m_active = active;
+	if (active != m_active)
+	{
+		m_active = active;
+		//send entity state to server
+		m_connection->SendEntityStateMessage(*this);
+	}
 }
 
 bool Entity::IsActive() const
 {
 	return m_active;
+}
+
+void Entity::SetHealth(float health)
+{
+	//Health can't be set higher than max health
+	m_health = std::min(m_maxHealth, health);
+}
+
+float Entity::GetHealth() const
+{
+	return m_health;
+}
+
+void Entity::SetMaxHealth(float health)
+{
+	m_maxHealth = health;
+}
+
+float Entity::GetMaxHealth() const
+{
+	return m_maxHealth;
 }
 
 sf::Vector2f Entity::CalculatePredictedPosition() const

@@ -16,6 +16,8 @@ struct Entity
 	sf::Vector2f Velocity;
 	unsigned int OwnershipID;
 	bool IsActive;
+	float Health;
+	float MaxHealth;
 };
 
 class Network;

@@ -166,19 +166,20 @@ void Network::Start()
 				{
 					EntityStateMessage* message = static_cast<EntityStateMessage*>(&msg.message);
 
-					if (message->IsActive()) {
+					if (!message->ShouldDestroy()) {
 						LOG_TRACE("Recieved Entity state message from entity:" + std::to_string(message->WorldID()));
 						//update world state with the new entity pos
-						m_worldState->MoveEntity(message->WorldID(), message->GetPosition(), message->GetVelocity());
+ 						m_worldState->MoveEntity(message->WorldID(), message->GetPosition(), message->GetVelocity());
 						//send entity state message back to all clients (including itself)
 						messagesToSend.push(std::make_tuple(0, Protocol::TCP, *message));
-					}else
+					}
+					else
 					{
 						//delete entity
 						LOG_TRACE("Recieved Entity delete message from entity:" + std::to_string(message->WorldID()));
 						//TODO only delete if the client had ownership of the entity
 						m_worldState->GetEntities().erase(message->WorldID());
-						EntityStateMessage deleteMsg(message->WorldID(), sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false, 0);
+						EntityStateMessage deleteMsg(message->WorldID(), sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false,true, 0);
 
 						SendToAllTCP(deleteMsg);
 					}
@@ -279,7 +280,7 @@ void Network::sendWorldState()
 	int i = 0;
 	for (auto& entity : entities)
 	{
-		EntityStateMessage msg{ entity.second->WorldID,entity.second->Position,sf::Vector2f{0,0},entity.second->IsActive,0 };
+		EntityStateMessage msg{ entity.second->WorldID,entity.second->Position,sf::Vector2f{0,0},entity.second->IsActive,false,0 };
 		messageBatcher.AddMessage(msg);
 		i++;
 	}
@@ -393,7 +394,7 @@ void Network::Disconnect(unsigned connectionID)
 		BatchMessage<EntityStateMessage> batch(MessageType::BATCH,(int)entitiesToRemove.size());
 		for (int i = 0; i < entitiesToRemove.size(); ++i)
 		{
-			EntityStateMessage entityState(entitiesToRemove[i]->WorldID, sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false, 0);
+			EntityStateMessage entityState(entitiesToRemove[i]->WorldID, sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false,true, 0);
 			batch[i] = entityState;
             m_worldState->GetEntities().erase(entitiesToRemove[i]->WorldID);
 		}
@@ -401,7 +402,7 @@ void Network::Disconnect(unsigned connectionID)
 	}
 	else if(!entitiesToRemove.empty())
 	{
-		EntityStateMessage entityState(entitiesToRemove[0]->WorldID, sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false, 0);
+		EntityStateMessage entityState(entitiesToRemove[0]->WorldID, sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false,true, 0);
 		SendToAllTCP(entityState);
 		m_worldState->GetEntities().erase(entitiesToRemove[0]->WorldID);
 	}

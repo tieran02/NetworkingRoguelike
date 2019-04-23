@@ -259,9 +259,9 @@ void DungeonChunk::processMap()
 
 void DungeonChunk::findEdgeTiles()
 {
-	for (int y = 0; y < CHUNK_SIZE; ++y)
+	for (int y = 0; y < (int)CHUNK_SIZE; ++y)
 	{
-		for (int x = 0; x < CHUNK_SIZE; ++x)
+		for (int x = 0; x < (int)CHUNK_SIZE; ++x)
 		{
 			const auto tile = &m_tiles[y][x];
 			if(tile->type == DungeonTileType::WALL)
@@ -272,7 +272,7 @@ void DungeonChunk::findEdgeTiles()
 			{
 				for (int chunkX = tile->x - 1; chunkX <= tile->x + 1; ++chunkX)
 				{
-					if (chunkX < 0 || chunkY < 0 || chunkY >= CHUNK_SIZE || chunkX >= CHUNK_SIZE)
+					if (chunkX < 0 || chunkY < 0 || chunkY >= (int)CHUNK_SIZE || chunkX >= (int)CHUNK_SIZE)
 						continue;
 
 					if (m_tiles[chunkY][chunkX].type == DungeonTileType::WALL)

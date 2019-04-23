@@ -5,7 +5,9 @@
 
 Player::Player() : Entity("Player")
 {
-	m_movementSpeed = 200.0f;
+	SetMaxHealth(100.0f);
+	SetHealth(GetMaxHealth());
+	SetMovementSpeed(200.0f);
 }
 
 Player::~Player()
@@ -17,7 +19,7 @@ void Player::Start()
 {
 	if (hasOwnership())
 	{
-		m_collider->SetMoveable(true);
+		GetCollider()->SetMoveable(true);
 	}
 }
 
@@ -30,33 +32,39 @@ void Player::Update(float deltaTime)
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
 		{
 			// left key is pressed: move our character
-			newVelocity += sf::Vector2f(-m_movementSpeed, 0.0f);
+			newVelocity += sf::Vector2f(-GetMovementSpeed(), 0.0f);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
 		{
 			// left key is pressed: move our character
-			newVelocity += sf::Vector2f(m_movementSpeed, 0.0f);
+			newVelocity += sf::Vector2f(GetMovementSpeed(), 0.0f);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
 		{
 			// left key is pressed: move our character
-			newVelocity += sf::Vector2f(0.0f, -m_movementSpeed);
+			newVelocity += sf::Vector2f(0.0f, -GetMovementSpeed());
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
 		{
 			// left key is pressed: move our character
-			newVelocity += sf::Vector2f(0.0f, m_movementSpeed);
+			newVelocity += sf::Vector2f(0.0f, GetMovementSpeed());
 		}
 
 		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
 		{
-			m_world->ShootBullet(m_position, sf::Vector2f(0.0f, -400.0f));
+			m_world->ShootBullet(GetPosition(), sf::Vector2f(0.0f, -400.0f));
 		}
 		SetVelocity(newVelocity);
 		UpdatePosition(deltaTime);
 
+		//if health is lower than zero disable the player
+		if(GetHealth() <= 0.0f)
+		{
+			SetActive(false);
+		}
+
 		//set camera pos
-		m_world->GetCamera().SetPosition(m_position);
+		m_world->GetCamera().SetPosition(GetPosition());
 	}else
 	{
 		UpdatePredictedPosition(deltaTime); //network player
@@ -65,11 +73,12 @@ void Player::Update(float deltaTime)
 
 void Player::Draw(sf::RenderWindow & window)
 {
-    window.draw(*m_sprite);
+    window.draw(*GetSprite());
 }
 
 void Player::OnCollision(Collider& other)
 {
+
 }
 
 std::shared_ptr<Entity> Player::Clone(unsigned int worldID, unsigned int ownership, ServerConnection* connection, World* world)

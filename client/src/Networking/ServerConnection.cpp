@@ -129,11 +129,23 @@ void ServerConnection::PollMessages()
 			}
 			else if (msg.message.GetHeader().type == MessageType::ENTITY_STATE)
 			{
-				// destroy entity
-				EntityStateMessage* entityState = static_cast<EntityStateMessage*>(&msg.message);
-				if(!entityState->IsActive())
+				EntityStateMessage* message = static_cast<EntityStateMessage*>(&msg.message);
+
+				if (message->ShouldDestroy())
 				{
-					m_world->removeEntity(entityState->WorldID());
+					// destroy entity
+					m_world->removeEntity(message->WorldID());
+				}
+				else 
+				{
+					auto& entities = m_world->GetEntities();
+					if (entities.find(message->WorldID()) != entities.end())
+					{
+						auto& entity = entities.at(message->WorldID());
+						entity->SetActive(message->IsActive());
+						updateEntityNetworkState(message->WorldID(), message->GetPosition(), message->GetVelocity());
+					}
+
 				}
 			}
 			
@@ -225,8 +237,8 @@ void ServerConnection::sendEntityStates()
 			constexpr float threshold = 5.0f;
 			if (distance >= threshold)
 			{
-				EntityStateMessage state{ entity.second->GetWorldID(),entity.second->GetPosition(),entity.second->GetVelocity(),true, m_clientID };
-				SendUdpMessage(state);
+				MovementMessage movement{ entity.second->GetWorldID(),entity.second->GetPosition(),entity.second->GetVelocity(), m_clientID };
+				SendUdpMessage(movement);
 				//Set network position and velocity to what we just sent to the server (This may get corrected later on when we receive a message)
 				entity.second->SetNetworkPosition(entity.second->GetPosition());
 				entity.second->SetNetworkVelocity(entity.second->GetVelocity());
@@ -251,11 +263,17 @@ void ServerConnection::calculatePing(long long  serverTimestamp)
 {
 	const long long now = std::chrono::system_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
 	const long long milliseconds = now - serverTimestamp;
-	m_ping = milliseconds;;
+	m_ping = (float)milliseconds;;
 	LOG_TRACE("Ping = " + std::to_string(m_ping));
 
 	//send ping back to server
 	SendUdpMessage(PingMessage{ serverTimestamp, m_clientID });
+}
+
+void ServerConnection::SendEntityStateMessage(const Entity& entity)
+{
+	const EntityStateMessage stateMsg{ entity.GetWorldID(),entity.GetPosition(),entity.GetVelocity(),entity.IsActive(),false,m_clientID };
+	SendTcpMessage(stateMsg);
 }
 
 void ServerConnection::SendMovementMessage(unsigned int worldID, sf::Vector2f newPosition, sf::Vector2f velocity)
@@ -282,7 +300,7 @@ void ServerConnection::SendSpawnRequestMessage(unsigned entityID, sf::Vector2f p
 
 void ServerConnection::SendEntityDestroyMessage(unsigned worldID)
 {
-	const EntityStateMessage state{ worldID,sf::Vector2f(),sf::Vector2f(),true, m_clientID };
+	const EntityStateMessage state{ worldID,sf::Vector2f(),sf::Vector2f(),false,true, m_clientID };
 	SendTcpMessage(state);
 }
 

@@ -59,7 +59,7 @@ std::vector<BatchMessage<T>> MessageBatcher<T>::createBatches()
 	//calculate number of batch messages needed
 	const size_t totalSize = m_messages.size() * sizeof(T);
 	const size_t maxSize{256};
-	const int amountOfBatches = (totalSize - 1) / maxSize + 1;
+	const int amountOfBatches = ((int)totalSize - 1) / (int)maxSize + 1;
 	std::vector<BatchMessage<T>> batches(amountOfBatches);
 
 	size_t currentBatchSize = 0;

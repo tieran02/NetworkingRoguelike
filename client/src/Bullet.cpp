@@ -3,7 +3,7 @@
 
 Bullet::Bullet() : Entity("Bullet")
 {
-	m_movementSpeed = 400.0f;
+	SetMovementSpeed(400.0f);
 }
 
 Bullet::~Bullet()
@@ -22,7 +22,7 @@ void Bullet::Update(float deltaTime)
 
 void Bullet::Draw(sf::RenderWindow& window)
 {
-	window.draw(*m_sprite);
+	window.draw(*GetSprite());
 }
 
 void Bullet::OnCollision(Collider& other)

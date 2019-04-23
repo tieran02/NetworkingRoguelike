@@ -55,10 +55,10 @@ void WorldState::SpawnNewEntity(const int entityID, sf::Vector2f position, sf::V
 	std::unique_lock<std::shared_mutex> lock{ m_entityMapMutex };
 
 	unsigned int worldID = entityIdCounter++;
-	m_network->SendSpawnMessage(worldID,entityID, position,velocity, ownership);
 	//add to entity list
-	auto entity = std::make_shared<Entity>(worldID, entityID, position, sf::Vector2f{ 0,0 }, ownership);
+	auto entity = std::make_shared<Entity>(worldID, entityID, position, velocity, ownership);
 	m_entities.insert(std::make_pair(worldID, entity));
+	m_network->SendSpawnMessage(entity->WorldID, entity->EntityID, entity->Position, entity->Velocity, entity->OwnershipID);
 }
 
 void WorldState::SpawnEntity(int worldID)
@@ -93,7 +93,7 @@ sf::Vector2f WorldState::findValidSpawnPos() const
 	const std::vector<DungeonTile*>& tiles = rooms[0].GetTiles();
 
 	//Get a random point within this room
-	int index = Random::randInt(0, tiles.size());
+	int index = Random::randInt(0, (int)tiles.size());
 	sf::Vector2f chunkPos{(float)tiles[index]->x, (float)tiles[index]->y};
 	return m_dungeon->ChunckToWorldSpace(0, chunkPos);
 }

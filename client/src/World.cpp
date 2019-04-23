@@ -45,6 +45,8 @@ void World::SetSeed(unsigned int seed)
 
 std::shared_ptr<Entity> World::SpawnEntity(unsigned int entityID, unsigned int worldID, sf::Vector2f pos, sf::Vector2f velocity, unsigned int ownership)
 {
+	if (m_entities.find(worldID) != m_entities.end()) //entity already exists in this world
+		return nullptr;
     auto entity = m_entityFactory.CreateEntity(entityID,worldID, ownership,m_serverConnection, this);
     if(entity != nullptr)
     {
@@ -53,10 +55,10 @@ std::shared_ptr<Entity> World::SpawnEntity(unsigned int entityID, unsigned int w
 		entity->SetLastNetworkPosition(pos);
 		entity->SetVelocity(velocity);
 		entity->SetNetworkVelocity(velocity);
+		m_entities.insert((std::make_pair(worldID, entity)));
+
 		//add entity collider to the collider vector
 		m_colliders.insert(entity->GetCollider());
-
-		m_entities.insert((std::make_pair(worldID, entity)));
 
 		entity->Start();
         return entity;

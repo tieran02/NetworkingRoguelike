@@ -48,7 +48,7 @@ BatchMessage<T>::BatchMessage(MessageType type, int size)
 	m_size = size;
 	m_type = type;
 
-	header.size = sizeof(T) * m_size;
+	header.size = (int16_t)(sizeof(T) * m_size);
 	header.type = MessageType::BATCH;
 
 	data.resize(header.size);
@@ -58,7 +58,7 @@ template <typename T>
 void BatchMessage<T>::AddMessage(const T& message)
 {
 	m_size++;
-	header.size = sizeof(T) * m_size;
+	header.size = (int16_t)(sizeof(T) * m_size);
 	data.resize(header.size);
 
 	memcpy(data.data() + (sizeof(T) * (m_size - 1)), &message, sizeof(T));

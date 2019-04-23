@@ -5,10 +5,10 @@ EntityStateMessage::EntityStateMessage(char* buffer) : Message(buffer)
 
 }
 
-EntityStateMessage::EntityStateMessage(unsigned int worldID, sf::Vector2f position, sf::Vector2f velocity, bool active, unsigned int senderID)
+EntityStateMessage::EntityStateMessage(unsigned int worldID, sf::Vector2f position, sf::Vector2f velocity, bool active, bool destroy, unsigned int senderID)
 {
 	header.type = MessageType::ENTITY_STATE;
-	header.size = sizeof(unsigned int) + sizeof(sf::Vector2f) + sizeof(sf::Vector2f) + sizeof(bool);
+	header.size = sizeof(unsigned int) + sizeof(sf::Vector2f) + sizeof(sf::Vector2f) + sizeof(bool) + sizeof(bool);
 	header.id = senderID;
 
 	data.resize(header.size);
@@ -16,6 +16,8 @@ EntityStateMessage::EntityStateMessage(unsigned int worldID, sf::Vector2f positi
 	memcpy(data.data() + sizeof(unsigned int), &position, sizeof(sf::Vector2f));
 	memcpy(data.data() + sizeof(unsigned int) + sizeof(sf::Vector2f), &velocity, sizeof(sf::Vector2f));
 	memcpy(data.data() + sizeof(unsigned int) + sizeof(sf::Vector2f) + sizeof(sf::Vector2f), &active, sizeof(bool));
+	memcpy(data.data() + sizeof(unsigned int) + sizeof(sf::Vector2f) + sizeof(sf::Vector2f) + sizeof(bool), &destroy, sizeof(bool));
+
 }
 
 unsigned EntityStateMessage::WorldID() const
@@ -35,5 +37,10 @@ sf::Vector2f EntityStateMessage::GetVelocity() const
 
 bool EntityStateMessage::IsActive() const
 {
-	return *((bool*)(data.data() + sizeof(unsigned int) + sizeof(sf::Vector2f) + sizeof(bool)));
+	return *((bool*)(data.data() + sizeof(unsigned int) + sizeof(sf::Vector2f) + sizeof(sf::Vector2f)));
+}
+
+bool EntityStateMessage::ShouldDestroy() const
+{
+	return *((bool*)(data.data() + sizeof(unsigned int) + sizeof(sf::Vector2f) + sizeof(sf::Vector2f) + sizeof(bool)));
 }
