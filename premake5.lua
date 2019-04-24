@@ -26,13 +26,18 @@ project "client"
 	debugdir ("bin/" .. outputdir .. "/%{prj.name}")
 
 	files { "client/src/**.*" }
-	includedirs {"client/src", "shared_network/include", "dependencies/spdlog/include"}
+	includedirs {"client/src", "shared_network/include", "dependencies/spdlog/include", "dependencies/json/include" }
 	libdirs {"bin/" .. outputdir .. "shared_network"}
 	links
 	{	
 		"shared_network"
 	}
 
+	postbuildcommands
+	{
+		("{COPY} %{prj.location}resources ../bin/" .. outputdir .. "/client/resources"),
+		("{COPY} %{wks.location}shared_network/resources ../bin/" .. outputdir .. "/client/resources")
+	}
 
 	filter "system:windows"
 		systemversion "latest"
@@ -42,8 +47,7 @@ project "client"
 
 		postbuildcommands
 		{
-			("{COPY} %{wks.location}dependencies/windows/SFML/bin ../bin/" .. outputdir .. "/client"),
-			("{COPY} %{prj.location}resources ../bin/" .. outputdir .. "/client/resources")
+			("{COPY} %{wks.location}dependencies/windows/SFML/bin ../bin/" .. outputdir .. "/client")
 		}
 
 		filter "configurations:Debug"
@@ -82,8 +86,7 @@ project "client"
 
 		postbuildcommands
 		{
-			("{COPY} %{wks.location}dependencies/linux/SFML/lib/bin ../bin/" .. outputdir .. "/client"),
-			("{COPY} %{prj.location}resources ../bin/" .. outputdir .. "/client/resources")
+			("{COPY} %{wks.location}dependencies/linux/SFML/lib/bin ../bin/" .. outputdir .. "/client")
 		}
 
 	filter "configurations:Debug"
@@ -110,11 +113,16 @@ project "server"
 
 	files { "server/src/**.*" }
 
-	includedirs {"server/src", "shared_network/include", "dependencies/spdlog/include"}
+	includedirs {"server/src", "shared_network/include", "dependencies/spdlog/include", "dependencies/json/include"}
 	libdirs { "shared_network/src" }
 	links
 	{	
 		"shared_network"
+	}
+
+	postbuildcommands
+	{
+		("{COPY} %{wks.location}shared_network/resources ../bin/" .. outputdir .. "/server/resources")
 	}
 
 	filter "system:windows"
@@ -186,7 +194,7 @@ project "shared_network"
 	files { "shared_network/src/**.*",
 			"shared_network/include/shared/**.*"	}
 
-	includedirs { "%{prj.name}/include/shared", "dependencies/spdlog/include" }
+	includedirs { "%{prj.name}/include/shared", "dependencies/spdlog/include", "dependencies/json/include" }
 
 	filter "system:windows"
 		includedirs { "dependencies/windows/SFML/include" }

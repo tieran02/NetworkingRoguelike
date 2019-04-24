@@ -5,6 +5,7 @@
 #include "shared/Utility/Math.h"
 #include "shared/Utility/Log.h"
 #include <sstream>
+#include "shared/EntityDataManager.h"
 
 
 ServerConnection::ServerConnection(unsigned short port, World* world) : m_world(world), m_broadcastUdpPort(port)
@@ -305,14 +306,16 @@ void ServerConnection::SendMovementMessage(unsigned int worldID, sf::Vector2f ne
 	}
 }
 
-void ServerConnection::SendSpawnRequestMessage(unsigned entityID, sf::Vector2f position, sf::Vector2f velocity)
+void ServerConnection::SendSpawnRequestMessage(const std::string& entityName, sf::Vector2f position, sf::Vector2f velocity)
 {
-	const SpawnMessage message{ 0,entityID,position,velocity,m_clientID,CollisionLayer::NONE };
+	const auto& entityID = EntityDataManager::Instance().GetEntityData(entityName).EntityID;
+	const SpawnMessage message{ 0, entityID,position,velocity,m_clientID,CollisionLayer::NONE };
 	SendTcpMessage(message);
 }
 
-void ServerConnection::SendProjectileRequestMessage(unsigned entityID, sf::Vector2f position, sf::Vector2f velocity, CollisionLayer side)
+void ServerConnection::SendProjectileRequestMessage(const std::string& entityName, sf::Vector2f position, sf::Vector2f velocity, CollisionLayer side)
 {
+	const auto& entityID = EntityDataManager::Instance().GetEntityData(entityName).EntityID;
 	const SpawnMessage message{ 0,entityID,position,velocity,m_clientID,side };
 	SendTcpMessage(message);
 }

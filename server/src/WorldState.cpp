@@ -36,7 +36,7 @@ void WorldState::SpawnPlayer(Connection& connection)
 	//send all entities to the new player
 	SpawnAllEntities();
 	//spawn the player
-	SpawnNewEntity(0, findValidSpawnPos(),sf::Vector2f(), connection.GetConnectionID());
+	SpawnNewEntity("Player", findValidSpawnPos(),sf::Vector2f(), connection.GetConnectionID(), CollisionLayer::NONE);
 }
 
 void WorldState::SpawnAllEntities()
@@ -50,15 +50,15 @@ void WorldState::SpawnAllEntities()
 	}
 }
 
-void WorldState::SpawnNewEntity(const int entityID, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownership, CollisionLayer layerOverride)
+void WorldState::SpawnNewEntity(const std::string& entityName, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownership, CollisionLayer layerOverride)
 {
 	std::unique_lock<std::shared_mutex> lock{ m_entityMapMutex };
 
 	unsigned int worldID = entityIdCounter++;
 	//add to entity list
-	auto entity = std::make_shared<Entity>(worldID, entityID, position, velocity, ownership);
+	auto entity = std::make_shared<Entity>(entityName ,worldID, position, velocity, ownership, layerOverride);
 	m_entities.insert(std::make_pair(worldID, entity));
-	m_network->SendSpawnMessage(entity->WorldID, entity->EntityID, entity->Position, entity->Velocity, entity->OwnershipID, layerOverride);
+	m_network->SendSpawnMessage(entity->WorldID(), entity->BaseData().EntityID, entity->Position(), entity->Velocity(), entity->OwnershipID(), layerOverride);
 }
 
 void WorldState::SpawnEntity(int worldID)
@@ -68,7 +68,7 @@ void WorldState::SpawnEntity(int worldID)
 	if (m_entities.find(worldID) != m_entities.end())
 	{
 		auto& entity = m_entities.at(worldID);
-		m_network->SendSpawnMessage(entity->WorldID, entity->EntityID, entity->Position, entity->Velocity, entity->OwnershipID);
+		m_network->SendSpawnMessage(entity->WorldID(), entity->BaseData().EntityID, entity->Position(), entity->Velocity(), entity->OwnershipID());
 	}
 }
 
@@ -79,8 +79,8 @@ void WorldState::MoveEntity(int worldID, sf::Vector2f newPosition, sf::Vector2f 
 	//check if entity exists in the world state
 	if(m_entities.find(worldID) != m_entities.end())
 	{
-		m_entities.at(worldID)->Position = newPosition;
-		m_entities.at(worldID)->Velocity = velocity;
+		m_entities.at(worldID)->SetPosition(newPosition);
+		m_entities.at(worldID)->SetVelocity(velocity);
 	}
 }
 
@@ -93,18 +93,18 @@ void WorldState::SetEntityHealth(unsigned worldID, float health, float maxHealth
 	{
 		auto& entity = m_entities.at(worldID);
 
-		entity->MaxHealth = maxHealth;
+		entity->SetMaxHealth(maxHealth);
 		//Health can't be set higher than max health
-		entity->Health = std::min(entity->MaxHealth, health);
+		entity->SetHealth(std::min(entity->BaseData().MaxHealth, health));
 
 		//set entity state to inactive if the entity is dead
-		if (entity->Health <= 0.0f)
-			entity->IsActive = false;
+		if (entity->BaseData().Health <= 0.0f)
+			entity->SetActive(false);
 		else
-			entity->IsActive = true;
+			entity->SetActive(true);
 
 		//send back to clients
-		m_network->SendHealthMessage(worldID, entity->Health, entity->MaxHealth);
+		m_network->SendHealthMessage(worldID, entity->BaseData().Health, entity->BaseData().MaxHealth);
 	}
 }
 

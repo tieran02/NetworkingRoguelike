@@ -1,0 +1,24 @@
+{
+  "entities": [
+    {
+      "EntityID": 0,
+      "EntityName": "Player",
+      "EntitySpriteName": "Player",
+      "SpriteWidth": 32,
+      "SpriteHeight": 64,
+      "Health": 100,
+      "MaxHealth": 100,
+      "Layer": 1
+    },
+    {
+      "EntityID": 1,
+      "EntityName": "Bullet",
+      "EntitySpriteName": "Bullet",
+      "SpriteWidth": 16,
+      "SpriteHeight": 16,
+      "Health": 1,
+      "MaxHealth": 1,
+      "Layer": 16
+    }
+  ]
+}

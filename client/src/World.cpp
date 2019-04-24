@@ -145,8 +145,9 @@ void World::removeEntity(unsigned int worldID)
 
 void World::ShootBullet(sf::Vector2f startPos, sf::Vector2f velocity, CollisionLayer side)
 {
-	m_serverConnection->SendProjectileRequestMessage(1, startPos, velocity, side);
+	m_serverConnection->SendProjectileRequestMessage("Bullet", startPos, velocity, side);
 }
+
 
 void World::RequestDestroyEntity(unsigned worldID)
 {
@@ -155,6 +156,19 @@ void World::RequestDestroyEntity(unsigned worldID)
 		m_entities.at(worldID)->SetActive(false, false);
 		m_serverConnection->SendEntityDestroyMessage(worldID);
 	}
+}
+
+std::vector<sf::Vector2f> World::GetPlayerPositions() const
+{
+	std::vector<sf::Vector2f> positions;
+	for (auto& entity : m_entities)
+	{
+		if(entity.second->GetCollider()->GetLayer() == CollisionLayer::PLAYER)
+		{
+			positions.push_back(entity.second->GetPosition());
+		}
+	}
+	return positions;
 }
 
 

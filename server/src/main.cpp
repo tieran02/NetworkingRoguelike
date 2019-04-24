@@ -7,6 +7,10 @@
 int main()
 {
 	Log::Init();
+
+	//load entity list
+	EntityDataManager::Instance();
+
 	LOG_INFO("Enter level seed: ");
 	unsigned int seed = 0;
 	std::cin >> seed;

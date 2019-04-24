@@ -25,6 +25,8 @@ public:
 	void ShootBullet(sf::Vector2f startPos, sf::Vector2f velocity, CollisionLayer side);
 
 	void RequestDestroyEntity(unsigned int worldID);
+	std::vector<sf::Vector2f> GetPlayerPositions() const;
+
 
 	bool IsGenerated() const { return m_generated; }
 	std::unordered_map<unsigned int, std::shared_ptr<Entity>>& GetEntities() { return m_entities; }
