@@ -12,4 +12,6 @@ public:
 	void OnCollision(Collider& other) override;
 
 	std::shared_ptr<Entity> Clone(unsigned int worldID, unsigned int ownership, ServerConnection* connection, World* world) override;
+private:
+	float m_damage{ 10.0f };
 };

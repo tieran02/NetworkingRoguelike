@@ -11,7 +11,7 @@ Entity::Entity(const std::string& spriteName, CollisionLayer layer)
 	m_sprite->setOrigin(spriteBounds.width / 2.0f, spriteBounds.height / 2.0f);
 
 	//create collider
-	m_collider = std::make_shared<Collider>(m_position,sf::Vector2f{ m_sprite->getGlobalBounds().width,m_sprite->getGlobalBounds().height},layer);
+	m_collider = std::make_shared<Collider>(m_position,sf::Vector2f{ m_sprite->getGlobalBounds().width,m_sprite->getGlobalBounds().height},this,layer);
 }
 
 Entity::~Entity()
@@ -67,13 +67,19 @@ float Entity::GetMovementSpeed() const
 	return m_movementSpeed;
 }
 
-void Entity::SetActive(bool active)
+void Entity::SetActive(bool active, bool serverAuth)
 {
-	if (active != m_active)
+	if (hasOwnership() && active != m_active && !serverAuth)
 	{
 		m_active = active;
-		//send entity state to server
+		m_collider->SetActive(active);
+		//send active only if this message didn't come from the server
 		m_connection->SendEntityStateMessage(*this);
+	}
+	if (serverAuth)
+	{
+		m_active = active;
+		m_collider->SetActive(active);
 	}
 }
 
@@ -82,10 +88,39 @@ bool Entity::IsActive() const
 	return m_active;
 }
 
-void Entity::SetHealth(float health)
+void Entity::SetHealth(float health, bool serverAuth)
 {
-	//Health can't be set higher than max health
-	m_health = std::min(m_maxHealth, health);
+	if (hasOwnership() && health != m_health && !serverAuth)
+	{
+		//send health message to server
+		m_connection->SendHealthMessage(m_worldID, health, m_maxHealth);
+
+		//set health locally (may change when the server sends the health back)
+		m_health = health;
+		//disable if health is less than zero
+		if (m_health <= 0.0f)
+		{
+			SetActive(false, serverAuth);
+		}
+		else
+		{
+			SetActive(true, serverAuth);
+		}
+	}
+	if (serverAuth) // message came directly from the server, set values from the server values
+	{
+		//set health from server
+		m_health = health;
+		//disable if health is less than zero
+		if (m_health <= 0.0f)
+		{
+			SetActive(false, serverAuth);
+		}
+		else
+		{
+			SetActive(true, serverAuth);
+		}
+	}
 }
 
 float Entity::GetHealth() const
@@ -93,14 +128,35 @@ float Entity::GetHealth() const
 	return m_health;
 }
 
-void Entity::SetMaxHealth(float health)
+void Entity::SetMaxHealth(float health, bool serverAuth)
 {
-	m_maxHealth = health;
+	if (hasOwnership() && health != m_maxHealth && !serverAuth)
+	{
+		//send health message to server
+		m_connection->SendHealthMessage(m_worldID, health, m_maxHealth);
+
+		//set health locally (may change when the server sends authorized health back)
+		m_maxHealth = health;
+	}
+	if (serverAuth)
+	{
+		m_maxHealth = health;
+	}
 }
 
 float Entity::GetMaxHealth() const
 {
 	return m_maxHealth;
+}
+
+void Entity::Damage(float amount)
+{
+	SetHealth(m_health - amount, false);
+}
+
+void Entity::Heal(float amount)
+{
+	SetHealth(m_health + amount, false);
 }
 
 sf::Vector2f Entity::CalculatePredictedPosition() const

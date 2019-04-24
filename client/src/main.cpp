@@ -18,19 +18,21 @@ int main()
 	SpriteManager::Instance().LoadTexture("Bullet", "bullet.png");
 	LOG_INFO("Resouces Loaded");
 
+	//Create window
+	sf::RenderWindow window;
+
 	//World
-	World world;
-	world.SetWindowSize(sf::Vector2u(width,height));
+	World world{ window };
+	world.SetWindowSize(sf::Vector2u(width, height));
 
 	//networking
-	ServerConnection server_connection{4305, &world};
+	ServerConnection server_connection{ 4305, &world };
 	server_connection.FindServer();
 	server_connection.Connect();
 	//Generate World
 	world.Generate(&server_connection);
 
-	//Create window
-	sf::RenderWindow window(sf::VideoMode(width, height), "SFML window");;
+	window.create(sf::VideoMode(width, height), "SFML window");
 
 	float lastTime{ 0.0f };
 	float deltaTime{ 0.0f };
@@ -45,7 +47,7 @@ int main()
 			// Request for closing the window
 			if (event.type == sf::Event::Closed)
 				window.close();
-			else if(event.type == sf::Event::Resized)
+			else if (event.type == sf::Event::Resized)
 			{
 				width = event.size.width;
 				height = event.size.height;
@@ -59,7 +61,7 @@ int main()
 
 		world.Update(deltaTime);
 		server_connection.UpdateTick();
-		window.clear(sf::Color{80,64,64,255});
+		window.clear(sf::Color{ 80,64,64,255 });
 
 		world.Draw(window);
 		window.display();

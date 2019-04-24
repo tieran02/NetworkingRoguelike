@@ -1,5 +1,7 @@
 #pragma once
 #include <SFML/Graphics/View.hpp>
+#include <SFML/Graphics/RenderWindow.hpp>
+
 
 class Camera
 {
@@ -15,6 +17,9 @@ public:
 	float GetSize() const;
 
 	const sf::View& GetView() const { return m_view; }
+
+	static sf::Vector2f ScreenToWorldPos(sf::Vector2i screenPos, const sf::RenderWindow& window);
+	static sf::Vector2i WorldPosToScreenPos(sf::Vector2f worldPos, const sf::RenderWindow& window);
 private:
 	sf::View m_view;
 	float m_zoom{0.0f};

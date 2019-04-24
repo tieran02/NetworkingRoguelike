@@ -7,3 +7,4 @@
 #include "ConnectionMessage.h"
 #include "SpawnMessage.h"
 #include "MessageBatcher.h"
+#include "HealthMessage.h"

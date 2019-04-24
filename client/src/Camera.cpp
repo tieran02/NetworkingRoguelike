@@ -34,7 +34,7 @@ float Camera::GetZoom() const
 void Camera::SetSize(sf::Vector2u windowSize, float cameraSize)
 {
 	float aspectRatio = (float)windowSize.x / (float)windowSize.y;
-	m_view.setSize(cameraSize * aspectRatio,cameraSize);
+	m_view.setSize(cameraSize * aspectRatio, cameraSize);
 	m_cameraSize = cameraSize;
 }
 
@@ -42,3 +42,15 @@ float Camera::GetSize() const
 {
 	return m_cameraSize;
 }
+
+sf::Vector2f Camera::ScreenToWorldPos(sf::Vector2i screenPos, const sf::RenderWindow& window)
+{
+	return window.mapPixelToCoords(screenPos);
+}
+
+sf::Vector2i Camera::WorldPosToScreenPos(sf::Vector2f worldPos, const sf::RenderWindow& window)
+{
+	return window.mapCoordsToPixel(worldPos);
+}
+
+

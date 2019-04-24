@@ -5,7 +5,7 @@
 #include "shared/Utility/Math.h"
 #include "Graphics/SpriteManager.h"
 
-World::World() : m_camera(sf::Vector2f{ 0.0f,0.0f }, GetWindowSize(), 1024)
+World::World(const sf::RenderWindow& window) : m_window(window), m_camera(sf::Vector2f{ 0.0f,0.0f }, GetWindowSize(), 1024)
 {
 	m_wallSprite = SpriteManager::Instance().CreateSprite("Wall");
 	m_floorSprite = SpriteManager::Instance().CreateSprite("Floor");
@@ -19,16 +19,16 @@ World::~World()
 void World::Generate(ServerConnection* connection)
 {
 	m_serverConnection = connection;
-    m_entityFactory.Setup();
+	m_entityFactory.Setup();
 
-	m_dungeon = std::unique_ptr<Dungeon>(new Dungeon(2,2,64,m_seed));
+	m_dungeon = std::unique_ptr<Dungeon>(new Dungeon(2, 2, 64, m_seed));
 	m_dungeon->Generate();
 
 	//Set dungeon colliders
 	auto rects = m_dungeon->GetTileRectangles();
 	for (auto& rect : rects)
 	{
-		auto collider = std::make_shared<Collider>(rect,CollisionLayer::WALL);
+		auto collider = std::make_shared<Collider>(rect, CollisionLayer::WALL);
 		m_colliders.insert(collider);
 	}
 
@@ -47,9 +47,9 @@ std::shared_ptr<Entity> World::SpawnEntity(unsigned int entityID, unsigned int w
 {
 	if (m_entities.find(worldID) != m_entities.end()) //entity already exists in this world
 		return nullptr;
-    auto entity = m_entityFactory.CreateEntity(entityID,worldID, ownership,m_serverConnection, this);
-    if(entity != nullptr)
-    {
+	auto entity = m_entityFactory.CreateEntity(entityID, worldID, ownership, m_serverConnection, this);
+	if (entity != nullptr)
+	{
 		entity->SetPosition(pos);
 		entity->SetNetworkPosition(pos);
 		entity->SetLastNetworkPosition(pos);
@@ -61,9 +61,9 @@ std::shared_ptr<Entity> World::SpawnEntity(unsigned int entityID, unsigned int w
 		m_colliders.insert(entity->GetCollider());
 
 		entity->Start();
-        return entity;
-    }
-    return nullptr;
+		return entity;
+	}
+	return nullptr;
 }
 
 void World::SetWindowFocused(bool focused)
@@ -92,6 +92,11 @@ Camera& World::GetCamera()
 	return m_camera;
 }
 
+const sf::RenderWindow& World::GetWindow() const
+{
+	return m_window;
+}
+
 void World::collisionDetection()
 {
 	std::unordered_set<std::shared_ptr<Collider>> toRemove;
@@ -102,10 +107,10 @@ void World::collisionDetection()
 			continue;
 		for (auto& other : m_colliders)
 		{
-			if(entity.second->GetCollider() == other)
+			if (entity.second->GetCollider() == other)
 				continue;
 
-			if(other->CheckCollision(*entity.second->GetCollider()))
+			if (other->CheckCollision(*entity.second->GetCollider()))
 			{
 				entity.second->OnCollision(*other);
 			}
@@ -138,9 +143,9 @@ void World::ShootBullet(sf::Vector2f startPos, sf::Vector2f velocity)
 
 void World::RequestDestroyEntity(unsigned worldID)
 {
-	if(m_entities.find(worldID) != m_entities.end())
+	if (m_entities.find(worldID) != m_entities.end())
 	{
-		m_entities.at(worldID)->SetActive(false);
+		m_entities.at(worldID)->SetActive(false, false);
 		m_serverConnection->SendEntityDestroyMessage(worldID);
 	}
 }
@@ -175,11 +180,11 @@ void World::Draw(sf::RenderWindow& window)
 	window.setView(m_camera.GetView());
 
 
-	m_dungeon->Draw(window,m_wallSprite,m_floorSprite);
+	m_dungeon->Draw(window, m_wallSprite, m_floorSprite);
 
-	for(auto& entity : m_entities)
+	for (auto& entity : m_entities)
 	{
-		if(entity.second->IsActive())
+		if (entity.second->IsActive())
 			entity.second->Draw(window);
 	}
 
@@ -187,7 +192,8 @@ void World::Draw(sf::RenderWindow& window)
 	if (m_debug) {
 		for (auto& collider : m_colliders)
 		{
-			window.draw(collider->GetRect());
+			if (collider->IsActive())
+				window.draw(collider->GetRect());
 		}
 	}
 }

@@ -37,13 +37,15 @@ public:
 	float GetMovementSpeed() const;
 
 	std::shared_ptr<Collider> GetCollider() const { return m_collider; }
-	void SetActive(bool active);
+	void SetActive(bool active, bool serverAuth);
 	bool IsActive() const;
 
-	void SetHealth(float health);
+	void SetHealth(float health, bool serverAuth);
 	float GetHealth() const;
-	void SetMaxHealth(float health);
+	void SetMaxHealth(float health, bool serverAuth);
 	float GetMaxHealth() const;
+	void Damage(float amount);
+	void Heal(float amount);
 
 	sf::Vector2f CalculatePredictedPosition() const;
 
@@ -60,10 +62,10 @@ protected:
 
 	unsigned int m_worldID;
 	unsigned int m_ownership;
+	float m_health{ 1.0f };
+	float m_maxHealth{ 1.0f };
 private:
     std::shared_ptr<sf::Sprite> m_sprite;
-	float m_health{1.0f};
-	float m_maxHealth{ 1.0f };
 	float m_movementSpeed{ 0.0f };
 	bool m_active{ true };
 	std::shared_ptr<Collider> m_collider;

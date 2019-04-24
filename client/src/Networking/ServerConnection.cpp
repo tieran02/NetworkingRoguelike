@@ -136,19 +136,29 @@ void ServerConnection::PollMessages()
 					// destroy entity
 					m_world->removeEntity(message->WorldID());
 				}
-				else 
+				else
 				{
 					auto& entities = m_world->GetEntities();
 					if (entities.find(message->WorldID()) != entities.end())
 					{
 						auto& entity = entities.at(message->WorldID());
-						entity->SetActive(message->IsActive());
+						entity->SetActive(message->IsActive(), true);
 						updateEntityNetworkState(message->WorldID(), message->GetPosition(), message->GetVelocity());
 					}
 
 				}
 			}
-			
+			else if (msg.message.GetHeader().type == MessageType::HEALTH)
+			{
+				HealthMessage* message = static_cast<HealthMessage*>(&msg.message);
+				auto& entities = m_world->GetEntities();
+				if (entities.find(message->GetWorldID()) != entities.end())
+				{
+					auto& entity = entities.at(message->GetWorldID());
+					entity->SetHealth(message->GetHealth(), true);
+					entity->SetMaxHealth(message->GetMaxHealth(), true);
+				}
+			}
 		}
 
 
@@ -302,6 +312,12 @@ void ServerConnection::SendEntityDestroyMessage(unsigned worldID)
 {
 	const EntityStateMessage state{ worldID,sf::Vector2f(),sf::Vector2f(),false,true, m_clientID };
 	SendTcpMessage(state);
+}
+
+void ServerConnection::SendHealthMessage(unsigned worldID, float health, float maxHealth)
+{
+	const HealthMessage msg{ worldID,health,maxHealth,m_clientID };
+	SendTcpMessage(msg);
 }
 
 sf::Time ServerConnection::TimeSinceLastMessage() const

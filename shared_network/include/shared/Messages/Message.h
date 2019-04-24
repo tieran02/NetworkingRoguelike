@@ -19,21 +19,22 @@ enum class MessageType
 	BATCH,
 	DISCONNECT,
 	CLIENT_SETUP,
-	PING
+	PING,
+	HEALTH
 };
 
 struct Header
 {
 	int16_t size;
 	MessageType type;
-	uint16_t id{0};
+	uint16_t id{ 0 };
 };
 
 class Message
 {
 public:
 	Message() {}
-	~Message(){}
+	~Message() {}
 
 	Message(char* buffer);
 
@@ -58,7 +59,7 @@ protected:
 //Message wrapper for the client/server. Includes the protocol, address and port of the sender
 struct ServerMessage
 {
-	ServerMessage(){}
+	ServerMessage() {}
 	ServerMessage(const Message& msg) : message(msg)
 	{
 

@@ -12,13 +12,13 @@ class World
 {
 	friend ServerConnection;
 public:
-	World();
+	World(const sf::RenderWindow& window);
 	~World();
 
 	void Generate(ServerConnection* connection);
 	void SetSeed(unsigned int);
 
-    void Update(float deltaTime);
+	void Update(float deltaTime);
 	void Draw(sf::RenderWindow& window);
 
 	std::shared_ptr<Entity> SpawnEntity(unsigned int entityID, unsigned int worldID, sf::Vector2f pos, sf::Vector2f velocity, unsigned int ownership);
@@ -35,12 +35,15 @@ public:
 	sf::Vector2u GetWindowSize() const;
 
 	Camera& GetCamera();
+	const sf::RenderWindow& GetWindow() const;
+
 private:
+	const sf::RenderWindow& m_window;
 	Camera m_camera;
 
 	bool m_windowFocused{ true };
 	bool m_generated{ false };
-	unsigned int m_seed{0};
+	unsigned int m_seed{ 0 };
 	std::unique_ptr<Dungeon> m_dungeon;
 	sf::Vector2f m_spawnPos;
 	std::unordered_map<unsigned int, std::shared_ptr<Entity>> m_entities;

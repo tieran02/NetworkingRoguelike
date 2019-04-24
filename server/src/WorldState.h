@@ -35,6 +35,7 @@ public:
 	void SpawnNewEntity(int entityID, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownership = 0);
 	void SpawnEntity(int worldID);
 	void MoveEntity(int worldID, sf::Vector2f newPosition, sf::Vector2f velocity);
+	void SetEntityHealth(unsigned int worldID, float health, float maxHealth);
 	std::unordered_map<unsigned int, std::shared_ptr<Entity>>& GetEntities() { return m_entities; }
 	std::shared_mutex& GetEntityMutex() { return m_entityMapMutex; }
 private:

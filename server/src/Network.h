@@ -25,6 +25,7 @@ public:
 
 	void SendSpawnMessage(unsigned int worldID, unsigned int entityID, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownershipID = 0);
 	void SendMovementMessage(unsigned int worldID, sf::Vector2f newPosition, sf::Vector2f velocity);
+	void SendHealthMessage(unsigned int worldID, float health, float maxHealth);
 
 	void Connect(Connection* connection);
 	void Disconnect(unsigned int connectionID);
