@@ -174,13 +174,15 @@ void Network::Start()
 						m_worldState->MoveEntity(message->WorldID(), message->GetPosition(), message->GetVelocity());
 						//send entity state message back to all clients (including itself)
 						messagesToSend.push(std::make_tuple(0, Protocol::TCP, *message));
+						//set active or not
+						m_worldState->SetEntityActive(message->WorldID(), message->IsActive());
 					}
 					else
 					{
 						//delete entity
 						LOG_TRACE("Recieved Entity delete message from entity:" + std::to_string(message->WorldID()));
 						//TODO only delete if the client had ownership of the entity
-						m_worldState->GetEntities().erase(message->WorldID());
+						m_worldState->DestroyEntity(message->WorldID());
 						EntityStateMessage deleteMsg(message->WorldID(), sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false, true, 0);
 
 						SendToAllTCP(deleteMsg);

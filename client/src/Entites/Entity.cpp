@@ -3,15 +3,21 @@
 #include "shared/Utility/Log.h"
 #include "Networking/ServerConnection.h"
 #include "Graphics/SpriteManager.h"
+#include "shared/EntityDataManager.h"
 
-Entity::Entity(const std::string& spriteName, CollisionLayer layer)
+Entity::Entity(const std::string& entityName)
 {
-	m_sprite = SpriteManager::Instance().CreateSprite(spriteName);
+	const auto& baseData = EntityDataManager::Instance().GetEntityData(entityName);
+	m_sprite = SpriteManager::Instance().CreateSprite(baseData.EntitySpriteName);
 	sf::FloatRect spriteBounds = m_sprite->getGlobalBounds();
-	m_sprite->setOrigin(spriteBounds.width / 2.0f, spriteBounds.height / 2.0f);
+	m_sprite->setOrigin(baseData.SpriteWidth / 2.0f, baseData.SpriteHeight / 2.0f);
+
+	m_maxHealth = baseData.MaxHealth;
+	m_health = m_maxHealth;
+	SetMovementSpeed(baseData.MovementSpeed);
 
 	//create collider
-	m_collider = std::make_shared<Collider>(m_position,sf::Vector2f{ m_sprite->getGlobalBounds().width,m_sprite->getGlobalBounds().height},this,layer);
+	m_collider = std::make_shared<Collider>(m_position,sf::Vector2f{ m_sprite->getGlobalBounds().width,m_sprite->getGlobalBounds().height},this, baseData.Layer);
 }
 
 Entity::~Entity()
@@ -190,9 +196,4 @@ void Entity::Translate(const sf::Vector2f& position)
 bool Entity::hasOwnership() const
 {
 	return m_ownership == m_connection->GetColientID();
-}
-
-bool Entity::SyncWithServer() const
-{
-	return m_serverSync;
 }

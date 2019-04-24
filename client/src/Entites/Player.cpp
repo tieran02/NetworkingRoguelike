@@ -3,11 +3,8 @@
 #include "World.h"
 #include "shared/Utility/Math.h"
 
-Player::Player() : Entity("Player", CollisionLayer::PLAYER)
+Player::Player() : Entity("Player")
 {
-	m_maxHealth = 100.f;
-	m_health = m_maxHealth;
-	SetMovementSpeed(200.0f);
 	//collide with everything except player projectiles
 	GetCollider()->SetCollideMask(Collider::AllLayers() & ~(CollisionLayer::PROJECTILE_PLAYER));
 }

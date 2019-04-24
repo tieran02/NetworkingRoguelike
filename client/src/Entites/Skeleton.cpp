@@ -1,10 +1,7 @@
 #include "Skeleton.h"
 
-Skeleton::Skeleton() : Entity("Skeleton", CollisionLayer::ENEMY)
+Skeleton::Skeleton() : Entity("Skeleton")
 {
-	m_maxHealth = 25.0f;
-	m_health = m_maxHealth;
-	SetMovementSpeed(150.0f);
 	//collide with everything except player projectiles
 	GetCollider()->SetCollideMask(Collider::AllLayers() & ~(CollisionLayer::PROJECTILE_ENEMY));
 }

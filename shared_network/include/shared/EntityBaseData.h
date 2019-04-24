@@ -12,4 +12,5 @@ struct EntityBaseData
 	float Health;
 	float MaxHealth;
 	CollisionLayer Layer;
+	float MovementSpeed;
 };

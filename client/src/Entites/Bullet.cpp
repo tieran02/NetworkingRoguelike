@@ -1,11 +1,9 @@
 #include "Bullet.h"
 #include "World.h"
 
-Bullet::Bullet() : Entity("Bullet", CollisionLayer::PROJECTILE_NEUTRAL)
+Bullet::Bullet() : Entity("Bullet")
 {
-	SetMovementSpeed(400.0f);
 	GetCollider()->SetCollideMask(Collider::AllLayers() & ~(CollisionLayer::PROJECTILE_NEUTRAL));
-	m_serverSync = false;
 }
 
 Bullet::~Bullet()

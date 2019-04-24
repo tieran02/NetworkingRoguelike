@@ -241,9 +241,6 @@ void ServerConnection::sendEntityStates()
 	//for each world entity update the entity state
 	for (const auto& entity : m_world->GetEntities())
 	{
-		if(!entity.second->SyncWithServer())
-			continue;
-
 		//onlu send movement of the entity if the client has ownership of it
 		if (entity.second->hasOwnership()) {
 			//check if the enity has exceeded its threshold

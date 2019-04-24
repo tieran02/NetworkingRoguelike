@@ -8,7 +8,8 @@
       "SpriteHeight": 64,
       "Health": 100,
       "MaxHealth": 100,
-      "Layer": 1
+      "Layer": 1,
+      "MoveSpeed": 200
     },
     {
       "EntityID": 1,
@@ -18,7 +19,19 @@
       "SpriteHeight": 16,
       "Health": 1,
       "MaxHealth": 1,
-      "Layer": 16
+      "Layer": 16,
+      "MoveSpeed": 400
+    },
+    {
+      "EntityID": 2,
+      "EntityName": "Skeleton",
+      "EntitySpriteName": "Skeleton",
+      "SpriteWidth": 32,
+      "SpriteHeight": 32,
+      "Health": 25,
+      "MaxHealth": 25,
+      "Layer": 2,
+      "MoveSpeed": 150
     }
   ]
 }

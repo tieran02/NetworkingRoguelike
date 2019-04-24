@@ -18,6 +18,14 @@ void WorldState::GenerateWorld()
 {
 	m_dungeon = std::unique_ptr<Dungeon>(new Dungeon(2, 2,64, m_seed));
 	m_dungeon->Generate();
+
+	//Set dungeon colliders
+	auto rects = m_dungeon->GetTileRectangles();
+	for (auto& rect : rects)
+	{
+		auto collider = std::make_shared<Collider>(rect, CollisionLayer::WALL);
+		m_colliders.insert(collider);
+	}
 }
 
 void WorldState::SetNetwork(Network& network)
@@ -59,6 +67,33 @@ void WorldState::SpawnNewEntity(const std::string& entityName, sf::Vector2f posi
 	auto entity = std::make_shared<Entity>(entityName ,worldID, position, velocity, ownership, layerOverride);
 	m_entities.insert(std::make_pair(worldID, entity));
 	m_network->SendSpawnMessage(entity->WorldID(), entity->BaseData().EntityID, entity->Position(), entity->Velocity(), entity->OwnershipID(), layerOverride);
+	//add to server collider list
+	m_colliders.insert(entity->GetCollider());
+}
+
+void WorldState::DestroyEntity(unsigned worldID)
+{
+	std::unique_lock<std::shared_mutex> lock{ m_entityMapMutex };
+	
+	if (m_entities.find(worldID) != m_entities.end())
+	{
+		auto& entity = m_entities.at(worldID);
+		//remove collider
+		m_colliders.erase(entity->GetCollider());
+		m_entities.erase(worldID);
+	}
+}
+
+void WorldState::SetEntityActive(unsigned worldID, bool active)
+{
+	std::unique_lock<std::shared_mutex> lock{ m_entityMapMutex };
+
+	if (m_entities.find(worldID) != m_entities.end())
+	{
+		auto& entity = m_entities.at(worldID);
+		//remove collider
+		entity->SetActive(active);
+	}
 }
 
 void WorldState::SpawnEntity(int worldID)

@@ -8,7 +8,7 @@ class ServerConnection;
 class Entity
 {
 public:
-    Entity(const std::string& spriteName, CollisionLayer layer);
+    Entity(const std::string& entityName);
     virtual ~Entity();
 
     virtual void Start() = 0;
@@ -58,15 +58,12 @@ public:
 	void Translate(const sf::Vector2f& position);
 
 	bool hasOwnership() const;
-	bool SyncWithServer() const;
-
 protected:
 	ServerConnection* m_connection;
 	World* m_world;
 
 	unsigned int m_worldID;
 	unsigned int m_ownership;
-	bool m_serverSync{ true };
 
 	float m_health{ 1.0f };
 	float m_maxHealth{ 1.0f };
@@ -80,6 +77,7 @@ private:
     sf::Vector2f m_position;
 	sf::Vector2f m_lastPosition;
 	sf::Vector2f m_velocity{ 0.0f,0.0f };
+
 
 	//Server positions
 	sf::Vector2f m_networkPosition;

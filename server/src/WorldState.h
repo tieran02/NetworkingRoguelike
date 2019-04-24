@@ -33,9 +33,9 @@ public:
 	const bool& IsActive() const { return m_active; }
 	std::shared_ptr<Collider> GetCollider() { return m_collider; }
 
-	void SetPosition(sf::Vector2f pos) { m_position = pos; }
+	void SetPosition(sf::Vector2f pos) { m_position = pos; m_collider->SetPosition(pos); }
 	void SetVelocity(sf::Vector2f velocity) { m_velocity = velocity; }
-	void SetActive(bool active) { m_active = active; }
+	void SetActive(bool active) { m_active = active; m_collider->SetActive(active); }
 	void SetHealth(float amount) { m_baseData.Health = amount; }
 	void SetMaxHealth(float amount) { m_baseData.MaxHealth = amount; }
 
@@ -63,6 +63,8 @@ public:
 	void SpawnPlayer(Connection& connection);
 	void SpawnAllEntities();
 	void SpawnNewEntity(const std::string& entityName, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownership, CollisionLayer layerOverride);
+	void DestroyEntity(unsigned int worldID);
+	void SetEntityActive(unsigned int worldID, bool active);
 
 	void SpawnEntity(int worldID);
 	void MoveEntity(int worldID, sf::Vector2f newPosition, sf::Vector2f velocity);
@@ -76,7 +78,9 @@ private:
 	unsigned int entityIdCounter{ 1 };
 	std::unordered_map<unsigned int, std::shared_ptr<Entity>> m_entities; // world entity id as key, a pair with postition and ownership id as the key
 	std::shared_mutex m_entityMapMutex;
-    unsigned int m_clientTurnID{0};
+	std::unordered_set<std::shared_ptr<Collider>> m_colliders;
+
+
 
 	sf::Vector2f findValidSpawnPos() const;
 };
