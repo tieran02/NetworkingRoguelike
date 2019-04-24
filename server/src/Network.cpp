@@ -7,6 +7,7 @@
 #include "WorldState.h"
 #include "shared/Utility/Log.h"
 #include <sstream>
+#include "shared/Collider.h"
 
 
 Network::Network(WorldState& world, unsigned short port) :m_worldState(&world), UDP_PORT(port), TCP_PORT(port + 1)
@@ -187,7 +188,7 @@ void Network::Start()
 				else if (msg.message.GetHeader().type == MessageType::SPAWN) //spawn request from client
 				{
 					SpawnMessage* requestMsg = static_cast<SpawnMessage*>(&msg.message);
-					m_worldState->SpawnNewEntity(requestMsg->GetEntityID(), requestMsg->GetPosition(), requestMsg->GetVelocity(), requestMsg->GetOwnershipID());
+					m_worldState->SpawnNewEntity(requestMsg->GetEntityID(), requestMsg->GetPosition(), requestMsg->GetVelocity(), requestMsg->GetOwnershipID(), requestMsg->GetLayerOverride());
 				}
 				else if (msg.message.GetHeader().type == MessageType::HEALTH)
 				{
@@ -333,9 +334,9 @@ void Network::SendToAllTCP(const Message& message, unsigned int ignore)
 	});
 }
 
-void Network::SendSpawnMessage(unsigned int worldID, unsigned int entityID, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownershipID)
+void Network::SendSpawnMessage(unsigned int worldID, unsigned int entityID, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownershipID, CollisionLayer layerOverride)
 {
-	SpawnMessage message{ worldID, entityID,position,velocity,ownershipID };
+	SpawnMessage message{ worldID, entityID,position,velocity,ownershipID,layerOverride };
 	SendToAllTCP(message);
 	std::stringstream stream;
 	stream << "Spawning entity: worldID:" << worldID << " entityID:" << entityID << " ownershipID:" << ownershipID;

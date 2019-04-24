@@ -1,11 +1,11 @@
 #include "Bullet.h"
 #include "World.h"
 
-Bullet::Bullet() : Entity("Bullet", CollisionLayer::PROJECTILE_PLAYER)
+Bullet::Bullet() : Entity("Bullet", CollisionLayer::PROJECTILE_NEUTRAL)
 {
 	SetMovementSpeed(400.0f);
-	GetCollider()->SetCollideMask(Collider::AllLayers() & ~(CollisionLayer::PROJECTILE_PLAYER));
-
+	GetCollider()->SetCollideMask(Collider::AllLayers() & ~(CollisionLayer::PROJECTILE_NEUTRAL));
+	m_serverSync = false;
 }
 
 Bullet::~Bullet()
@@ -36,6 +36,12 @@ void Bullet::OnCollision(Collider& other)
 	}
 
 	m_world->RequestDestroyEntity(m_worldID);
+}
+
+void Bullet::OnLayerOverride(CollisionLayer layer)
+{
+	//make sure bullets don't collide with self
+	GetCollider()->SetCollideMask(Collider::AllLayers() & ~layer);
 }
 
 std::shared_ptr<Entity> Bullet::Clone(unsigned worldID, unsigned ownership, ServerConnection* connection, World* world)

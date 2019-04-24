@@ -52,14 +52,16 @@ void Player::Update(float deltaTime)
 			newVelocity += sf::Vector2f(0.0f, GetMovementSpeed());
 		}
 
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && m_fireTimeCounter >= .25f)
 		{
 			const sf::Vector2i mousePos = sf::Mouse::getPosition(m_world->GetWindow());
 			const sf::Vector2f mouseWorldPos = Camera::ScreenToWorldPos(mousePos, m_world->GetWindow());
 			const sf::Vector2f dir = Math::Direction(GetPosition(), mouseWorldPos);
 
-			m_world->ShootBullet(GetPosition(), dir * 400.0f);
+			m_world->ShootBullet(GetPosition(), dir * 400.0f, CollisionLayer::PROJECTILE_PLAYER);
+			m_fireTimeCounter = 0.0f;
 		}
+		m_fireTimeCounter += deltaTime;
 		SetVelocity(newVelocity);
 		UpdatePosition(deltaTime);
 
@@ -80,6 +82,10 @@ void Player::Draw(sf::RenderWindow & window)
 void Player::OnCollision(Collider& other)
 {
 	Damage(5.0f);
+}
+
+void Player::OnLayerOverride(CollisionLayer layer)
+{
 }
 
 std::shared_ptr<Entity> Player::Clone(unsigned int worldID, unsigned int ownership, ServerConnection* connection, World* world)

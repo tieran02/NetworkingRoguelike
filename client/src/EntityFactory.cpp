@@ -1,6 +1,6 @@
 #include "EntityFactory.h"
-#include "Player.h"
-#include "Bullet.h"
+#include "Entites/Player.h"
+#include "Entites/Bullet.h"
 
 EntityFactory::EntityFactory()
 {

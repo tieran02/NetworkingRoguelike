@@ -32,6 +32,7 @@ public:
 	void SendEntityStateMessage(const Entity& entity);
 	void SendMovementMessage(unsigned int worldID, sf::Vector2f newPosition, sf::Vector2f velocity);
 	void SendSpawnRequestMessage(unsigned int entityID, sf::Vector2f position, sf::Vector2f velocity);
+	void SendProjectileRequestMessage(unsigned int entityID, sf::Vector2f position, sf::Vector2f velocity, CollisionLayer side);
 	void SendEntityDestroyMessage(unsigned int worldID);
 	void SendHealthMessage(unsigned int worldID, float health, float maxHealth);
 

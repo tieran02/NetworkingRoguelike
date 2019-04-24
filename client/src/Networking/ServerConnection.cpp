@@ -125,7 +125,7 @@ void ServerConnection::PollMessages()
 				LOG_INFO("Spawning Entity with ID = " + std::to_string(spawnMessage->GetEntityID()) + " and ownership of connection " + std::to_string(spawnMessage->GetOwnershipID())
 					+ " @" + std::to_string(spawnMessage->GetPosition().x) + "," + std::to_string(spawnMessage->GetPosition().y));
 				auto pos = spawnMessage->GetPosition();
-				m_world->SpawnEntity(spawnMessage->GetEntityID(), spawnMessage->GetWorldID(), spawnMessage->GetPosition(), spawnMessage->GetVelocity(), spawnMessage->GetOwnershipID());
+				m_world->SpawnEntity(spawnMessage->GetEntityID(), spawnMessage->GetWorldID(), spawnMessage->GetPosition(), spawnMessage->GetVelocity(), spawnMessage->GetOwnershipID(), spawnMessage->GetLayerOverride());
 			}
 			else if (msg.message.GetHeader().type == MessageType::ENTITY_STATE)
 			{
@@ -240,6 +240,9 @@ void ServerConnection::sendEntityStates()
 	//for each world entity update the entity state
 	for (const auto& entity : m_world->GetEntities())
 	{
+		if(!entity.second->SyncWithServer())
+			continue;
+
 		//onlu send movement of the entity if the client has ownership of it
 		if (entity.second->hasOwnership()) {
 			//check if the enity has exceeded its threshold
@@ -304,7 +307,13 @@ void ServerConnection::SendMovementMessage(unsigned int worldID, sf::Vector2f ne
 
 void ServerConnection::SendSpawnRequestMessage(unsigned entityID, sf::Vector2f position, sf::Vector2f velocity)
 {
-	const SpawnMessage message{ 0,entityID,position,velocity,m_clientID };
+	const SpawnMessage message{ 0,entityID,position,velocity,m_clientID,CollisionLayer::NONE };
+	SendTcpMessage(message);
+}
+
+void ServerConnection::SendProjectileRequestMessage(unsigned entityID, sf::Vector2f position, sf::Vector2f velocity, CollisionLayer side)
+{
+	const SpawnMessage message{ 0,entityID,position,velocity,m_clientID,side };
 	SendTcpMessage(message);
 }
 

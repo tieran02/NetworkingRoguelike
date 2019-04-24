@@ -15,7 +15,12 @@ private:
 	static std::shared_ptr<spdlog::logger> m_logger;
 };
 
-#define LOG_TRACE(...) ::Log::GetLogger()->trace(__VA_ARGS__)
+#ifdef DEBUG
+	#define LOG_TRACE(...) ::Log::GetLogger()->trace(__VA_ARGS__)
+#else
+	#define LOG_TRACE(...)
+#endif
+
 #define LOG_INFO(...) ::Log::GetLogger()->info(__VA_ARGS__)
 #define LOG_WARN(...) ::Log::GetLogger()->warn(__VA_ARGS__)
 #define LOG_ERROR(...) ::Log::GetLogger()->error(__VA_ARGS__)

@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <mutex>
 #include <shared_mutex>
+#include "shared/Collider.h"
 
 struct Entity
 {
@@ -32,7 +33,7 @@ public:
 	unsigned int GetSeed();
 	void SpawnPlayer(Connection& connection);
 	void SpawnAllEntities();
-	void SpawnNewEntity(int entityID, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownership = 0);
+	void SpawnNewEntity(int entityID, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownership = 0, CollisionLayer layerOverride = CollisionLayer::NONE);
 	void SpawnEntity(int worldID);
 	void MoveEntity(int worldID, sf::Vector2f newPosition, sf::Vector2f velocity);
 	void SetEntityHealth(unsigned int worldID, float health, float maxHealth);

@@ -8,6 +8,7 @@
 #include <shared_mutex>
 #include "shared/ThreadPool.h"
 #include <shared/Messages/NetworkMessages.h>
+#include "shared/Collider.h"
 
 
 class WorldState;
@@ -23,7 +24,7 @@ public:
 	void SendToAllUDP(const Message& message, unsigned int ignore = 0);
 	void SendToAllTCP(const Message& message, unsigned int ignore = 0);
 
-	void SendSpawnMessage(unsigned int worldID, unsigned int entityID, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownershipID = 0);
+	void SendSpawnMessage(unsigned int worldID, unsigned int entityID, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownershipID = 0, CollisionLayer layerOverride = CollisionLayer::NONE);
 	void SendMovementMessage(unsigned int worldID, sf::Vector2f newPosition, sf::Vector2f velocity);
 	void SendHealthMessage(unsigned int worldID, float health, float maxHealth);
 

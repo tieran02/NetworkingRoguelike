@@ -43,7 +43,7 @@ void World::SetSeed(unsigned int seed)
 	m_seed = seed;
 }
 
-std::shared_ptr<Entity> World::SpawnEntity(unsigned int entityID, unsigned int worldID, sf::Vector2f pos, sf::Vector2f velocity, unsigned int ownership)
+std::shared_ptr<Entity> World::SpawnEntity(unsigned int entityID, unsigned int worldID, sf::Vector2f pos, sf::Vector2f velocity, unsigned int ownership, CollisionLayer layerOverride)
 {
 	if (m_entities.find(worldID) != m_entities.end()) //entity already exists in this world
 		return nullptr;
@@ -59,6 +59,13 @@ std::shared_ptr<Entity> World::SpawnEntity(unsigned int entityID, unsigned int w
 
 		//add entity collider to the collider vector
 		m_colliders.insert(entity->GetCollider());
+
+		//set layer override (USED FOR PROJECTILES)
+		if(layerOverride != CollisionLayer::NONE)
+		{
+			entity->GetCollider()->SetLayer(layerOverride);
+			entity->OnLayerOverride(layerOverride);
+		}
 
 		entity->Start();
 		return entity;
@@ -136,9 +143,9 @@ void World::removeEntity(unsigned int worldID)
 	}
 }
 
-void World::ShootBullet(sf::Vector2f startPos, sf::Vector2f velocity)
+void World::ShootBullet(sf::Vector2f startPos, sf::Vector2f velocity, CollisionLayer side)
 {
-	m_serverConnection->SendSpawnRequestMessage(1, startPos, velocity);
+	m_serverConnection->SendProjectileRequestMessage(1, startPos, velocity, side);
 }
 
 void World::RequestDestroyEntity(unsigned worldID)

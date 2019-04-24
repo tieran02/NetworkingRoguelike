@@ -191,3 +191,8 @@ bool Entity::hasOwnership() const
 {
 	return m_ownership == m_connection->GetColientID();
 }
+
+bool Entity::SyncWithServer() const
+{
+	return m_serverSync;
+}

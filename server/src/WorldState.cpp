@@ -50,7 +50,7 @@ void WorldState::SpawnAllEntities()
 	}
 }
 
-void WorldState::SpawnNewEntity(const int entityID, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownership)
+void WorldState::SpawnNewEntity(const int entityID, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownership, CollisionLayer layerOverride)
 {
 	std::unique_lock<std::shared_mutex> lock{ m_entityMapMutex };
 
@@ -58,7 +58,7 @@ void WorldState::SpawnNewEntity(const int entityID, sf::Vector2f position, sf::V
 	//add to entity list
 	auto entity = std::make_shared<Entity>(worldID, entityID, position, velocity, ownership);
 	m_entities.insert(std::make_pair(worldID, entity));
-	m_network->SendSpawnMessage(entity->WorldID, entity->EntityID, entity->Position, entity->Velocity, entity->OwnershipID);
+	m_network->SendSpawnMessage(entity->WorldID, entity->EntityID, entity->Position, entity->Velocity, entity->OwnershipID, layerOverride);
 }
 
 void WorldState::SpawnEntity(int worldID)

@@ -5,10 +5,10 @@ SpawnMessage::SpawnMessage(char* buffer)
 
 }
 
-SpawnMessage::SpawnMessage(unsigned int worldID,unsigned int entityID, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownerID)
+SpawnMessage::SpawnMessage(unsigned int worldID,unsigned int entityID, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownerID, CollisionLayer layerOverride)
 {
     header.type = MessageType::SPAWN;
-	header.size = sizeof(unsigned int) + sizeof(unsigned int) + sizeof(sf::Vector2f) + sizeof(sf::Vector2f) + sizeof(unsigned int);
+	header.size = sizeof(unsigned int) + sizeof(unsigned int) + sizeof(sf::Vector2f) + sizeof(sf::Vector2f) + sizeof(unsigned int) + sizeof(CollisionLayer);
 
 	data.resize(header.size);
 	memcpy(data.data(), &worldID, sizeof(unsigned int));
@@ -16,6 +16,7 @@ SpawnMessage::SpawnMessage(unsigned int worldID,unsigned int entityID, sf::Vecto
 	memcpy(data.data() + sizeof(unsigned int) + sizeof(unsigned int), &position, sizeof(sf::Vector2f) );
 	memcpy(data.data() + sizeof(unsigned int) + sizeof(unsigned int) + sizeof(sf::Vector2f), &velocity, sizeof(sf::Vector2f));
 	memcpy(data.data() + sizeof(unsigned int) + sizeof(unsigned int) + sizeof(sf::Vector2f) + sizeof(sf::Vector2f), &ownerID, sizeof(unsigned int));
+	memcpy(data.data() + sizeof(unsigned int) + sizeof(unsigned int) + sizeof(sf::Vector2f) + sizeof(sf::Vector2f) + sizeof(unsigned int), &layerOverride, sizeof(CollisionLayer));
 }
 
 unsigned SpawnMessage::GetWorldID() const
@@ -41,4 +42,9 @@ sf::Vector2f SpawnMessage::GetVelocity() const
 unsigned SpawnMessage::GetOwnershipID() const
 {
 	return *((unsigned int*)(data.data() + sizeof(unsigned int) + sizeof(unsigned int) + sizeof(sf::Vector2f) + sizeof(sf::Vector2f)));
+}
+
+CollisionLayer SpawnMessage::GetLayerOverride() const
+{
+	return *((CollisionLayer*)(data.data() + sizeof(unsigned int) + sizeof(unsigned int) + sizeof(sf::Vector2f) + sizeof(sf::Vector2f) + sizeof(unsigned int)));
 }
