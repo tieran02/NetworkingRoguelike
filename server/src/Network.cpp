@@ -311,6 +311,8 @@ void Network::calculateClientPing(unsigned id, long long clientTimestamp)
 
 void Network::SendToAllUDP(const Message& message, unsigned int ignore)
 {
+	if (m_connections.empty())
+		return;
 	m_threadPool.enqueue([=]
 	{
 		for (auto& connection : m_connections)
@@ -327,6 +329,8 @@ void Network::SendToAllUDP(const Message& message, unsigned int ignore)
 
 void Network::SendToAllTCP(const Message& message, unsigned int ignore)
 {
+	if (m_connections.empty())
+		return;
 	m_threadPool.enqueue([=] {
 		for (auto& connection : m_connections)
 		{

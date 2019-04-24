@@ -26,6 +26,8 @@ void WorldState::GenerateWorld()
 		auto collider = std::make_shared<Collider>(rect, CollisionLayer::WALL);
 		m_colliders.insert(collider);
 	}
+
+	SpawnEnemies();
 }
 
 void WorldState::SetNetwork(Network& network)
@@ -66,7 +68,8 @@ void WorldState::SpawnNewEntity(const std::string& entityName, sf::Vector2f posi
 	//add to entity list
 	auto entity = std::make_shared<Entity>(entityName ,worldID, position, velocity, ownership, layerOverride);
 	m_entities.insert(std::make_pair(worldID, entity));
-	m_network->SendSpawnMessage(entity->WorldID(), entity->BaseData().EntityID, entity->Position(), entity->Velocity(), entity->OwnershipID(), layerOverride);
+	if(m_network != nullptr)
+		m_network->SendSpawnMessage(entity->WorldID(), entity->BaseData().EntityID, entity->Position(), entity->Velocity(), entity->OwnershipID(), layerOverride);
 	//add to server collider list
 	m_colliders.insert(entity->GetCollider());
 }
@@ -155,4 +158,30 @@ sf::Vector2f WorldState::findValidSpawnPos() const
 	int index = Random::randInt(0, (int)tiles.size());
 	sf::Vector2f chunkPos{(float)tiles[index]->x, (float)tiles[index]->y};
 	return m_dungeon->ChunckToWorldSpace(0, chunkPos);
+}
+
+sf::Vector2f WorldState::findRandomPos() const
+{
+	int randomChunk = Random::randInt(0, 3);
+	const std::vector<DungeonChunk*>&  chunks = m_dungeon->GetChunks();
+	const std::vector<DungeonRoom>& rooms = chunks[randomChunk]->GetRooms();
+
+	//Room tiles
+	int randomRoom = Random::randInt(0, rooms.size()-1);
+	const std::vector<DungeonTile*>& tiles = rooms[randomRoom].GetTiles();
+
+	//Get a random point within this room
+	int index = Random::randInt(0, (int)tiles.size()-1);
+	sf::Vector2f chunkPos{ (float)tiles[index]->x, (float)tiles[index]->y };
+	return m_dungeon->ChunckToWorldSpace(0, chunkPos);
+}
+
+void WorldState::SpawnEnemies()
+{
+	constexpr int ENEMY_COUNT = 50;
+	for (int i = 0; i < ENEMY_COUNT; ++i)
+	{
+		sf::Vector2f spawnPos = findRandomPos();
+		SpawnNewEntity("Skeleton", spawnPos, sf::Vector2f(), 0, CollisionLayer::NONE);
+	}
 }

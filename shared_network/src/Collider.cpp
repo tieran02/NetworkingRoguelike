@@ -3,7 +3,7 @@
 #include "Utility/Log.h"
 
 
-Collider::Collider(const sf::Vector2f& pos, const sf::Vector2f& size, Entity* entity, CollisionLayer layer)
+Collider::Collider(const sf::Vector2f& pos, const sf::Vector2f& size, Entity* entity, CollisionLayer layer) : qt(nullptr)
 {
 	m_rect = sf::RectangleShape{ size };
 	m_rect.setPosition(pos);
@@ -46,6 +46,8 @@ bool Collider::CheckCollision(Collider& other)
 	const bool bit1 = (other.m_collideWith & m_layer) != 0;
 	if (!bit || !bit1)
 		return false;
+
+
 
 	sf::Vector2f otherPos = other.GetPosition();
 	sf::Vector2f otherHalfSize = other.GetHalfSize();
@@ -112,6 +114,11 @@ sf::Vector2f Collider::GetHalfSize() const
 	return m_halfSize;
 }
 
+sf::FloatRect Collider::GetRect() const
+{
+	return m_rect.getGlobalBounds();
+}
+
 void Collider::SetMoveable(bool moveable)
 {
 	m_moveable = moveable;
@@ -151,3 +158,4 @@ bool Collider::IsActive() const
 {
 	return  m_active;
 }
+

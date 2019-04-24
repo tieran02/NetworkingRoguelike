@@ -5,10 +5,10 @@
 #include "shared/Utility/Math.h"
 #include "Graphics/SpriteManager.h"
 
-World::World(const sf::RenderWindow& window) : m_window(window), m_camera(sf::Vector2f{ 0.0f,0.0f }, GetWindowSize(), 1024)
+World::World(const sf::RenderWindow& window) : m_window(window), m_camera(sf::Vector2f{ 0.0f,0.0f }, GetWindowSize(), 1024), m_collisionManger(m_camera.GetBounds())
 {
-	m_wallSprite = SpriteManager::Instance().CreateSprite("Wall");
-	m_floorSprite = SpriteManager::Instance().CreateSprite("Floor");
+	m_wallSprite = SpriteManager::Instance().CreateSprite("wall");
+	m_floorSprite = SpriteManager::Instance().CreateSprite("floor");
 }
 
 
@@ -29,7 +29,7 @@ void World::Generate(ServerConnection* connection)
 	for (auto& rect : rects)
 	{
 		auto collider = std::make_shared<Collider>(rect, CollisionLayer::WALL);
-		m_colliders.insert(collider);
+		m_collisionManger.Add(collider);
 	}
 
 	m_generated = true;
@@ -58,7 +58,7 @@ std::shared_ptr<Entity> World::SpawnEntity(unsigned int entityID, unsigned int w
 		m_entities.insert((std::make_pair(worldID, entity)));
 
 		//add entity collider to the collider vector
-		m_colliders.insert(entity->GetCollider());
+		m_collisionManger.Add(entity->GetCollider());
 
 		//set layer override (USED FOR PROJECTILES)
 		if(layerOverride != CollisionLayer::NONE)
@@ -106,25 +106,7 @@ const sf::RenderWindow& World::GetWindow() const
 
 void World::collisionDetection()
 {
-	std::unordered_set<std::shared_ptr<Collider>> toRemove;
-
-	for (auto& entity : m_entities)
-	{
-		if (!entity.second->IsActive())
-			continue;
-		for (auto& other : m_colliders)
-		{
-			if (entity.second->GetCollider() == other)
-				continue;
-
-			if (other->CheckCollision(*entity.second->GetCollider()))
-			{
-				entity.second->OnCollision(*other);
-			}
-		}
-		//set entity pos to collider pos
-		entity.second->SetPosition(entity.second->GetCollider()->GetPosition());
-	}
+	m_collisionManger.Update();
 }
 
 void World::removeEntity(unsigned int worldID)
@@ -133,11 +115,7 @@ void World::removeEntity(unsigned int worldID)
 	{
 		auto& entity = m_entities.at(worldID);
 		//destroy collider
-		const auto collider = std::find(m_colliders.begin(), m_colliders.end(), entity->GetCollider());
-		if (collider != m_colliders.end())
-		{
-			m_colliders.erase(collider);
-		}
+		m_collisionManger.Remove(entity->GetCollider());
 
 		m_entities.erase(entity->GetWorldID());
 	}
@@ -211,10 +189,6 @@ void World::Draw(sf::RenderWindow& window)
 
 	//draw colliders
 	if (m_debug) {
-		for (auto& collider : m_colliders)
-		{
-			if (collider->IsActive())
-				window.draw(collider->GetRect());
-		}
+		m_collisionManger.Draw(window);
 	}
 }

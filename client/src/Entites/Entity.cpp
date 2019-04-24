@@ -10,14 +10,14 @@ Entity::Entity(const std::string& entityName)
 	const auto& baseData = EntityDataManager::Instance().GetEntityData(entityName);
 	m_sprite = SpriteManager::Instance().CreateSprite(baseData.EntitySpriteName);
 	sf::FloatRect spriteBounds = m_sprite->getGlobalBounds();
-	m_sprite->setOrigin(baseData.SpriteWidth / 2.0f, baseData.SpriteHeight / 2.0f);
+	m_sprite->setOrigin(m_sprite->getGlobalBounds().width / 2.0f, m_sprite->getGlobalBounds().height / 2.0f);
 
 	m_maxHealth = baseData.MaxHealth;
 	m_health = m_maxHealth;
 	SetMovementSpeed(baseData.MovementSpeed);
 
 	//create collider
-	m_collider = std::make_shared<Collider>(m_position,sf::Vector2f{ m_sprite->getGlobalBounds().width,m_sprite->getGlobalBounds().height},this, baseData.Layer);
+	m_collider = std::make_shared<Collider>(m_position,sf::Vector2f{ (float)baseData.SpriteWidth,(float)baseData.SpriteHeight},this, baseData.Layer);
 }
 
 Entity::~Entity()

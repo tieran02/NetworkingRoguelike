@@ -43,6 +43,11 @@ float Camera::GetSize() const
 	return m_cameraSize;
 }
 
+sf::FloatRect Camera::GetBounds() const
+{
+	return sf::FloatRect(m_view.getCenter() - m_view.getSize() / 2.f, m_view.getSize());
+}
+
 sf::Vector2f Camera::ScreenToWorldPos(sf::Vector2i screenPos, const sf::RenderWindow& window)
 {
 	return window.mapPixelToCoords(screenPos);

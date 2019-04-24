@@ -3,7 +3,7 @@
     {
       "EntityID": 0,
       "EntityName": "Player",
-      "EntitySpriteName": "Player",
+      "EntitySpriteName": "player",
       "SpriteWidth": 32,
       "SpriteHeight": 64,
       "Health": 100,
@@ -14,7 +14,7 @@
     {
       "EntityID": 1,
       "EntityName": "Bullet",
-      "EntitySpriteName": "Bullet",
+      "EntitySpriteName": "bullet",
       "SpriteWidth": 16,
       "SpriteHeight": 16,
       "Health": 1,
@@ -25,7 +25,7 @@
     {
       "EntityID": 2,
       "EntityName": "Skeleton",
-      "EntitySpriteName": "Skeleton",
+      "EntitySpriteName": "skeleton",
       "SpriteWidth": 32,
       "SpriteHeight": 32,
       "Health": 25,

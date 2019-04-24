@@ -24,6 +24,12 @@ namespace Math {
 		return Magnitude(d);
 	}
 
+	static float SqrDistance(const sf::Vector2f& v1, const sf::Vector2f& v2)
+	{
+		sf::Vector2f d(v2.x - v1.x, v2.y - v1.y);
+		return SqrMagnitude(d);
+	}
+
 	static sf::Vector2f Normalise(const sf::Vector2f& v)
 	{
 		return v / Magnitude(v);

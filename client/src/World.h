@@ -4,6 +4,7 @@
 #include "EntityFactory.h"
 #include "shared/DungeonGeneration/Dungeon.h"
 #include "Camera.h"
+#include "shared/CollisionManager.h"
 
 class Entity;
 class ServerConnection;
@@ -54,7 +55,7 @@ private:
 	ServerConnection* m_serverConnection{};
 	sf::Vector2u m_windowSize;
 
-	std::unordered_set<std::shared_ptr<Collider>> m_colliders;
+	CollisionManager m_collisionManger;
 	std::shared_ptr<sf::Sprite> m_wallSprite;
 	std::shared_ptr<sf::Sprite> m_floorSprite;
 
