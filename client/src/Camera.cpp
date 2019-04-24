@@ -42,3 +42,15 @@ float Camera::GetSize() const
 {
 	return m_cameraSize;
 }
+
+sf::Vector2f Camera::ScreenToWorldPos(sf::Vector2i screenPos, const sf::RenderWindow& window)
+{
+	return window.mapPixelToCoords(screenPos);
+}
+
+sf::Vector2i Camera::WorldPosToScreenPos(sf::Vector2f worldPos, const sf::RenderWindow& window)
+{
+	return window.mapCoordsToPixel(worldPos);
+}
+
+

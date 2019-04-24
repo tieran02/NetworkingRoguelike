@@ -4,6 +4,8 @@
 Bullet::Bullet() : Entity("Bullet", CollisionLayer::PROJECTILE_PLAYER)
 {
 	SetMovementSpeed(400.0f);
+	GetCollider()->SetCollideMask(Collider::AllLayers() & ~(CollisionLayer::PROJECTILE_PLAYER));
+
 }
 
 Bullet::~Bullet()
@@ -27,6 +29,12 @@ void Bullet::Draw(sf::RenderWindow& window)
 
 void Bullet::OnCollision(Collider& other)
 {
+	Entity* entity = other.GetEntity();
+	if(entity != nullptr && other.GetLayer() == CollisionLayer::PLAYER)
+	{
+		entity->Damage(m_damage);
+	}
+
 	m_world->RequestDestroyEntity(m_worldID);
 }
 

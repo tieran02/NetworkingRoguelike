@@ -16,7 +16,7 @@ enum CollisionLayer
 class Collider
 {
 public:
-	Collider(const sf::Vector2f& pos, const sf::Vector2f& size, CollisionLayer layer);
+	Collider(const sf::Vector2f& pos, const sf::Vector2f& size, Entity* entity, CollisionLayer layer);
 	Collider(const sf::RectangleShape& rect, CollisionLayer layer);
 	~Collider();
 
@@ -31,12 +31,20 @@ public:
 
 	void SetCollideMask(unsigned int collideWithMask);
 	void SetLayer(CollisionLayer layer);
+	CollisionLayer GetLayer() const;
 	static unsigned int AllLayers();
+
+	Entity* GetEntity() const;
+
+	void SetActive(bool active);
+	bool IsActive() const;
 private:
+	Entity* m_entity{ nullptr };
 	sf::RectangleShape m_rect;
 	sf::Vector2f m_halfSize;
 	bool m_moveable{ false };
-	unsigned int m_layer;
+	CollisionLayer m_layer;
 	unsigned int m_collideWith;
+	bool m_active{true};
 };
 

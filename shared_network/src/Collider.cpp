@@ -3,7 +3,7 @@
 #include "Utility/Log.h"
 
 
-Collider::Collider(const sf::Vector2f& pos, const sf::Vector2f& size, CollisionLayer layer)
+Collider::Collider(const sf::Vector2f& pos, const sf::Vector2f& size, Entity* entity, CollisionLayer layer)
 {
 	m_rect = sf::RectangleShape{ size };
 	m_rect.setPosition(pos);
@@ -11,6 +11,7 @@ Collider::Collider(const sf::Vector2f& pos, const sf::Vector2f& size, CollisionL
 	m_halfSize = size / 2.0f;
 	m_rect.setOrigin(m_halfSize);
 
+	m_entity = entity;
 	m_layer = layer;
 	m_collideWith = AllLayers();
 }
@@ -37,6 +38,9 @@ void Collider::Move(float x, float y)
 
 bool Collider::CheckCollision(Collider& other)
 {
+	if (!m_active || !other.m_active)
+		return false;
+
 	//check the layers
 	const bool bit = (m_collideWith & other.m_layer) != 0;
 	const bool bit1 = (other.m_collideWith & m_layer) != 0;
@@ -123,7 +127,27 @@ void Collider::SetLayer(CollisionLayer layer)
 	m_layer = layer;
 }
 
+CollisionLayer Collider::GetLayer() const
+{
+	return m_layer;
+}
+
 unsigned int Collider::AllLayers()
 {
 	return std::numeric_limits<unsigned int>::max();
+}
+
+Entity* Collider::GetEntity() const
+{
+	return m_entity;
+}
+
+void Collider::SetActive(bool active)
+{
+	m_active = active;
+}
+
+bool Collider::IsActive() const
+{
+	return  m_active;
 }

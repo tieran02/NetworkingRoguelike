@@ -1,13 +1,15 @@
 #pragma once
-#include "Messages/Message.h"
+#include "Message.h"
 
-class HealthMessage : Message
+class HealthMessage : public Message
 {
 public:
 	HealthMessage() = default;;
 	HealthMessage(char* buffer);
-	HealthMessage(float amount, unsigned int senderID);
-	
-	float GetAmount() const;
+	HealthMessage(unsigned int worldID, float health, float maxHealth, unsigned int senderID);
+
+	unsigned int GetWorldID() const;
+	float GetHealth() const;
+	float GetMaxHealth() const;
 };
 

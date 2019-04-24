@@ -18,8 +18,11 @@ int main()
 	SpriteManager::Instance().LoadTexture("Bullet", "bullet.png");
 	LOG_INFO("Resouces Loaded");
 
+	//Create window
+	sf::RenderWindow window;
+
 	//World
-	World world;
+	World world{window};
 	world.SetWindowSize(sf::Vector2u(width,height));
 
 	//networking
@@ -29,8 +32,7 @@ int main()
 	//Generate World
 	world.Generate(&server_connection);
 
-	//Create window
-	sf::RenderWindow window(sf::VideoMode(width, height), "SFML window");;
+	window.create(sf::VideoMode(width, height), "SFML window");
 
 	float lastTime{ 0.0f };
 	float deltaTime{ 0.0f };

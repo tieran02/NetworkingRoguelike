@@ -5,8 +5,8 @@
 
 Player::Player() : Entity("Player", CollisionLayer::PLAYER)
 {
-	SetMaxHealth(100.0f);
-	SetHealth(GetMaxHealth());
+	m_maxHealth = 100.f;
+	m_health = m_maxHealth;
 	SetMovementSpeed(200.0f);
 	//collide with everything except player projectiles
 	GetCollider()->SetCollideMask(Collider::AllLayers() & ~(CollisionLayer::PROJECTILE_PLAYER));
@@ -52,18 +52,16 @@ void Player::Update(float deltaTime)
 			newVelocity += sf::Vector2f(0.0f, GetMovementSpeed());
 		}
 
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
+		if(sf::Mouse::isButtonPressed(sf::Mouse::Left))
 		{
-			m_world->ShootBullet(GetPosition(), sf::Vector2f(0.0f, -400.0f));
-		}
-		SetVelocity(newVelocity);
-		UpdatePosition(deltaTime);
+			const sf::Vector2i mousePos = sf::Mouse::getPosition(m_world->GetWindow());
+			const sf::Vector2f mouseWorldPos = Camera::ScreenToWorldPos(mousePos, m_world->GetWindow());
+			const sf::Vector2f dir = Math::Direction(GetPosition(), mouseWorldPos);
 
-		//if health is lower than zero disable the player
-		if(GetHealth() <= 0.0f)
-		{
-			SetActive(false);
+			//m_world->ShootBullet(GetPosition(), dir * 400.0f);
 		}
+		SetVelocity(newVelocity,false);
+		UpdatePosition(deltaTime);
 
 		//set camera pos
 		m_world->GetCamera().SetPosition(GetPosition());
@@ -80,7 +78,7 @@ void Player::Draw(sf::RenderWindow & window)
 
 void Player::OnCollision(Collider& other)
 {
-
+	Damage(5.0f);
 }
 
 std::shared_ptr<Entity> Player::Clone(unsigned int worldID, unsigned int ownership, ServerConnection* connection, World* world)

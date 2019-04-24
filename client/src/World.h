@@ -12,7 +12,7 @@ class World
 {
 	friend ServerConnection;
 public:
-	World();
+	World(const sf::RenderWindow& window);
 	~World();
 
 	void Generate(ServerConnection* connection);
@@ -35,7 +35,10 @@ public:
 	sf::Vector2u GetWindowSize() const;
 
 	Camera& GetCamera();
+	const sf::RenderWindow& GetWindow() const;
+
 private:
+	const sf::RenderWindow& m_window;
 	Camera m_camera;
 
 	bool m_windowFocused{ true };

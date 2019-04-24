@@ -19,31 +19,29 @@ public:
 
 	unsigned int GetWorldID() const { return m_worldID; }
 	const std::shared_ptr<sf::Sprite>& GetSprite() const { return m_sprite; }
-    void SetPosition(const sf::Vector2f& position);
+    void SetPosition(const sf::Vector2f& position, bool serverAuth);
 	sf::Vector2f GetPosition() const { return m_position; }
 	sf::Vector2f GetLastPosition() const { return m_lastPosition; }
-
-	void SetNetworkPosition(const sf::Vector2f& position);
 	sf::Vector2f GetNetworkPosition() const { return m_networkPosition; }
-	void SetLastNetworkPosition(const sf::Vector2f& position);
 	sf::Vector2f GetLastNetworkPosition() const { return m_lastNetworkPosition; }
 
 	sf::Vector2f GetDirection() const;
-	void SetVelocity(sf::Vector2f velocity);
+	void SetVelocity(const sf::Vector2f& velocity, bool serverAuth);
 	sf::Vector2f GetVelocity() const;
-	void SetNetworkVelocity(const sf::Vector2f& velocity);
 	sf::Vector2f GetNetworkVelocity() const { return m_networkVelocity; }
 	void SetMovementSpeed(float speed);
 	float GetMovementSpeed() const;
 
 	std::shared_ptr<Collider> GetCollider() const { return m_collider; }
-	void SetActive(bool active);
+	void SetActive(bool active, bool serverAuth);
 	bool IsActive() const;
 
-	void SetHealth(float health);
+	void SetHealth(float health, bool serverAuth);
 	float GetHealth() const;
-	void SetMaxHealth(float health);
+	void SetMaxHealth(float health, bool serverAuth);
 	float GetMaxHealth() const;
+	void Damage(float amount);
+	void Heal(float amount);
 
 	sf::Vector2f CalculatePredictedPosition() const;
 
@@ -60,10 +58,10 @@ protected:
 
 	unsigned int m_worldID;
 	unsigned int m_ownership;
+	float m_health{ 1.0f };
+	float m_maxHealth{ 1.0f };
 private:
     std::shared_ptr<sf::Sprite> m_sprite;
-	float m_health{1.0f};
-	float m_maxHealth{ 1.0f };
 	float m_movementSpeed{ 0.0f };
 	bool m_active{ true };
 	std::shared_ptr<Collider> m_collider;
@@ -77,5 +75,7 @@ private:
 	sf::Vector2f m_networkPosition;
 	sf::Vector2f m_lastNetworkPosition;
 	sf::Vector2f m_networkVelocity{ 0.0f,0.0f };
+
+	float getDistanceFromNetworkPosition() const;
 
 };

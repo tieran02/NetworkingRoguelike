@@ -189,6 +189,12 @@ void Network::Start()
 					SpawnMessage* requestMsg = static_cast<SpawnMessage*>(&msg.message);
 					m_worldState->SpawnNewEntity(requestMsg->GetEntityID(), requestMsg->GetPosition(), requestMsg->GetVelocity(), requestMsg->GetOwnershipID());
 				}
+				else if(msg.message.GetHeader().type == MessageType::HEALTH)
+				{
+					HealthMessage* healthMessage = static_cast<HealthMessage*>(&msg.message);
+					LOG_TRACE("Recieved Entity health message from entity:" + std::to_string(healthMessage->GetWorldID()));
+					m_worldState->SetEntityHealth(healthMessage->GetWorldID(), healthMessage->GetHealth(), healthMessage->GetMaxHealth());
+				}
 				else
 				{
 					std::stringstream stream;
@@ -342,6 +348,12 @@ void Network::SendMovementMessage(unsigned worldID, sf::Vector2f newPosition,sf:
 	SendToAllUDP(message);
 	LOG_TRACE("Sending movement message to all connections");
 
+}
+
+void Network::SendHealthMessage(unsigned worldID, float health, float maxHealth)
+{
+	HealthMessage message{ worldID,health,maxHealth, 0 };
+	SendToAllTCP(message);
 }
 
 void Network::Connect(Connection* connection)

@@ -84,6 +84,30 @@ void WorldState::MoveEntity(int worldID, sf::Vector2f newPosition, sf::Vector2f 
 	}
 }
 
+void WorldState::SetEntityHealth(unsigned worldID, float health, float maxHealth)
+{
+	std::shared_lock<std::shared_mutex> lock{ m_entityMapMutex };
+
+	//check if entity exists in the world state
+	if (m_entities.find(worldID) != m_entities.end())
+	{
+		auto& entity = m_entities.at(worldID);
+
+		entity->MaxHealth = maxHealth;
+		//Health can't be set higher than max health
+		entity->Health = std::min(entity->MaxHealth, health);
+
+		//set entity state to inactive if the entity is dead
+		if (entity->Health <= 0.0f)
+			entity->IsActive = false;
+		else
+			entity->IsActive = true;
+
+		//send back to clients
+		m_network->SendHealthMessage(worldID, entity->Health, entity->MaxHealth);
+	}
+}
+
 sf::Vector2f WorldState::findValidSpawnPos() const
 {
 	const std::vector<DungeonChunk*>&  chunks = m_dungeon->GetChunks();

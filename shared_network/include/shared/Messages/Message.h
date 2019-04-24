@@ -19,7 +19,8 @@ enum class MessageType
 	BATCH,
 	DISCONNECT,
 	CLIENT_SETUP,
-	PING
+	PING,
+	HEALTH
 };
 
 struct Header

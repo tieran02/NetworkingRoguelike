@@ -11,30 +11,43 @@ Entity::Entity(const std::string& spriteName, CollisionLayer layer)
 	m_sprite->setOrigin(spriteBounds.width / 2.0f, spriteBounds.height / 2.0f);
 
 	//create collider
-	m_collider = std::make_shared<Collider>(m_position,sf::Vector2f{ m_sprite->getGlobalBounds().width,m_sprite->getGlobalBounds().height},layer);
+	m_collider = std::make_shared<Collider>(m_position,sf::Vector2f{ m_sprite->getGlobalBounds().width,m_sprite->getGlobalBounds().height},this,layer);
 }
 
 Entity::~Entity()
 {
 }
 
-void Entity::SetPosition(const sf::Vector2f& position)
+void Entity::SetPosition(const sf::Vector2f& position, bool serverAuth)
 {
-	m_lastPosition = m_position;
+	if (hasOwnership() && !serverAuth)
+	{
+		m_lastPosition = m_position;
+		m_sprite->setPosition(position);
+		m_collider->SetPosition(position);
+		m_position = position;
 
-    m_sprite->setPosition(position);
-	m_collider->SetPosition(position);
-    m_position = position;
-}
 
-void Entity::SetNetworkPosition(const sf::Vector2f& position)
-{
-	m_networkPosition = position;
-}
+		//only send if moved beyond threshold
+		const float distance = getDistanceFromNetworkPosition();
+		constexpr float threshold = 10.0f;
+		if (distance >= threshold)
+		{
+			//send to server
+			m_connection->SendMovementMessage(m_worldID, m_position, m_velocity);
+		}
+	}
+	if(serverAuth)
+	{
+		m_lastPosition = m_position;
+		m_sprite->setPosition(position);
+		m_collider->SetPosition(position);
+		m_position = position;
 
-void Entity::SetLastNetworkPosition(const sf::Vector2f& position)
-{
-	m_lastNetworkPosition = position;
+		//set network position
+		m_lastNetworkPosition = m_networkPosition;
+		m_networkPosition = position;
+	}
 }
 
 sf::Vector2f Entity::GetDirection() const
@@ -42,9 +55,19 @@ sf::Vector2f Entity::GetDirection() const
 	return Math::Normalise(m_velocity);
 }
 
-void Entity::SetVelocity(sf::Vector2f velocity)
+void Entity::SetVelocity(const sf::Vector2f& velocity, bool serverAuth)
 {
-	m_velocity = velocity;
+	if (hasOwnership() && !serverAuth && m_velocity != velocity)
+	{
+		m_velocity = velocity;
+		//send movement message to server
+		m_connection->SendMovementMessage(m_worldID, m_position, m_velocity);
+	}
+	if(serverAuth) // velocity change came from the server so update velocity to match the server
+	{
+		m_velocity = velocity;
+		m_networkVelocity = velocity;
+	}
 }
 
 sf::Vector2f Entity::GetVelocity() const
@@ -52,10 +75,6 @@ sf::Vector2f Entity::GetVelocity() const
 	return m_velocity;
 }
 
-void Entity::SetNetworkVelocity(const sf::Vector2f& velocity)
-{
-	m_networkVelocity = velocity;
-}
 
 void Entity::SetMovementSpeed(float speed)
 {
@@ -67,13 +86,19 @@ float Entity::GetMovementSpeed() const
 	return m_movementSpeed;
 }
 
-void Entity::SetActive(bool active)
+void Entity::SetActive(bool active, bool serverAuth)
 {
-	if (active != m_active)
+	if (hasOwnership() && active != m_active && !serverAuth)
 	{
 		m_active = active;
-		//send entity state to server
+		m_collider->SetActive(active);
+		//send active only if this message didn't come from the server
 		m_connection->SendEntityStateMessage(*this);
+	}
+	if(serverAuth)
+	{
+		m_active = active;
+		m_collider->SetActive(active);
 	}
 }
 
@@ -82,10 +107,38 @@ bool Entity::IsActive() const
 	return m_active;
 }
 
-void Entity::SetHealth(float health)
+void Entity::SetHealth(float health, bool serverAuth)
 {
-	//Health can't be set higher than max health
-	m_health = std::min(m_maxHealth, health);
+	if (hasOwnership() && health != m_health && !serverAuth)
+	{
+		//send health message to server
+		m_connection->SendHealthMessage(m_worldID,health,m_maxHealth);
+
+		//set health locally (may change when the server sends the health back)
+		m_health = health;
+		//disable if health is less than zero
+		if(m_health <= 0.0f)
+		{
+			SetActive(false, serverAuth);
+		}
+		else
+		{
+			SetActive(true, serverAuth);
+		}
+	}
+	if(serverAuth) // message came directly from the server, set values from the server values
+	{
+		//set health from server
+		m_health = health;
+		//disable if health is less than zero
+		if (m_health <= 0.0f)
+		{
+			SetActive(false, serverAuth);
+		}else
+		{
+			SetActive(true, serverAuth);
+		}
+	}
 }
 
 float Entity::GetHealth() const
@@ -93,14 +146,35 @@ float Entity::GetHealth() const
 	return m_health;
 }
 
-void Entity::SetMaxHealth(float health)
+void Entity::SetMaxHealth(float health, bool serverAuth)
 {
-	m_maxHealth = health;
+	if (hasOwnership() && health != m_maxHealth && !serverAuth)
+	{
+		//send health message to server
+		m_connection->SendHealthMessage(m_worldID, health, m_maxHealth);
+
+		//set health locally (may change when the server sends authorized health back)
+		m_maxHealth = health;
+	}
+	if(serverAuth)
+	{
+		m_maxHealth = health;
+	}
 }
 
 float Entity::GetMaxHealth() const
 {
 	return m_maxHealth;
+}
+
+void Entity::Damage(float amount)
+{
+	SetHealth(m_health - amount, false);
+}
+
+void Entity::Heal(float amount)
+{
+	SetHealth(m_health + amount, false);
 }
 
 sf::Vector2f Entity::CalculatePredictedPosition() const
@@ -113,25 +187,36 @@ void Entity::UpdatePosition(float deltaTime)
 	if (Math::SqrMagnitude(m_velocity) == 0.0f)
 		return;
 
-	SetPosition(m_position + (m_velocity * deltaTime));
+	m_lastPosition = m_position;
+	m_position += (m_velocity * deltaTime);
+	m_sprite->setPosition(m_position);
+	m_collider->SetPosition(m_position);
 }
 
 void Entity::UpdatePredictedPosition(float deltaTime)
 {
-	if (Math::Distance(m_position, m_networkPosition) <= 0.5f)
-		return;
-
-	sf::Vector2f newPos = Math::MoveTowards(m_lastNetworkPosition, m_networkPosition, deltaTime * m_movementSpeed);
-	SetPosition(newPos);
+	if (m_position != m_networkPosition)
+	{
+		sf::Vector2f newPos = Math::MoveTowards(m_position, m_networkPosition, deltaTime * m_movementSpeed);
+		m_lastPosition = m_position;
+		m_position = newPos;
+		m_sprite->setPosition(m_position);
+		m_collider->SetPosition(m_position);
+	}
 }
 
 
 void Entity::Translate(const sf::Vector2f& position)
 {
-	SetPosition(m_position + position);
+	SetPosition(m_position + position,false);
 }
 
 bool Entity::hasOwnership() const
 {
 	return m_ownership == m_connection->GetColientID();
+}
+
+float Entity::getDistanceFromNetworkPosition() const
+{
+	return Math::Distance(m_position, m_networkPosition);
 }

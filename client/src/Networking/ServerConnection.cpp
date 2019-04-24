@@ -66,7 +66,7 @@ void ServerConnection::Connect()
 
 void ServerConnection::UpdateTick()
 {
-	sendEntityStates();
+	//sendEntityStates();
 }
 
 void ServerConnection::PollMessages()
@@ -142,13 +142,23 @@ void ServerConnection::PollMessages()
 					if (entities.find(message->WorldID()) != entities.end())
 					{
 						auto& entity = entities.at(message->WorldID());
-						entity->SetActive(message->IsActive());
+						entity->SetActive(message->IsActive(),true);
 						updateEntityNetworkState(message->WorldID(), message->GetPosition(), message->GetVelocity());
 					}
 
 				}
 			}
-			
+			else if (msg.message.GetHeader().type == MessageType::HEALTH)
+			{
+				HealthMessage* message = static_cast<HealthMessage*>(&msg.message);
+				auto& entities = m_world->GetEntities();
+				if (entities.find(message->GetWorldID()) != entities.end())
+				{
+					auto& entity = entities.at(message->GetWorldID());
+					entity->SetHealth(message->GetHealth(), true);
+					entity->SetMaxHealth(message->GetMaxHealth(), true);
+				}
+			}
 		}
 
 
@@ -225,37 +235,35 @@ void ServerConnection::NotifyWorldGeneration()
 	SendTcpMessage(setupMsg);
 }
 
-void ServerConnection::sendEntityStates()
-{
-	//for each world entity update the entity state
-	for (const auto& entity : m_world->GetEntities())
-	{
-		//onlu send movement of the entity if the client has ownership of it
-		if (entity.second->hasOwnership()) {
-			//check if the enity has exceeded its threshold
-			const float distance = std::abs(Math::Distance(entity.second->GetNetworkPosition(), entity.second->GetPosition()));
-			constexpr float threshold = 5.0f;
-			if (distance >= threshold)
-			{
-				MovementMessage movement{ entity.second->GetWorldID(),entity.second->GetPosition(),entity.second->GetVelocity(), m_clientID };
-				SendUdpMessage(movement);
-				//Set network position and velocity to what we just sent to the server (This may get corrected later on when we receive a message)
-				entity.second->SetNetworkPosition(entity.second->GetPosition());
-				entity.second->SetNetworkVelocity(entity.second->GetVelocity());
-			}
-		}
-	}
-}
+//void ServerConnection::sendEntityStates()
+//{
+//	//for each world entity update the entity state
+//	for (const auto& entity : m_world->GetEntities())
+//	{
+//		//onlu send movement of the entity if the client has ownership of it
+//		if (entity.second->hasOwnership()) {
+//			//check if the enity has exceeded its threshold
+//			const float distance = std::abs(Math::Distance(entity.second->GetNetworkPosition(), entity.second->GetPosition()));
+//			constexpr float threshold = 5.0f;
+//			if (distance >= threshold)
+//			{
+//				MovementMessage movement{ entity.second->GetWorldID(),entity.second->GetPosition(),entity.second->GetVelocity(), m_clientID };
+//				SendUdpMessage(movement);
+//				//Set network position and velocity to what we just sent to the server (This may get corrected later on when we receive a message)
+//				entity.second->SetNetworkPosition(entity.second->GetPosition());
+//				entity.second->SetNetworkVelocity(entity.second->GetVelocity());
+//			}
+//		}
+//	}
+//}
 
 void ServerConnection::updateEntityNetworkState(unsigned worldID, sf::Vector2f newPosition, sf::Vector2f velocity)
 {
 	auto entities = m_world->GetEntities();
 	if (entities.find(worldID) != entities.end())
 	{
-		entities.at(worldID)->SetLastNetworkPosition(entities.at(worldID)->GetNetworkPosition());
-		entities.at(worldID)->SetNetworkPosition(newPosition);
-		entities.at(worldID)->SetVelocity(velocity);
-		entities.at(worldID)->SetNetworkVelocity(velocity);
+		entities.at(worldID)->SetVelocity(velocity,true);
+		//entities.at(worldID)->SetPosition(newPosition, true);
 	}
 }
 
@@ -302,6 +310,12 @@ void ServerConnection::SendEntityDestroyMessage(unsigned worldID)
 {
 	const EntityStateMessage state{ worldID,sf::Vector2f(),sf::Vector2f(),false,true, m_clientID };
 	SendTcpMessage(state);
+}
+
+void ServerConnection::SendHealthMessage(unsigned worldID, float health, float maxHealth)
+{
+	const HealthMessage msg{ worldID,health,maxHealth,m_clientID };
+	SendTcpMessage(msg);
 }
 
 sf::Time ServerConnection::TimeSinceLastMessage() const

@@ -5,7 +5,7 @@
 #include "shared/Utility/Math.h"
 #include "Graphics/SpriteManager.h"
 
-World::World() : m_camera(sf::Vector2f{ 0.0f,0.0f }, GetWindowSize(), 1024)
+World::World(const sf::RenderWindow& window) : m_window(window), m_camera(sf::Vector2f{ 0.0f,0.0f }, GetWindowSize(), 1024)
 {
 	m_wallSprite = SpriteManager::Instance().CreateSprite("Wall");
 	m_floorSprite = SpriteManager::Instance().CreateSprite("Floor");
@@ -50,11 +50,8 @@ std::shared_ptr<Entity> World::SpawnEntity(unsigned int entityID, unsigned int w
     auto entity = m_entityFactory.CreateEntity(entityID,worldID, ownership,m_serverConnection, this);
     if(entity != nullptr)
     {
-		entity->SetPosition(pos);
-		entity->SetNetworkPosition(pos);
-		entity->SetLastNetworkPosition(pos);
-		entity->SetVelocity(velocity);
-		entity->SetNetworkVelocity(velocity);
+		entity->SetPosition(pos,true);
+		entity->SetVelocity(velocity,true);
 		m_entities.insert((std::make_pair(worldID, entity)));
 
 		//add entity collider to the collider vector
@@ -92,6 +89,11 @@ Camera& World::GetCamera()
 	return m_camera;
 }
 
+const sf::RenderWindow& World::GetWindow() const
+{
+	return m_window;
+}
+
 void World::collisionDetection()
 {
 	std::unordered_set<std::shared_ptr<Collider>> toRemove;
@@ -111,7 +113,7 @@ void World::collisionDetection()
 			}
 		}
 		//set entity pos to collider pos
-		entity.second->SetPosition(entity.second->GetCollider()->GetPosition());
+		entity.second->SetPosition(entity.second->GetCollider()->GetPosition(),false);
 	}
 }
 
@@ -140,7 +142,7 @@ void World::RequestDestroyEntity(unsigned worldID)
 {
 	if(m_entities.find(worldID) != m_entities.end())
 	{
-		m_entities.at(worldID)->SetActive(false);
+		m_entities.at(worldID)->SetActive(false, false);
 		m_serverConnection->SendEntityDestroyMessage(worldID);
 	}
 }
@@ -187,7 +189,8 @@ void World::Draw(sf::RenderWindow& window)
 	if (m_debug) {
 		for (auto& collider : m_colliders)
 		{
-			window.draw(collider->GetRect());
+			if(collider->IsActive())
+				window.draw(collider->GetRect());
 		}
 	}
 }
