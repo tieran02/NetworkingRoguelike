@@ -18,11 +18,12 @@ public:
 	void Generate(ServerConnection* connection);
 	void SetSeed(unsigned int);
 
-	void Update(float deltaTime);
+	void Update();
 	void Draw(sf::RenderWindow& window);
 
 	std::shared_ptr<Entity> SpawnEntity(unsigned int entityID, unsigned int worldID, sf::Vector2f pos, sf::Vector2f velocity, unsigned int ownership, CollisionLayer layerOverride);
 	void ShootBullet(sf::Vector2f startPos, sf::Vector2f velocity, CollisionLayer side);
+
 
 	void RequestDestroyEntity(unsigned int worldID);
 	std::vector<sf::Vector2f> GetPlayerPositions() const;
@@ -40,6 +41,10 @@ public:
 	const sf::RenderWindow& GetWindow() const;
 
 private:
+	float currentTime{ 0.0f };
+	float lastTime{ 0.0f };
+	float deltaTime{ 0.0f };
+
 	const sf::RenderWindow& m_window;
 	Camera m_camera;
 

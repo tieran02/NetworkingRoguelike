@@ -20,7 +20,8 @@ enum class MessageType
 	DISCONNECT,
 	CLIENT_SETUP,
 	PING,
-	HEALTH
+	HEALTH,
+	COLLIDE
 };
 
 struct Header

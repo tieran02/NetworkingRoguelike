@@ -96,7 +96,7 @@ bool Entity::IsActive() const
 
 void Entity::SetHealth(float health, bool serverAuth)
 {
-	if (hasOwnership() && health != m_health && !serverAuth)
+	if (health != m_health && !serverAuth)
 	{
 		//send health message to server
 		m_connection->SendHealthMessage(m_worldID, health, m_maxHealth);
@@ -136,7 +136,7 @@ float Entity::GetHealth() const
 
 void Entity::SetMaxHealth(float health, bool serverAuth)
 {
-	if (hasOwnership() && health != m_maxHealth && !serverAuth)
+	if (health != m_maxHealth && !serverAuth)
 	{
 		//send health message to server
 		m_connection->SendHealthMessage(m_worldID, health, m_maxHealth);

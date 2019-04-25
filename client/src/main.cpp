@@ -35,12 +35,9 @@ int main()
 
 	window.create(sf::VideoMode(width, height), "SFML window");
 
-	float lastTime{ 0.0f };
-	float deltaTime{ 0.0f };
+
 	while (window.isOpen())
 	{
-		float currentTime = std::chrono::duration<float>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-
 		// Event processing
 		sf::Event event;
 		while (window.pollEvent(event))
@@ -60,7 +57,7 @@ int main()
 				world.SetWindowFocused(false);
 		}
 
-		world.Update(deltaTime);
+		world.Update();
 		server_connection.UpdateTick();
 		window.clear(sf::Color{ 80,64,64,255 });
 
@@ -68,10 +65,6 @@ int main()
 		window.display();
 
 		server_connection.PollMessages();
-		deltaTime = currentTime - lastTime;
-		LOG_INFO("FPS = " + std::to_string(1.0f / (currentTime - lastTime)));
-
-		lastTime = currentTime;
 	}
 
 	server_connection.Disconnect();

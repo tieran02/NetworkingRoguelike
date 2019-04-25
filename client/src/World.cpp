@@ -4,6 +4,7 @@
 #include "Networking/ServerConnection.h"
 #include "shared/Utility/Math.h"
 #include "Graphics/SpriteManager.h"
+#include "shared/Utility/Log.h"
 
 World::World(const sf::RenderWindow& window) : m_window(window), m_camera(sf::Vector2f{ 0.0f,0.0f }, GetWindowSize(), 1024)
 {
@@ -127,6 +128,8 @@ void World::entityWorldCollision(Entity& entity)
 {
 	//Check world collisions
 	const DungeonTile* startTile = m_dungeon->GetTileFromWorld(entity.GetPosition());
+	if(startTile == nullptr)
+		return;
 	//convert to chunk pos
 	const sf::Vector2i intPos{ (int)std::floor(entity.GetPosition().x),(int)std::floor(entity.GetPosition().y) };
 	const int chunkX = (intPos.x / 64) / 64;
@@ -173,7 +176,6 @@ void World::ShootBullet(sf::Vector2f startPos, sf::Vector2f velocity, CollisionL
 	m_serverConnection->SendProjectileRequestMessage("Bullet", startPos, velocity, side);
 }
 
-
 void World::RequestDestroyEntity(unsigned worldID)
 {
 	if (m_entities.find(worldID) != m_entities.end())
@@ -197,8 +199,10 @@ std::vector<sf::Vector2f> World::GetPlayerPositions() const
 }
 
 
-void World::Update(float deltaTime)
+void World::Update()
 {
+	float currentTime = std::chrono::duration<float>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+
 	if (!m_serverConnection->IsConnected() && !m_generated)
 		return;
 
@@ -215,6 +219,11 @@ void World::Update(float deltaTime)
 	{
 		m_debug = !m_debug;
 	}
+
+	deltaTime = currentTime - lastTime;
+	//LOG_INFO("FPS = " + std::to_string(1.0f / (currentTime - lastTime)));
+
+	lastTime = currentTime;
 }
 
 

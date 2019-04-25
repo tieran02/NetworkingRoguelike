@@ -28,7 +28,7 @@ void Bullet::Draw(sf::RenderWindow& window)
 void Bullet::OnCollision(Collider& other)
 {
 	Entity* entity = other.GetEntity();
-	if (entity != nullptr && other.GetLayer() == CollisionLayer::PLAYER)
+	if (entity != nullptr )
 	{
 		entity->Damage(m_damage);
 	}

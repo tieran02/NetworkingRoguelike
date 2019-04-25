@@ -48,32 +48,6 @@ void DungeonChunk::Draw(sf::RenderWindow& window, int tileSize, std::shared_ptr<
 
 	sf::Vector2i offset{ chunkX * (int)CHUNK_SIZE * tileSize, chunkY * (int)CHUNK_SIZE * tileSize };
 
-	//draw rooms only
-	//int i = 0;
-	//for (auto& room : m_rooms)
-	//{
-
-	//	for (auto& tile : room.GetEdgeTiles())
-	//	{
-	//		sf::Vector2f position = sf::Vector2f((tile->x*(float)tileSize), (tile->y*float(tileSize))) + (sf::Vector2f)offset;
-	//		rectangle.setPosition(position);
-	//		rectangle.setFillColor(m_roomColours[i]);
-
-	//		switch (m_tiles[tile->y][tile->x].type)
-	//		{
-	//		case DungeonTileType::EMPTY:
-	//			window.draw(rectangle);
-	//			break;
-	//		case DungeonTileType::WALL:
-	//			window.draw(rectangle);
-	//			break;
-	//		default:
-	//			break;
-	//		}
-	//	}
-	//	i++;
-	//}
-
 	for (int y = 0; y < (int)CHUNK_SIZE; ++y)
 	{
 		for (int x = 0; x < (int)CHUNK_SIZE; ++x)
@@ -94,9 +68,9 @@ void DungeonChunk::Draw(sf::RenderWindow& window, int tileSize, std::shared_ptr<
 				break;
 			}
 
-			//draw colliders
-			if(m_tiles[y][x].collider != nullptr)
-				window.draw(m_tiles[y][x].collider->GetRectShape());
+			////draw colliders
+			//if(m_tiles[y][x].collider != nullptr)
+			//	window.draw(m_tiles[y][x].collider->GetRectShape());
 		}
 	}
 }

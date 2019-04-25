@@ -50,13 +50,16 @@ void Network::Start()
 		//Send message to clients
 		if (m_currentTime >= m_lastTickTime + TICK_RATE)
 		{
+			m_worldState->Update();
+
+
 			if (m_currentTime >= m_lastPing + 1)
 			{
 				//ping all clients every second
 				auto timestamp = std::chrono::system_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
 				messagesToSend.push(std::make_tuple(0, Protocol::UPD, PingMessage(timestamp, 0)));
 				m_lastPing = m_currentTime;
-				LOG_INFO("Server ms = " + std::to_string(m_currentTime - m_lastTickTime));
+				LOG_INFO("Server ms = " + std::to_string(m_currentTickRate));
 			}
 
 			while (!messagesToSend.empty())
@@ -93,7 +96,7 @@ void Network::Start()
 				default:;
 				}
 			}
-
+			m_currentTickRate = m_currentTime - m_lastTickTime;
 			m_lastTickTime = m_currentTime;
 		}
 
@@ -216,7 +219,6 @@ void Network::Start()
 				break;
 			}
 		}
-
 	}
 	m_running = false;
 
@@ -346,7 +348,7 @@ void Network::SendToAllTCP(const Message& message, unsigned int ignore)
 
 void Network::SendSpawnMessage(unsigned int worldID, unsigned int entityID, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownershipID, CollisionLayer layerOverride)
 {
-	SpawnMessage message{ worldID, entityID,position,velocity,ownershipID,layerOverride };
+	const SpawnMessage message{ worldID, entityID,position,velocity,ownershipID,layerOverride };
 	SendToAllTCP(message);
 	std::stringstream stream;
 	stream << "Spawning entity: worldID:" << worldID << " entityID:" << entityID << " ownershipID:" << ownershipID;

@@ -265,6 +265,8 @@ void ServerConnection::updateEntityNetworkState(unsigned worldID, sf::Vector2f n
 	{
 		entities.at(worldID)->SetLastNetworkPosition(entities.at(worldID)->GetNetworkPosition());
 		entities.at(worldID)->SetNetworkPosition(newPosition);
+		entities.at(worldID)->SetPosition(newPosition);
+
 		entities.at(worldID)->SetVelocity(velocity);
 		entities.at(worldID)->SetNetworkVelocity(velocity);
 	}

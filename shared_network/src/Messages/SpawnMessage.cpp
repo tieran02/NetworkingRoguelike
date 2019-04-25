@@ -1,6 +1,6 @@
 #include "Messages/SpawnMessage.h"
 
-SpawnMessage::SpawnMessage(char* buffer)
+SpawnMessage::SpawnMessage(char* buffer) : Message(buffer)
 {
 
 }

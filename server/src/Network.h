@@ -31,6 +31,9 @@ public:
 	void Connect(Connection* connection);
 	void Disconnect(unsigned int connectionID);
 
+	float GetCurrentTime() const { return m_currentTime; }
+	float GetCurrentTickRate() const { return m_currentTickRate; }
+
 	ThreadPool& GetThreadPool() { return m_threadPool; }
 private:
 	WorldState* m_worldState;
@@ -43,6 +46,7 @@ private:
 	//server tick rate in milliseconds
 	const float TICK_RATE{ (1.0f / 64.0f)  };
 	float m_currentTime;
+	float m_currentTickRate{ 1.0 / 64.0f };
 
 	sf::UdpSocket m_udpSocket;
 	std::unordered_map<unsigned int,std::unique_ptr<Connection>> m_connections;

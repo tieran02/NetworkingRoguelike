@@ -35,6 +35,8 @@ public:
 
 	void SendTCP(const Message& msg) const;
 	void SendUDP(const Message& msg) const;
+
+	float GetPing() const { return m_ping; }
 private:
 	unsigned int m_connectionID;
 	sf::IpAddress m_address;

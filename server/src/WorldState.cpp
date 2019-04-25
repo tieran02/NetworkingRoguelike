@@ -22,6 +22,46 @@ void WorldState::GenerateWorld()
 	SpawnEnemies();
 }
 
+void WorldState::Update()
+{
+	//loop through all enemies
+	for (const auto& enemy : m_enemies)
+	{
+		if(!enemy.second->IsActive())
+			continue;
+
+		if(enemy.second->GetTarget() == nullptr)
+		{
+			//look for closest player
+			float distance = 0.0f;
+			const auto player = GetClosestPlayer(*enemy.second, distance);
+			if (player != nullptr)
+			{
+				if (distance <= 320.0f)
+				{
+					enemy.second->SetTarget(player);
+				}
+			}
+		}
+		else
+		{
+			//move towards target
+			sf::Vector2f direction = Math::Direction(enemy.second->Position(), enemy.second->GetTarget()->Position());
+			enemy.second->SetVelocity(direction * enemy.second->BaseData().MovementSpeed);
+			enemy.second->ApplyVelocity(m_network->GetCurrentTickRate());
+			//Send pos to all clients
+			const float distance = std::abs(Math::Distance(enemy.second->LastSentPosition(), enemy.second->Position()));
+			if (distance >= 5.0f)
+			{
+				m_network->SendMovementMessage(enemy.first, enemy.second->Position(), enemy.second->Velocity());
+				enemy.second->SetLastSentPosition(enemy.second->Position());
+			}
+		}
+	}
+
+	enemyCollisions();
+}
+
 void WorldState::SetNetwork(Network& network)
 {
 	m_network = &network;
@@ -38,7 +78,8 @@ void WorldState::SpawnPlayer(Connection& connection)
 	//send all entities to the new player
 	SpawnAllEntities();
 	//spawn the player
-	SpawnNewEntity("Player", findValidSpawnPos(),sf::Vector2f(), connection.GetConnectionID(), CollisionLayer::NONE);
+	auto entity = SpawnNewEntity("Player", findValidSpawnPos(),sf::Vector2f(), connection.GetConnectionID(), CollisionLayer::NONE);
+	m_players.insert(std::make_pair(entity->WorldID(), entity));
 }
 
 void WorldState::SpawnAllEntities()
@@ -52,7 +93,7 @@ void WorldState::SpawnAllEntities()
 	}
 }
 
-void WorldState::SpawnNewEntity(const std::string& entityName, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownership, CollisionLayer layerOverride)
+std::shared_ptr<Entity> WorldState::SpawnNewEntity(const std::string& entityName, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownership, CollisionLayer layerOverride)
 {
 	std::unique_lock<std::shared_mutex> lock{ m_entityMapMutex };
 
@@ -64,6 +105,8 @@ void WorldState::SpawnNewEntity(const std::string& entityName, sf::Vector2f posi
 		m_network->SendSpawnMessage(entity->WorldID(), entity->BaseData().EntityID, entity->Position(), entity->Velocity(), entity->OwnershipID(), layerOverride);
 	//add to server collider list
 	m_colliders.insert(entity->GetCollider());
+
+	return entity;
 }
 
 void WorldState::DestroyEntity(unsigned worldID)
@@ -76,6 +119,8 @@ void WorldState::DestroyEntity(unsigned worldID)
 		//remove collider
 		m_colliders.erase(entity->GetCollider());
 		m_entities.erase(worldID);
+		m_enemies.erase(worldID);
+		m_players.erase(worldID);
 	}
 }
 
@@ -138,6 +183,31 @@ void WorldState::SetEntityHealth(unsigned worldID, float health, float maxHealth
 	}
 }
 
+void WorldState::DamageEntity(unsigned worldID, float damage)
+{
+	if (m_entities.find(worldID) != m_entities.end())
+	{
+		auto& entity = m_entities.at(worldID);
+		//Damage server entity
+		m_entities.at(worldID)->Damage(damage);
+		//send new health to all clients
+		m_network->SendHealthMessage(worldID, entity->BaseData().Health, entity->BaseData().MaxHealth);
+	}
+}
+
+bool WorldState::IsColliding(unsigned worldID, unsigned otherWorldID) const
+{
+	if(m_entities.find(worldID) != m_entities.end() && m_entities.find(otherWorldID) != m_entities.end())
+	{
+		const auto& firstEntity = m_entities.at(worldID);
+		const auto& otherEntity = m_entities.at(otherWorldID);;
+
+		//check against actual server pos
+		return m_entities.at(worldID)->GetCollider()->CheckCollision(*m_entities.at(otherWorldID)->GetCollider());
+	}
+	return false;
+}
+
 sf::Vector2f WorldState::findValidSpawnPos() const
 {
 	const std::vector<DungeonChunk*>&  chunks = m_dungeon->GetChunks();
@@ -165,7 +235,8 @@ sf::Vector2f WorldState::findRandomPos() const
 	//Get a random point within this room
 	int index = Random::randInt(0, (int)tiles.size()-1);
 	sf::Vector2f chunkPos{ (float)tiles[index]->x, (float)tiles[index]->y };
-	return m_dungeon->ChunckToWorldSpace(0, chunkPos);
+
+	return m_dungeon->ChunckToWorldSpace(randomChunk, chunkPos);
 }
 
 void WorldState::SpawnEnemies()
@@ -174,6 +245,71 @@ void WorldState::SpawnEnemies()
 	for (int i = 0; i < ENEMY_COUNT; ++i)
 	{
 		sf::Vector2f spawnPos = findRandomPos();
-		SpawnNewEntity("Skeleton", spawnPos, sf::Vector2f(), 0, CollisionLayer::NONE);
+		std::shared_ptr<Entity> entity = SpawnNewEntity("Skeleton", spawnPos, sf::Vector2f(), 0, CollisionLayer::NONE);
+		m_enemies.insert(std::make_pair(entity->WorldID(), entity));
+	}
+}
+
+std::shared_ptr<Entity> WorldState::GetClosestPlayer(const Entity& sourceEntity, float& distance) const
+{
+	if (m_players.empty())
+		return nullptr;
+
+	std::shared_ptr<Entity> closest;
+	for (const auto& entity : m_players)
+	{
+		if (closest == nullptr) 
+		{
+			closest = entity.second;
+			distance = Math::Distance(closest->Position(), sourceEntity.Position());
+			continue;
+		}
+
+		const float closestDistance = Math::Distance(entity.second->Position(), sourceEntity.Position());
+		if(closestDistance < distance)
+		{
+			closest = entity.second;
+			distance = closestDistance;
+		}
+
+	}
+	return closest;
+}
+
+void WorldState::entityWorldCollision(Entity& entity)
+{
+	//Check world collisions
+	const DungeonTile* startTile = m_dungeon->GetTileFromWorld(entity.Position());
+	if (startTile == nullptr)
+		return;
+	//convert to chunk pos
+	const sf::Vector2i intPos{ (int)std::floor(entity.Position().x),(int)std::floor(entity.Position().y) };
+	const int chunkX = (intPos.x / 64) / 64;
+	const int chunkY = (intPos.y / 64) / 64;
+
+	for (int y = startTile->y - 1; y <= startTile->y + 1; ++y)
+	{
+		for (int x = startTile->x - 1; x <= startTile->x + 1; ++x)
+		{
+			const DungeonTile* tile = m_dungeon->GetTileFromChunk(chunkX, chunkY, x, y);
+
+			if (tile == nullptr || tile->collider == nullptr)
+				continue;
+			Collider* collider = tile->collider;
+
+			if (collider->CheckCollision(*entity.GetCollider()))
+			{
+				entity.SetPosition(entity.LastPosition());
+				return;
+			}
+		}
+	}
+}
+
+void WorldState::enemyCollisions()
+{
+	for (auto& enemy : m_enemies)
+	{
+		entityWorldCollision(*enemy.second);
 	}
 }
