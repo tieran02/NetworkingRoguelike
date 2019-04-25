@@ -59,6 +59,7 @@ private:
 	std::shared_ptr<sf::Sprite> m_floorSprite;
 
 	void collisionDetection();
+	void entityWorldCollision(Entity& entity);
 	bool m_debug{ false };
 
 	void removeEntity(unsigned int worldID);

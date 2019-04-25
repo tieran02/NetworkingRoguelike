@@ -1,5 +1,6 @@
 #pragma once
 #include <SFML/Graphics.hpp>
+#include "Utility/Math.h"
 
 class Entity;
 
@@ -27,7 +28,9 @@ public:
 	sf::Vector2f GetPosition() const;
 	void SetPosition(const sf::Vector2f& pos);
 	sf::Vector2f GetHalfSize() const;
-	const sf::RectangleShape& GetRect() const { return m_rect; }
+	const sf::RectangleShape& GetRectShape() const { return m_rect; }
+	sf::FloatRect GetRect() const;
+
 	void SetMoveable(bool moveable);
 
 	void SetCollideMask(unsigned int collideWithMask);
@@ -42,6 +45,7 @@ public:
 private:
 	Entity* m_entity{ nullptr };
 	sf::RectangleShape m_rect;
+	Math::Rect m_floatRect;
 	sf::Vector2f m_halfSize;
 	bool m_moveable{ false };
 	CollisionLayer m_layer;

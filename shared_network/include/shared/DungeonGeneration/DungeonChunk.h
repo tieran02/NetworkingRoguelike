@@ -3,6 +3,7 @@
 #include "DungeonRoom.h"
 #include <SFML/Graphics.hpp>
 #include <unordered_set>
+#include "../Collider.h"
 
 class Dungeon;
 
@@ -19,8 +20,10 @@ enum class DungeonTileType
 class DungeonTile
 {
 public:
+	~DungeonTile() { delete collider; }
 	int x{ 0 }, y{ 0 }, id{ 0 };
 	DungeonTileType type{DungeonTileType::EMPTY};
+	Collider* collider{nullptr};
 };
 
 class DungeonChunk
@@ -40,7 +43,7 @@ public:
 	const std::vector<DungeonChunk*>& GetNeighbours() const { return m_neighbourChunks; }
 	const std::vector<DungeonRoom>& GetRooms() const;
 protected:
-	const unsigned int CHUNK_SIZE{ 64 };
+	static const unsigned int CHUNK_SIZE{ 64 };
 	int chunkX, chunkY;
 	DungeonTile** m_tiles;
 	std::vector<DungeonRoom> m_rooms;

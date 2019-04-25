@@ -2,6 +2,51 @@
 #include <SFML/System.hpp>
 
 namespace Math {
+
+	struct Rect
+	{
+		Rect() : Left(0), Right(0), Top(0), Bottom(0) {}
+		Rect(float left, float right, float top, float bottom) : Left(left), Right(right), Top(top), Bottom(bottom) {}
+
+		float Left, Right, Top, Bottom;
+
+		float Width() const { return (Right - Left); }
+		float Height() const { return (Bottom - Top); }
+
+		bool Intersect(const Rect& otherRect)
+		{
+			if (std::max(Left, otherRect.Left) <= std::min(Right, otherRect.Right) && std::max(Top, otherRect.Top) <= std::min(Bottom, otherRect.Bottom))
+				return true;
+
+			return false;
+		}
+		//A single point intersects
+		//Rectangle COMPLETELY contains OTHER_Rect 
+		bool Contains(const Rect& otherRect)
+		{
+			if (otherRect.Right <= Right && otherRect.Left >= Left && otherRect.Top >= Top && otherRect.Bottom <= Bottom)
+				return true;
+			return false;
+		}
+		//Check of THIS rect is outide OTHER_Rect
+		bool Outside(const Rect& otherRect)
+		{
+			return !Intersect(otherRect);
+		}
+
+
+
+		//Add a vector to the current vector
+		Rect& operator+=(const Rect& rhs)
+		{
+			Left += rhs.Left;
+			Right += rhs.Right;
+			Top += rhs.Top;
+			Bottom += rhs.Bottom;
+			return *this;
+		}
+	};
+
 	static float Dot(const sf::Vector2f& v1, const sf::Vector2f& v2)
 	{
 		return v1.x * v2.x + v1.y * v2.y;
@@ -22,6 +67,12 @@ namespace Math {
 	{
 		sf::Vector2f d(v2.x - v1.x, v2.y - v1.y);
 		return Magnitude(d);
+	}
+
+	static float SqrDistance(const sf::Vector2f& v1, const sf::Vector2f& v2)
+	{
+		sf::Vector2f d(v2.x - v1.x, v2.y - v1.y);
+		return SqrMagnitude(d);
 	}
 
 	static sf::Vector2f Normalise(const sf::Vector2f& v)

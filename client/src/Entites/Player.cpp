@@ -78,7 +78,7 @@ void Player::Draw(sf::RenderWindow & window)
 
 void Player::OnCollision(Collider& other)
 {
-	Damage(5.0f);
+	//Damage(5.0f);
 }
 
 void Player::OnLayerOverride(CollisionLayer layer)

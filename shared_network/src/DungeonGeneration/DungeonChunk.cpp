@@ -93,6 +93,10 @@ void DungeonChunk::Draw(sf::RenderWindow& window, int tileSize, std::shared_ptr<
 			default:
 				break;
 			}
+
+			//draw colliders
+			if(m_tiles[y][x].collider != nullptr)
+				window.draw(m_tiles[y][x].collider->GetRectShape());
 		}
 	}
 }

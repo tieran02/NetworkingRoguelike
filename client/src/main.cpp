@@ -12,10 +12,11 @@ int main()
 	Log::Init();
 
 	LOG_INFO("Loading Resouces...");
-	SpriteManager::Instance().LoadTexture("Player", "player.png");
-	SpriteManager::Instance().LoadTexture("Wall", "wall.png");
-	SpriteManager::Instance().LoadTexture("Floor", "floor.png");
-	SpriteManager::Instance().LoadTexture("Bullet", "bullet.png");
+	SpriteManager::Instance().LoadTexture("player", "player.png");
+	SpriteManager::Instance().LoadTexture("wall", "wall.png");
+	SpriteManager::Instance().LoadTexture("floor", "floor.png");
+	SpriteManager::Instance().LoadTexture("bullet", "bullet.png");
+	SpriteManager::Instance().LoadTexture("skeleton", "skeleton.png");
 	LOG_INFO("Resouces Loaded");
 
 	//Create window
@@ -68,7 +69,7 @@ int main()
 
 		server_connection.PollMessages();
 		deltaTime = currentTime - lastTime;
-		//LOG_INFO("FPS = " + std::to_string(1.0f / (currentTime - lastTime)));
+		LOG_INFO("FPS = " + std::to_string(1.0f / (currentTime - lastTime)));
 
 		lastTime = currentTime;
 	}

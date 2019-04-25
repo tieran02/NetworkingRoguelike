@@ -58,6 +58,7 @@ public:
     ~WorldState();
 
 	void GenerateWorld();
+
 	void SetNetwork(Network& network);
 	unsigned int GetSeed();
 	void SpawnPlayer(Connection& connection);
@@ -72,7 +73,7 @@ public:
 	std::unordered_map<unsigned int, std::shared_ptr<Entity>>& GetEntities() { return m_entities; }
 	std::shared_mutex& GetEntityMutex() { return m_entityMapMutex; }
 private:
-	Network* m_network;
+	Network* m_network{nullptr};
 	unsigned int m_seed{ 0 };
 	std::unique_ptr<Dungeon> m_dungeon;
 	unsigned int entityIdCounter{ 1 };
@@ -83,4 +84,7 @@ private:
 
 
 	sf::Vector2f findValidSpawnPos() const;
+	sf::Vector2f findRandomPos() const;
+	void SpawnEnemies();
+
 };

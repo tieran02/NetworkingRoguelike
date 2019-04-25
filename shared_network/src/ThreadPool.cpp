@@ -14,10 +14,9 @@ ThreadPool::~ThreadPool()
 
 void ThreadPool::enqueue(Task task)
 {
-	{
-		std::unique_lock<std::mutex> lock{ m_eventMutex };
-		m_tasks.emplace(std::move(task));
-	}
+	std::unique_lock<std::mutex> lock{ m_eventMutex };
+	m_tasks.emplace(std::move(task));
+	lock.unlock();
 
 	m_eventCV.notify_one();
 }

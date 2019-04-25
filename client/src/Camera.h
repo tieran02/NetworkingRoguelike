@@ -17,6 +17,7 @@ public:
 	float GetSize() const;
 
 	const sf::View& GetView() const { return m_view; }
+	sf::FloatRect GetBounds() const;
 
 	static sf::Vector2f ScreenToWorldPos(sf::Vector2i screenPos, const sf::RenderWindow& window);
 	static sf::Vector2i WorldPosToScreenPos(sf::Vector2f worldPos, const sf::RenderWindow& window);
