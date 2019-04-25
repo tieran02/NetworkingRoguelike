@@ -1,6 +1,6 @@
 #pragma once
 #include <SFML/Graphics.hpp>
-#include "QuadTree.h"
+#include "Utility/Math.h"
 
 class Entity;
 
@@ -17,7 +17,6 @@ enum CollisionLayer
 
 class Collider
 {
-	friend QuadTree;
 public:
 	Collider(const sf::Vector2f& pos, const sf::Vector2f& size, Entity* entity, CollisionLayer layer);
 	Collider(const sf::RectangleShape& rect, CollisionLayer layer);
@@ -46,11 +45,11 @@ public:
 private:
 	Entity* m_entity{ nullptr };
 	sf::RectangleShape m_rect;
+	Math::Rect m_floatRect;
 	sf::Vector2f m_halfSize;
 	bool m_moveable{ false };
 	CollisionLayer m_layer;
 	unsigned int m_collideWith;
 	bool m_active{ true };
-	QuadTree* qt = nullptr;
 };
 

@@ -3,13 +3,14 @@
 #include "Utility/Log.h"
 
 
-Collider::Collider(const sf::Vector2f& pos, const sf::Vector2f& size, Entity* entity, CollisionLayer layer) : qt(nullptr)
+Collider::Collider(const sf::Vector2f& pos, const sf::Vector2f& size, Entity* entity, CollisionLayer layer)
 {
 	m_rect = sf::RectangleShape{ size };
 	m_rect.setPosition(pos);
 	m_rect.setFillColor(sf::Color{ 0,255,0,200 });
 	m_halfSize = size / 2.0f;
 	m_rect.setOrigin(m_halfSize);
+	m_floatRect = Math::Rect{ pos.x,pos.x + size.x,pos.y,pos.y + size.y };
 
 	m_entity = entity;
 	m_layer = layer;
@@ -47,23 +48,28 @@ bool Collider::CheckCollision(Collider& other)
 	if (!bit || !bit1)
 		return false;
 
+	if(GetRect().intersects(other.GetRect()))
+	{
+		return true;
+	}
+	return false;
 
-
-	sf::Vector2f otherPos = other.GetPosition();
+	/*sf::Vector2f otherPos = other.GetPosition();
 	sf::Vector2f otherHalfSize = other.GetHalfSize();
 	sf::Vector2f thisPos = GetPosition();
 	sf::Vector2f thisHalfSize = GetHalfSize();
 
 	sf::Vector2f d{ otherPos.x - thisPos.x ,otherPos.y - thisPos.y };
 
-	const float intersectX = std::abs(d.x) - (otherHalfSize.x + thisHalfSize.x);
-	const float intersectY = std::abs(d.y) - (otherHalfSize.y + thisHalfSize.y);
-
 	float push = 1.0f;
 	if (m_moveable)
 	{
 		push = 0.0f;
 	}
+
+	const float intersectX = std::abs(d.x) - (otherHalfSize.x + thisHalfSize.x);
+	const float intersectY = std::abs(d.y) - (otherHalfSize.y + thisHalfSize.y);
+
 
 	if (intersectX < 0.0f && intersectY < 0.0f)
 	{
@@ -96,7 +102,7 @@ bool Collider::CheckCollision(Collider& other)
 		}
 		return true;
 	}
-	return false;
+	return false;*/
 }
 
 sf::Vector2f Collider::GetPosition() const
@@ -107,6 +113,8 @@ sf::Vector2f Collider::GetPosition() const
 void Collider::SetPosition(const sf::Vector2f& pos)
 {
 	m_rect.setPosition(pos);
+	m_floatRect = Math::Rect{ pos.x,pos.x + m_rect.getSize().x,pos.y,pos.y + +m_rect.getSize().y };
+
 }
 
 sf::Vector2f Collider::GetHalfSize() const
@@ -116,7 +124,7 @@ sf::Vector2f Collider::GetHalfSize() const
 
 sf::FloatRect Collider::GetRect() const
 {
-	return m_rect.getGlobalBounds();
+	return  m_rect.getGlobalBounds();
 }
 
 void Collider::SetMoveable(bool moveable)

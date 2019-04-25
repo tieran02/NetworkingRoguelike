@@ -69,7 +69,7 @@ int main()
 
 		server_connection.PollMessages();
 		deltaTime = currentTime - lastTime;
-		//LOG_INFO("FPS = " + std::to_string(1.0f / (currentTime - lastTime)));
+		LOG_INFO("FPS = " + std::to_string(1.0f / (currentTime - lastTime)));
 
 		lastTime = currentTime;
 	}

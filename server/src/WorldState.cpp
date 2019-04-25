@@ -19,14 +19,6 @@ void WorldState::GenerateWorld()
 	m_dungeon = std::unique_ptr<Dungeon>(new Dungeon(2, 2,64, m_seed));
 	m_dungeon->Generate();
 
-	//Set dungeon colliders
-	auto rects = m_dungeon->GetTileRectangles();
-	for (auto& rect : rects)
-	{
-		auto collider = std::make_shared<Collider>(rect, CollisionLayer::WALL);
-		m_colliders.insert(collider);
-	}
-
 	SpawnEnemies();
 }
 

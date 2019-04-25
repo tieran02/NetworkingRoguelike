@@ -5,7 +5,7 @@
 #include "shared/Utility/Math.h"
 #include "Graphics/SpriteManager.h"
 
-World::World(const sf::RenderWindow& window) : m_window(window), m_camera(sf::Vector2f{ 0.0f,0.0f }, GetWindowSize(), 1024), m_collisionManger(m_camera.GetBounds())
+World::World(const sf::RenderWindow& window) : m_window(window), m_camera(sf::Vector2f{ 0.0f,0.0f }, GetWindowSize(), 1024)
 {
 	m_wallSprite = SpriteManager::Instance().CreateSprite("wall");
 	m_floorSprite = SpriteManager::Instance().CreateSprite("floor");
@@ -23,14 +23,6 @@ void World::Generate(ServerConnection* connection)
 
 	m_dungeon = std::unique_ptr<Dungeon>(new Dungeon(2, 2, 64, m_seed));
 	m_dungeon->Generate();
-
-	//Set dungeon colliders
-	auto rects = m_dungeon->GetTileRectangles();
-	for (auto& rect : rects)
-	{
-		auto collider = std::make_shared<Collider>(rect, CollisionLayer::WALL);
-		m_collisionManger.Add(collider);
-	}
 
 	m_generated = true;
 	connection->NotifyWorldGeneration();
@@ -58,7 +50,7 @@ std::shared_ptr<Entity> World::SpawnEntity(unsigned int entityID, unsigned int w
 		m_entities.insert((std::make_pair(worldID, entity)));
 
 		//add entity collider to the collider vector
-		m_collisionManger.Add(entity->GetCollider());
+		m_colliders.insert(entity->GetCollider());
 
 		//set layer override (USED FOR PROJECTILES)
 		if(layerOverride != CollisionLayer::NONE)
@@ -106,7 +98,58 @@ const sf::RenderWindow& World::GetWindow() const
 
 void World::collisionDetection()
 {
-	m_collisionManger.Update();
+	for (auto& entity : m_entities)
+	{
+		if (!entity.second->IsActive())
+			continue;
+
+		entityWorldCollision(*entity.second);
+
+		//check against other entities
+		for (auto& other : m_colliders)
+		{
+			if (entity.second->GetCollider() == other)
+				continue;
+
+			if (other->CheckCollision(*entity.second->GetCollider()))
+			{
+				entity.second->OnCollision(*other);
+				entity.second->SetPosition(entity.second->GetLastPosition());
+				break;
+			}
+		}
+		//set entity pos to collider pos
+		entity.second->SetPosition(entity.second->GetCollider()->GetPosition());
+	}
+}
+
+void World::entityWorldCollision(Entity& entity)
+{
+	//Check world collisions
+	const DungeonTile* startTile = m_dungeon->GetTileFromWorld(entity.GetPosition());
+	//convert to chunk pos
+	const sf::Vector2i intPos{ (int)std::floor(entity.GetPosition().x),(int)std::floor(entity.GetPosition().y) };
+	const int chunkX = (intPos.x / 64) / 64;
+	const int chunkY = (intPos.y / 64) / 64;
+
+	for (int y = startTile->y - 1; y <= startTile->y + 1; ++y)
+	{
+		for (int x = startTile->x - 1; x <= startTile->x + 1; ++x)
+		{
+			const DungeonTile* tile = m_dungeon->GetTileFromChunk(chunkX, chunkY, x, y);
+
+			if (tile == nullptr || tile->collider == nullptr)
+				continue;
+			Collider* collider = tile->collider;
+
+			if (collider->CheckCollision(*entity.GetCollider()))
+			{
+				entity.OnCollision(*collider);
+				entity.SetPosition(entity.GetLastPosition());
+				return;
+			}
+		}
+	}
 }
 
 void World::removeEntity(unsigned int worldID)
@@ -115,7 +158,11 @@ void World::removeEntity(unsigned int worldID)
 	{
 		auto& entity = m_entities.at(worldID);
 		//destroy collider
-		m_collisionManger.Remove(entity->GetCollider());
+		const auto collider = std::find(m_colliders.begin(), m_colliders.end(), entity->GetCollider());
+		if (collider != m_colliders.end())
+		{
+			m_colliders.erase(collider);
+		}
 
 		m_entities.erase(entity->GetWorldID());
 	}
@@ -189,6 +236,10 @@ void World::Draw(sf::RenderWindow& window)
 
 	//draw colliders
 	if (m_debug) {
-		m_collisionManger.Draw(window);
+		for (auto& collider : m_colliders)
+		{
+			if (collider->IsActive())
+				window.draw(collider->GetRectShape());
+		}
 	}
 }

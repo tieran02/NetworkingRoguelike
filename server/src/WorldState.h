@@ -84,7 +84,6 @@ private:
 
 
 	sf::Vector2f findValidSpawnPos() const;
-
 	sf::Vector2f findRandomPos() const;
 	void SpawnEnemies();
 

@@ -45,6 +45,7 @@ void Dungeon::Generate()
 		assignNeighbours(chunk);
 		chunk->Generate();
 	}
+	createDungeonColliders();
 }
 
 
@@ -74,6 +75,56 @@ sf::Vector2f Dungeon::ChunckToWorldSpace(int chunkID, sf::Vector2f chunckPos) co
 	sf::Vector2f tileWorldPos = chunkWorldPos + sf::Vector2f{ chunckPos.x  , chunckPos.y };
 
 	return tileWorldPos * (float)m_tileSize;
+}
+
+const DungeonTile* Dungeon::GetTileFromWorld(const sf::Vector2f& worldPos) const
+{
+	//convert to chunk pos
+	const sf::Vector2i intPos{ (int)std::floor(worldPos.x),(int)std::floor(worldPos.y) };
+
+	int chunkX = (intPos.x / m_tileSize) / (int)DungeonChunk::CHUNK_SIZE;
+	int chunkY = (intPos.y / m_tileSize) / (int)DungeonChunk::CHUNK_SIZE;
+
+	sf::Vector2f chunkWorldPos{ chunkX * ((float)DungeonChunk::CHUNK_SIZE - 1), chunkY * ((float)DungeonChunk::CHUNK_SIZE - 1) };
+	sf::Vector2f tileWoldPos = (worldPos - chunkWorldPos) / (float)m_tileSize;
+
+	int tileX = (intPos.x / m_tileSize) % (int)DungeonChunk::CHUNK_SIZE;
+	int tileY = (intPos.y / m_tileSize) % (int)DungeonChunk::CHUNK_SIZE;
+
+	if (chunkX < 0 || chunkY < 0 || tileX < 0 || tileY < 0 || chunkX >= WIDTH || chunkY >= HEIGHT)
+		return nullptr;
+
+	const unsigned int chunkOffset = (chunkX + chunkY * WIDTH);
+
+	//getChunk
+	return &m_chunks[chunkOffset]->m_tiles[tileY][tileX];
+}
+
+const DungeonTile* Dungeon::GetTileFromChunk(int chunkX, int chunkY, int tileX, int tileY)
+{
+	if (chunkX < 0 || chunkY < 0 || tileX < 0 || tileY < 0 || chunkX >= WIDTH || chunkY >= HEIGHT || tileX >= m_tileSize || tileY >= m_tileSize)
+		return nullptr;
+
+	const unsigned int chunkOffset = (chunkX + chunkY * WIDTH);
+
+	return &m_chunks[chunkOffset]->m_tiles[tileY][tileX];
+}
+
+const DungeonTile** Dungeon::GetNeighboursOfTileFromWorld(const sf::Vector2f& worldPos)
+{
+	const DungeonTile* tiles[9]{nullptr};
+	int index{ 0 };
+	sf::Vector2i intPos = (sf::Vector2i)worldPos;
+	for (int y = intPos.y - 1; y <= intPos.y +1 ; ++y)
+	{
+		for (int x = intPos.x - 1; x <= intPos.x + 1; ++x)
+		{
+			const DungeonTile* tile = GetTileFromWorld(sf::Vector2f{(float)x,(float)y});
+			if (tile != nullptr)
+				tiles[index++] = tile;
+		}
+	}
+	return tiles;
 }
 
 std::vector<sf::RectangleShape> Dungeon::GetTileRectangles()
@@ -114,6 +165,34 @@ std::vector<sf::RectangleShape> Dungeon::GetTileRectangles()
 	}
 
 	return rects;
+}
+
+void Dungeon::createDungeonColliders()
+{
+	for (int i = 0; i < m_chunks.size(); ++i)
+	{
+		DungeonTile** tiles = m_chunks[i]->m_tiles;
+
+		for (int y = 0; y < (int)DungeonChunk::CHUNK_SIZE; y++)
+		{
+			for (int x = 0; x < (int)DungeonChunk::CHUNK_SIZE; ++x)
+			{
+				DungeonTile* tile = &tiles[y][x];
+
+				CollisionLayer layer = CollisionLayer::NONE;
+				if (tile->type == DungeonTileType::WALL) {
+					layer = CollisionLayer::WALL;
+
+					sf::RectangleShape rect;
+					sf::Vector2f chunkPos = ChunckToWorldSpace(i, sf::Vector2f{ (float)m_chunks[i]->GetX() ,(float)m_chunks[i]->GetY() });
+					sf::Vector2f worldPos = sf::Vector2f{ chunkPos.x + (tile->x * m_tileSize),chunkPos.y + (tile->y * m_tileSize) };
+					rect.setPosition(worldPos.x, worldPos.y);
+					rect.setSize(sf::Vector2f{ (float)m_tileSize,(float)m_tileSize });
+					tile->collider = new Collider(rect, layer);
+				}
+			}
+		}
+	}
 }
 
 void Dungeon::assignNeighbours(DungeonChunk* chunk)
