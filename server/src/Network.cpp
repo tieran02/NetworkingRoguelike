@@ -9,7 +9,7 @@
 #include <sstream>
 #include "shared/Collider.h"
 #include "shared/EntityDataManager.h"
-
+#include "Connection.h"
 
 Network::Network(WorldState& world, unsigned short port) :m_worldState(&world), UDP_PORT(port), TCP_PORT(port + 1)
 {
@@ -17,6 +17,10 @@ Network::Network(WorldState& world, unsigned short port) :m_worldState(&world), 
 
 Network::~Network()
 {
+    m_close = true;
+    m_receiveTcpThread.detach();
+    m_receiveUdpThread.detach();
+    LOG_INFO("Calling network destructor!");
 }
 
 void Network::Start()
@@ -28,6 +32,7 @@ void Network::Start()
 	if (m_udpSocket.bind(UDP_PORT) != sf::Socket::Done)
 	{
 		LOG_FATAL("failed to bind upd socket");
+		return;
 	}
 
 	m_threadPool.enqueue([this]
@@ -35,8 +40,9 @@ void Network::Start()
 		LOG_INFO("THREAD POOL TASK RAN 1");
 	});
 
-	std::thread acceptTCP(&Network::acceptTCP, this);
-	std::thread updRecieve(&Network::receiveUDP, this);
+
+    m_receiveUdpThread = std::thread(&Network::receiveUDP, this);;
+    m_receiveTcpThread = std::thread(&Network::acceptTCP, this);;
 
 	std::queue<std::tuple<unsigned int, Protocol, Message>> messagesToSend;
 
@@ -45,7 +51,7 @@ void Network::Start()
 
 	while (m_running)
 	{
-		m_currentTime = std::chrono::duration<float>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+		m_currentTime = std::chrono::duration<float>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
 		//Send message to clients
 		if (m_currentTime >= m_lastTickTime + TICK_RATE)
@@ -56,7 +62,7 @@ void Network::Start()
 			if (m_currentTime >= m_lastPing + 1)
 			{
 				//ping all clients every second
-				auto timestamp = std::chrono::system_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
+				auto timestamp = std::chrono::steady_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
 				messagesToSend.push(std::make_tuple(0, Protocol::UPD, PingMessage(timestamp, 0)));
 				m_lastPing = m_currentTime;
 				LOG_INFO("Server ms = " + std::to_string(m_currentTickRate));
@@ -221,9 +227,6 @@ void Network::Start()
 		}
 	}
 	m_running = false;
-
-	acceptTCP.join();
-	updRecieve.join();
 }
 
 void Network::SendUdpMessage(const Message& message, sf::IpAddress address, unsigned short port)
@@ -237,7 +240,7 @@ void Network::SendUdpMessage(const Message& message, sf::IpAddress address, unsi
 
 void Network::receiveUDP()
 {
-	while (m_running)
+	while (!m_close)
 	{
 		sf::IpAddress sender;
 		unsigned short port;
@@ -268,26 +271,23 @@ void Network::acceptTCP()
 	if (listener.listen(TCP_PORT) != sf::Socket::Done)
 	{
 		LOG_FATAL("failed to listen on tcp");
+		return;
 	}
 
-	while (m_running)
+	while (!m_close)
 	{
-		Connection* connection = new Connection(this);
 		//accept new client
-		if (listener.accept(*connection->GetTcpSocket()) == sf::Socket::Done)
+        std::unique_ptr<sf::TcpSocket> socket(new sf::TcpSocket);
+		if (listener.accept(*socket) == sf::Socket::Done)
 		{
-			Connect(connection);
-		}
-		else
-		{
-			delete connection;
+			Connect(std::move(socket));
 		}
 	}
 }
 
 void Network::sendWorldState()
 {
-	std::shared_lock<std::shared_mutex> lock{ m_worldState->GetEntityMutex() };
+	/*std::shared_lock<std::shared_mutex> lock{ m_worldState->GetEntityMutex() };
 	//loop through all entities in the world
 	auto& entities = m_worldState->GetEntities();
 	MessageBatcher<EntityStateMessage> messageBatcher{ (int)entities.size() };
@@ -301,7 +301,7 @@ void Network::sendWorldState()
 	}
 
 	LOG_INFO("Sending World State Update To All Clients");
-	messageBatcher.SentToAllTCP(this);
+	messageBatcher.SentToAllTCP(this);*/
 }
 
 void Network::calculateClientPing(unsigned id, long long clientTimestamp)
@@ -369,27 +369,29 @@ void Network::SendHealthMessage(unsigned worldID, float health, float maxHealth)
 	SendToAllTCP(message);
 }
 
-void Network::Connect(Connection* connection)
+void Network::Connect(std::unique_ptr<sf::TcpSocket> socket)
 {
-	std::thread([this, &connection]
-	{
-		std::unique_lock<std::mutex> l(m_connectionMutex);
+	unsigned int id {0};
+    {
+        std::unique_lock<std::mutex> l(m_connectionMutex);
 
-		//TODO: check if client with that id already exists if so reconnect with it
-		const unsigned int id = m_connectionIdCount++;
-		m_connections[id] = std::unique_ptr<Connection>(connection);
-		m_connections[id]->Connect(id, m_worldState->GetSeed(), m_serverMessages);
-		l.unlock();
+        //TODO: check if client with that id already exists if so reconnect with it
+        id = m_connectionIdCount++;
+        m_connections.insert(std::make_pair(id,std::unique_ptr<Connection>(new Connection(this))));
+        m_connections.at(id)->m_tcpSocket = std::move(socket);
+        m_connections.at(id)->Connect(id, m_worldState->GetSeed());
 
-		//Send client connection data
-		const ConnectionMessage message(id, m_worldState->GetSeed(), 0); //send the seed to the client (UDP port of the client will be sent back)
-		m_connections[id]->SendTCP(message);
+        //Send client connection data
+        const ConnectionMessage message(id, m_worldState->GetSeed(), 0); //send the seed to the client (UDP port of the client will be sent back)
+        m_connections.at(id)->SendTCP(message);
+    }
 
-		//Spawn the player when the client is setup
-		std::unique_lock<std::mutex> lock{ m_connections[id]->m_setupMutex };
-		m_connections[id]->m_cv.wait(lock, [this, &id]() { return m_connections[id]->IsSetup(); });
-		m_worldState->SpawnPlayer(*m_connections[id]);
-	}).detach();
+    //Spawn the player when the client is setup
+    {
+        std::unique_lock<std::mutex> lock{ m_connections[id]->m_setupMutex };
+        m_connections.at(id)->m_cv.wait(lock, [this, &id]() { return m_connections[id]->IsSetup(); });
+        m_worldState->SpawnPlayer(*m_connections.at(id));
+    }
 }
 
 void Network::Disconnect(unsigned connectionID)
@@ -412,23 +414,11 @@ void Network::Disconnect(unsigned connectionID)
 		}
 	}
 
-	//sent entity state updates to other clients
-	if (entitiesToRemove.size() > 1)
+
+	for(auto& entity : entitiesToRemove)
 	{
-		//batch messages
-		BatchMessage<EntityStateMessage> batch(MessageType::BATCH, (int)entitiesToRemove.size());
-		for (int i = 0; i < entitiesToRemove.size(); ++i)
-		{
-			EntityStateMessage entityState(entitiesToRemove[i]->WorldID(), sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false, true, 0);
-			batch[i] = entityState;
-			m_worldState->GetEntities().erase(entitiesToRemove[i]->WorldID());
-		}
-		SendToAllTCP(batch);
-	}
-	else if (!entitiesToRemove.empty())
-	{
-		EntityStateMessage entityState(entitiesToRemove[0]->WorldID(), sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false, true, 0);
+        EntityStateMessage entityState(entity->WorldID(), sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false, true, 0);
 		SendToAllTCP(entityState);
-		m_worldState->GetEntities().erase(entitiesToRemove[0]->WorldID());
+		m_worldState->GetEntities().erase(entity->WorldID());
 	}
 }

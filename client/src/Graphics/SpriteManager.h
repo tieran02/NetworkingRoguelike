@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/Graphics/Sprite.hpp>
+#include <memory>
 
 class SpriteManager
 {

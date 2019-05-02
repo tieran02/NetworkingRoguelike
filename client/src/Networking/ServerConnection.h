@@ -62,8 +62,10 @@ private:
 	Queue<ServerMessage> m_serverMessages;
 
 	//receive threads
-	std::thread updRecieve;
-	std::thread tcpRecieve;
+	bool m_close{false};
+	std::thread m_receiveUdpThread;
+    std::thread m_receiveTcpThread;
+
 	void receiveUDP();
 	void receiveTCP();
 

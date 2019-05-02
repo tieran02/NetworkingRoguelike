@@ -2,6 +2,7 @@
 #include "Network.h"
 #include "shared/Random.h"
 #include <memory>
+#include "shared/Utility/Log.h"
 
 
 WorldState::WorldState(unsigned int seed) : m_seed(seed)
@@ -84,7 +85,6 @@ void WorldState::SpawnPlayer(Connection& connection)
 
 void WorldState::SpawnAllEntities()
 {
-	std::shared_lock<std::shared_mutex> lock{ m_entityMapMutex };
 	//TODO: only send messages once the client has generated the level
 
 	for (auto& entity : m_entities)
@@ -95,12 +95,13 @@ void WorldState::SpawnAllEntities()
 
 std::shared_ptr<Entity> WorldState::SpawnNewEntity(const std::string& entityName, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownership, CollisionLayer layerOverride)
 {
-	std::unique_lock<std::shared_mutex> lock{ m_entityMapMutex };
+    std::unique_lock<std::mutex> l{m_entityMapMutex};
 
 	unsigned int worldID = entityIdCounter++;
 	//add to entity list
 	auto entity = std::make_shared<Entity>(entityName ,worldID, position, velocity, ownership, layerOverride);
 	m_entities.insert(std::make_pair(worldID, entity));
+
 	if(m_network != nullptr)
 		m_network->SendSpawnMessage(entity->WorldID(), entity->BaseData().EntityID, entity->Position(), entity->Velocity(), entity->OwnershipID(), layerOverride);
 	//add to server collider list
@@ -111,8 +112,8 @@ std::shared_ptr<Entity> WorldState::SpawnNewEntity(const std::string& entityName
 
 void WorldState::DestroyEntity(unsigned worldID)
 {
-	std::unique_lock<std::shared_mutex> lock{ m_entityMapMutex };
-	
+    std::unique_lock<std::mutex> l{m_entityMapMutex};
+
 	if (m_entities.find(worldID) != m_entities.end())
 	{
 		auto& entity = m_entities.at(worldID);
@@ -126,7 +127,6 @@ void WorldState::DestroyEntity(unsigned worldID)
 
 void WorldState::SetEntityActive(unsigned worldID, bool active)
 {
-	std::unique_lock<std::shared_mutex> lock{ m_entityMapMutex };
 
 	if (m_entities.find(worldID) != m_entities.end())
 	{
@@ -138,7 +138,7 @@ void WorldState::SetEntityActive(unsigned worldID, bool active)
 
 void WorldState::SpawnEntity(int worldID)
 {
-	std::shared_lock<std::shared_mutex> lock{ m_entityMapMutex };
+    std::unique_lock<std::mutex> l{m_entityMapMutex};
 
 	if (m_entities.find(worldID) != m_entities.end())
 	{
@@ -149,7 +149,6 @@ void WorldState::SpawnEntity(int worldID)
 
 void WorldState::MoveEntity(int worldID, sf::Vector2f newPosition, sf::Vector2f velocity)
 {
-	std::shared_lock<std::shared_mutex> lock{ m_entityMapMutex };
 
 	//check if entity exists in the world state
 	if(m_entities.find(worldID) != m_entities.end())
@@ -161,7 +160,6 @@ void WorldState::MoveEntity(int worldID, sf::Vector2f newPosition, sf::Vector2f 
 
 void WorldState::SetEntityHealth(unsigned worldID, float health, float maxHealth)
 {
-	std::shared_lock<std::shared_mutex> lock{ m_entityMapMutex };
 
 	//check if entity exists in the world state
 	if (m_entities.find(worldID) != m_entities.end())
@@ -241,6 +239,7 @@ sf::Vector2f WorldState::findRandomPos() const
 
 void WorldState::SpawnEnemies()
 {
+    LOG_INFO("Spawning Enemies");
 	constexpr int ENEMY_COUNT = 50;
 	for (int i = 0; i < ENEMY_COUNT; ++i)
 	{
@@ -258,7 +257,7 @@ std::shared_ptr<Entity> WorldState::GetClosestPlayer(const Entity& sourceEntity,
 	std::shared_ptr<Entity> closest;
 	for (const auto& entity : m_players)
 	{
-		if (closest == nullptr) 
+		if (closest == nullptr)
 		{
 			closest = entity.second;
 			distance = Math::Distance(closest->Position(), sourceEntity.Position());
@@ -311,5 +310,22 @@ void WorldState::enemyCollisions()
 	for (auto& enemy : m_enemies)
 	{
 		entityWorldCollision(*enemy.second);
+
+        //check enemy collisions against other entities
+        for(auto& entity : m_entities)
+        {
+            if(enemy == entity)
+            {
+                continue;
+            }
+
+            auto entityCollider = entity.second->GetCollider();
+            if(entityCollider->CheckCollision(*enemy.second->GetCollider()))
+            {
+                enemy.second->SetPosition(enemy.second->LastPosition());
+                break;
+            }
+        }
 	}
 }
+

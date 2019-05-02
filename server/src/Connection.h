@@ -4,6 +4,7 @@
 #include <thread>
 #include "shared/Messages/NetworkMessages.h"
 #include "shared/Queue.h"
+#include <mutex>
 
 class WorldState;
 class Network;
@@ -18,7 +19,7 @@ public:
 	Connection(const Connection& other) = delete;
 	Connection& operator=(const Connection& other) = delete;
 
-	void Connect(unsigned int id, int seed, Queue<ServerMessage>& messageBuffer);
+	void Connect(unsigned int id, int seed);
 	void Disconnect();
 
 	sf::TcpSocket* GetTcpSocket() const { return m_tcpSocket.get(); }
@@ -31,7 +32,7 @@ public:
 	unsigned int GetConnectionID() const { return m_connectionID; }
 
 	//Receive TCP message (creates a new thread)
-	void ReceiveTCP(Queue<ServerMessage>& messageBuffer);
+	void ReceiveTCP();
 
 	void SendTCP(const Message& msg) const;
 	void SendUDP(const Message& msg) const;
@@ -53,6 +54,7 @@ private:
 	std::condition_variable m_cv;
 
 	Network* m_network;
-	std::thread receiveThread;
+	std::thread m_receiveThread;
+	bool m_close{false};
 };
 

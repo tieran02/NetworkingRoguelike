@@ -2,6 +2,7 @@
 #include <SFML/System/Vector2.hpp>
 #include "shared/Collider.h"
 #include "shared/EntityDataManager.h"
+#include <memory>
 
 class Entity
 {

@@ -4,6 +4,7 @@
 #include <SFML/Graphics.hpp>
 #include <unordered_set>
 #include "../Collider.h"
+#include <memory>
 
 class Dungeon;
 

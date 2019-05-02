@@ -1,16 +1,14 @@
 #pragma once
 #include <SFML/Network.hpp>
-#include "Connection.h"
 #include "shared/MessageQueue.h"
 #include <unordered_map>
 #include "shared/CircularBuffer.h"
 #include "shared/Queue.h"
-#include <shared_mutex>
 #include "shared/ThreadPool.h"
 #include <shared/Messages/NetworkMessages.h>
 #include "shared/Collider.h"
 
-
+class Connection;
 class WorldState;
 class Network
 {
@@ -28,13 +26,14 @@ public:
 	void SendMovementMessage(unsigned int worldID, sf::Vector2f newPosition, sf::Vector2f velocity);
 	void SendHealthMessage(unsigned int worldID, float health, float maxHealth);
 
-	void Connect(Connection* connection);
+	void Connect(std::unique_ptr<sf::TcpSocket> connection);
 	void Disconnect(unsigned int connectionID);
 
 	float GetCurrentTime() const { return m_currentTime; }
 	float GetCurrentTickRate() const { return m_currentTickRate; }
 
 	ThreadPool& GetThreadPool() { return m_threadPool; }
+	Queue<ServerMessage>& GetMessageQueue() {return m_serverMessages;}
 private:
 	WorldState* m_worldState;
 	bool m_running{ false };
@@ -58,6 +57,10 @@ private:
 	//Recieve and send broadcasts
 	void receiveUDP();
 	void acceptTCP();
+
+    bool m_close{false};
+	std::thread m_receiveUdpThread;
+    std::thread m_receiveTcpThread;
 
 	void sendWorldState();
 	void calculateClientPing(unsigned int id, long long clientTimestamp);

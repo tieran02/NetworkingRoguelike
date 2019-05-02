@@ -1,22 +1,25 @@
 #include "Messages/SpawnMessage.h"
+#include "./Utility/Log.h"
 
 SpawnMessage::SpawnMessage(char* buffer) : Message(buffer)
 {
-
+    LOG_INFO("Creating Spawn message from buffer" + std::to_string(GetWorldID()));
 }
 
 SpawnMessage::SpawnMessage(unsigned int worldID, unsigned int entityID, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownerID, CollisionLayer layerOverride)
 {
     header.type = MessageType::SPAWN;
-	header.size = sizeof(unsigned int) + sizeof(unsigned int) + sizeof(sf::Vector2f) + sizeof(sf::Vector2f) + sizeof(unsigned int) + sizeof(CollisionLayer) + sizeof(sf::Vector2f);
+	header.size = sizeof(unsigned int) + sizeof(unsigned int) + sizeof(sf::Vector2f) + sizeof(sf::Vector2f) + sizeof(unsigned int) + sizeof(CollisionLayer);
 
 	data.resize(header.size);
-	memcpy(data.data(), &worldID, sizeof(unsigned int));
+    memcpy(data.data(), &worldID, sizeof(unsigned int));
 	memcpy(data.data() + sizeof(unsigned int), &entityID, sizeof(unsigned int));
 	memcpy(data.data() + sizeof(unsigned int) + sizeof(unsigned int), &position, sizeof(sf::Vector2f) );
 	memcpy(data.data() + sizeof(unsigned int) + sizeof(unsigned int) + sizeof(sf::Vector2f), &velocity, sizeof(sf::Vector2f));
 	memcpy(data.data() + sizeof(unsigned int) + sizeof(unsigned int) + sizeof(sf::Vector2f) + sizeof(sf::Vector2f), &ownerID, sizeof(unsigned int));
 	memcpy(data.data() + sizeof(unsigned int) + sizeof(unsigned int) + sizeof(sf::Vector2f) + sizeof(sf::Vector2f) + sizeof(unsigned int), &layerOverride, sizeof(CollisionLayer));
+
+	LOG_INFO("Creating Spawn message" + std::to_string(GetWorldID()));
 
 }
 

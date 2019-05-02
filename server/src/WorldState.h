@@ -4,10 +4,8 @@
 #include "Connection.h"
 #include <unordered_map>
 #include <mutex>
-#include <shared_mutex>
 #include "shared/Collider.h"
 #include "Entity.h"
-
 
 class Network;
 class WorldState
@@ -33,7 +31,7 @@ public:
 	void DamageEntity(unsigned int worldID, float damage);
 
 	std::unordered_map<unsigned int, std::shared_ptr<Entity>>& GetEntities() { return m_entities; }
-	std::shared_mutex& GetEntityMutex() { return m_entityMapMutex; }
+	std::mutex& GetEntityMutex() { return m_entityMapMutex; }
 
 	bool IsColliding(unsigned int worldID, unsigned int otherWorldID) const;
 private:
@@ -45,7 +43,7 @@ private:
 	std::unordered_map<unsigned int, std::shared_ptr<Entity>> m_enemies; // world entity id as key, a pair with postition and ownership id as the key
 	std::unordered_map<unsigned int, std::shared_ptr<Entity>> m_players; // world entity id as key, a pair with postition and ownership id as the key
 
-	std::shared_mutex m_entityMapMutex;
+	std::mutex m_entityMapMutex;
 	std::unordered_set<std::shared_ptr<Collider>> m_colliders;
 
 

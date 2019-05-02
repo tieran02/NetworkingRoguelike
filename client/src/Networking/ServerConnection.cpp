@@ -10,14 +10,17 @@
 
 ServerConnection::ServerConnection(unsigned short port, World* world) : m_world(world), m_broadcastUdpPort(port)
 {
-	updRecieve = std::thread(&ServerConnection::receiveUDP, this);
-	tcpRecieve = std::thread(&ServerConnection::receiveTCP, this);
+    m_receiveUdpThread = std::thread(&ServerConnection::receiveUDP, this);
+    m_receiveTcpThread = std::thread(&ServerConnection::receiveTCP, this);
+
 }
 
 
 ServerConnection::~ServerConnection()
 {
-
+    m_close = true;
+    m_receiveUdpThread.detach();
+    m_receiveTcpThread.detach();
 }
 
 void ServerConnection::FindServer()
@@ -116,7 +119,7 @@ void ServerConnection::PollMessages()
 				m_isConnected = true;
 				m_clientID = message->GetClientID();
 
-				//send client udp port to server 
+				//send client udp port to server
 				ConnectionMessage updPortMessage{ m_clientID ,0,m_serverUdpSocket.getLocalPort() };
 				SendTcpMessage(updPortMessage);
 			}
@@ -188,9 +191,6 @@ void ServerConnection::Disconnect()
 	const Message disconnectMessage(MessageType::DISCONNECT, nullptr, 0, m_clientID);
 	SendTcpMessage(disconnectMessage);
 	m_isConnected = false;
-
-	updRecieve.detach();
-	tcpRecieve.detach();
 
 	std::stringstream stream;
 	stream << "Disconnected from Sever @" << m_serverAddress << ":" << m_serverTcpPort;
@@ -337,8 +337,8 @@ sf::Time ServerConnection::TimeSinceLastMessage() const
 }
 
 void ServerConnection::receiveUDP()
-{		
-	while (true)
+{
+	while (!m_close)
 	{
 		if (m_serverUdpSocket.getLocalPort() == 0)
 			continue;
@@ -349,7 +349,7 @@ void ServerConnection::receiveUDP()
 		const size_t maxMessageSize = 256;
 		char buffer[maxMessageSize];
 
-		const auto receive = m_serverUdpSocket.receive(buffer, maxMessageSize, received, sender, port);
+        auto receive = m_serverUdpSocket.receive(buffer, maxMessageSize, received, sender, port);
 		if (receive != sf::Socket::Done)
 		{
 			LOG_ERROR("Failed To receive udp packet");
@@ -368,16 +368,18 @@ void ServerConnection::receiveUDP()
 
 void ServerConnection::receiveTCP()
 {
-	while (true)
+    size_t received;
+    const size_t maxMessageSize = 256;
+    char buffer[maxMessageSize];
+
+	while (!m_close)
 	{
 		if (m_serverTcpSocket.getLocalPort() == 0)
 			continue;
+        std::memset(buffer, 0, maxMessageSize);
 
-		size_t received;
-		const size_t maxMessageSize = 256;
-		char buffer[maxMessageSize];
 
-		const auto receive = m_serverTcpSocket.receive(buffer, maxMessageSize, received);
+        auto receive = m_serverTcpSocket.receive(buffer, maxMessageSize, received);
 		if (receive != sf::Socket::Done)
 		{
 			if (receive == sf::Socket::Disconnected)

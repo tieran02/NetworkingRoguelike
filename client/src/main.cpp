@@ -27,7 +27,7 @@ int main()
 	world.SetWindowSize(sf::Vector2u(width, height));
 
 	//networking
-	ServerConnection server_connection{ 4305, &world };
+	ServerConnection server_connection{ 8305, &world };
 	server_connection.FindServer();
 	server_connection.Connect();
 	//Generate World

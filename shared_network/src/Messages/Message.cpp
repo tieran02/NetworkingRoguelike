@@ -48,6 +48,7 @@ std::vector<char> Message::GetBuffer() const
 {
 	std::vector<char> buffer(sizeof(Header) + header.size);
 	memcpy(buffer.data(), &header, sizeof(header));
-	memcpy(buffer.data() + sizeof(Header), data.data(), header.size);
+	if(header.size > 0)
+		memcpy(buffer.data() + sizeof(Header), data.data(), header.size);
 	return buffer;
 }

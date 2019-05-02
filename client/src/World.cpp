@@ -201,7 +201,7 @@ std::vector<sf::Vector2f> World::GetPlayerPositions() const
 
 void World::Update()
 {
-	float currentTime = std::chrono::duration<float>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+	float currentTime = std::chrono::duration<float>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
 	if (!m_serverConnection->IsConnected() && !m_generated)
 		return;

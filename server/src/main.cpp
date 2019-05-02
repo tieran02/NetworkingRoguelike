@@ -18,7 +18,7 @@ int main()
 	WorldState world{ seed };
 	world.GenerateWorld();
 
-	Network network(world,4305);
+	Network network(world,8305);
 	world.SetNetwork(network);
 	network.Start();
 
