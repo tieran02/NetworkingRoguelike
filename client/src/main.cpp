@@ -4,6 +4,7 @@
 #include "World.h"
 #include "shared/Utility/Log.h"
 #include "Graphics/ResourceManager.h"
+#include "Lobby.h"
 
 int main()
 {
@@ -31,6 +32,12 @@ int main()
 	ServerConnection server_connection{ 8305, &world };
 	server_connection.FindServer();
 	server_connection.Connect();
+
+
+	TODO LOBBY
+	Lobby lobby{ server_connection };
+
+
 	//Generate World
 	world.Generate(&server_connection);
 

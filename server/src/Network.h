@@ -7,6 +7,7 @@
 #include "shared/ThreadPool.h"
 #include <shared/Messages/NetworkMessages.h>
 #include "shared/Collider.h"
+#include "Lobby.h"
 
 class Connection;
 class WorldState;
@@ -28,13 +29,17 @@ public:
 
 	void Connect(std::unique_ptr<sf::TcpSocket> connection);
 	void Disconnect(unsigned int connectionID);
+	void SpawnPlayer(unsigned int connectionID);
+
 
 	float GetCurrentTime() const { return m_currentTime; }
 	float GetCurrentTickRate() const { return m_currentTickRate; }
 
 	ThreadPool& GetThreadPool() { return m_threadPool; }
 	Queue<ServerMessage>& GetMessageQueue() {return m_serverMessages;}
+	std::unordered_map<unsigned int, std::unique_ptr<Connection>>& GetConnections() { return m_connections; }
 private:
+	Lobby m_lobby;
 	WorldState* m_worldState;
 	bool m_running{ false };
 	const unsigned short UDP_PORT;
@@ -51,9 +56,12 @@ private:
 	std::unordered_map<unsigned int,std::unique_ptr<Connection>> m_connections;
 	unsigned int m_connectionIdCount{ 1 };
 	Queue<ServerMessage> m_serverMessages;
+	//Client - (0 is to all), protocl to send, message to send, client to ignore in send to all
+	std::queue<std::tuple<unsigned int, Protocol, Message, unsigned int>> m_messagesToSend;
 
 	std::mutex m_connectionMutex;
 
+	void pollMessages();
 	//Recieve and send broadcasts
 	void receiveUDP();
 	void acceptTCP();

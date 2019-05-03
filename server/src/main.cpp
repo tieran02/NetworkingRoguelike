@@ -3,6 +3,7 @@
 #include "WorldState.h"
 #include <iostream>
 #include "shared/Utility/Log.h"
+#include "Lobby.h"
 
 int main()
 {
@@ -14,6 +15,7 @@ int main()
 	LOG_INFO("Enter level seed: ");
 	unsigned int seed = 0;
 	std::cin >> seed;
+
 
 	WorldState world{ seed };
 	world.GenerateWorld();
