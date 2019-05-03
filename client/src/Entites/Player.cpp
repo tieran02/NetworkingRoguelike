@@ -71,11 +71,6 @@ void Player::Update(float deltaTime)
 	}
 }
 
-void Player::Draw(sf::RenderWindow & window)
-{
-	window.draw(*GetSprite());
-}
-
 void Player::OnCollision(Collider& other)
 {
 	//Damage(5.0f);

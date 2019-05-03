@@ -13,7 +13,7 @@ public:
 
     virtual void Start() = 0;
     virtual void Update(float deltaTime) = 0;
-    virtual void Draw(sf::RenderWindow & window) = 0;
+    virtual void Draw(sf::RenderWindow & window);
 	virtual void OnCollision(Collider& other) = 0;
 	virtual void OnLayerOverride(CollisionLayer layer) = 0;
     virtual std::shared_ptr<Entity> Clone(unsigned int worldID, unsigned int ownership, ServerConnection* connection, World* world) = 0;
@@ -21,21 +21,16 @@ public:
 	unsigned int GetWorldID() const { return m_worldID; }
 	const std::shared_ptr<sf::Sprite>& GetSprite() const { return m_sprite; }
     void SetPosition(const sf::Vector2f& position);
-	void SetLocalPosition(const sf::Vector2f& position);
 
 	sf::Vector2f GetPosition() const { return m_position; }
 	sf::Vector2f GetLastPosition() const { return m_lastPosition; }
 
 	void SetNetworkPosition(const sf::Vector2f& position);
 	sf::Vector2f GetNetworkPosition() const { return m_networkPosition; }
-	void SetLastNetworkPosition(const sf::Vector2f& position);
-	sf::Vector2f GetLastNetworkPosition() const { return m_lastNetworkPosition; }
 
 	sf::Vector2f GetDirection() const;
 	void SetVelocity(sf::Vector2f velocity);
 	sf::Vector2f GetVelocity() const;
-	void SetNetworkVelocity(const sf::Vector2f& velocity);
-	sf::Vector2f GetNetworkVelocity() const { return m_networkVelocity; }
 	void SetMovementSpeed(float speed);
 	float GetMovementSpeed() const;
 
@@ -81,7 +76,5 @@ private:
 
 	//Server positions
 	sf::Vector2f m_networkPosition;
-	sf::Vector2f m_lastNetworkPosition;
-	sf::Vector2f m_networkVelocity{ 0.0f,0.0f };
 
 };

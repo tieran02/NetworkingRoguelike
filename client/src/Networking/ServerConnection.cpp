@@ -63,9 +63,6 @@ void ServerConnection::Connect()
 	{
 		PollMessages();
 	}
-
-	m_tickClock.restart();
-	m_lastTick = m_tickClock.getElapsedTime();
 }
 
 void ServerConnection::UpdateTick()
@@ -79,14 +76,10 @@ void ServerConnection::PollMessages()
 	{
 		//Get Data
 		ServerMessage msg = m_serverMessages.dequeue();
-		m_timeSinceLastMessage.restart();
-
 
 		switch (msg.protocol)
 		{
 		case Protocol::UPD:
-			LOG_TRACE("UDP::Received " + std::to_string(msg.message.GetHeader().size) + " bytes from server on port " + std::to_string(msg.senderPort));
-
 			if (msg.message.GetHeader().type == MessageType::PING)
 			{
 				PingMessage* message = static_cast<PingMessage*>(&msg.message);
@@ -106,8 +99,6 @@ void ServerConnection::PollMessages()
 			}
 			break;
 		case Protocol::TCP:
-			LOG_TRACE("TCP::Received " + std::to_string(msg.message.GetHeader().size) + " bytes from server on port " + std::to_string(msg.senderPort));
-
 			if(msg.message.GetHeader().type == MessageType::CONNECTION_ID)
 			{
 				ConnectionMessage* message = static_cast<ConnectionMessage*>(&msg.message);
@@ -164,7 +155,6 @@ void ServerConnection::PollMessages()
 				}
 			}
 		}
-
 
 		if (!FoundServer() && msg.message.GetHeader().type == MessageType::BROADCAST) //server response from broadcast sent
 		{
@@ -252,7 +242,6 @@ void ServerConnection::sendEntityStates()
 				SendUdpMessage(movement);
 				//Set network position and velocity to what we just sent to the server (This may get corrected later on when we receive a message)
 				entity.second->SetNetworkPosition(entity.second->GetPosition());
-				entity.second->SetNetworkVelocity(entity.second->GetVelocity());
 			}
 		}
 	}
@@ -263,21 +252,18 @@ void ServerConnection::updateEntityNetworkState(unsigned worldID, sf::Vector2f n
 	auto entities = m_world->GetEntities();
 	if (entities.find(worldID) != entities.end())
 	{
-		entities.at(worldID)->SetLastNetworkPosition(entities.at(worldID)->GetNetworkPosition());
 		entities.at(worldID)->SetNetworkPosition(newPosition);
 		entities.at(worldID)->SetPosition(newPosition);
 
 		entities.at(worldID)->SetVelocity(velocity);
-		entities.at(worldID)->SetNetworkVelocity(velocity);
 	}
 }
 
 void ServerConnection::calculatePing(long long  serverTimestamp)
 {
-	const long long now = std::chrono::system_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
+	const long long now = std::chrono::steady_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
 	const long long milliseconds = now - serverTimestamp;
 	m_ping = (float)milliseconds;;
-	LOG_TRACE("Ping = " + std::to_string(m_ping));
 
 	//send ping back to server
 	SendUdpMessage(PingMessage{ serverTimestamp, m_clientID });
@@ -298,7 +284,7 @@ void ServerConnection::SendMovementMessage(unsigned int worldID, sf::Vector2f ne
 
 		//check if distance is greater than threshold
 		const float distance = std::abs(Math::Distance(entity->GetNetworkPosition(), entity->GetPosition()));
-		if (distance >= 16.0f || entity->GetVelocity() != entity->GetNetworkVelocity()) {
+		if (distance >= 16.0f) {
 			const MovementMessage message{ worldID,newPosition,velocity, m_clientID };
 			SendUdpMessage(message);
 		}
@@ -329,11 +315,6 @@ void ServerConnection::SendHealthMessage(unsigned worldID, float health, float m
 {
 	const HealthMessage msg{ worldID,health,maxHealth,m_clientID };
 	SendTcpMessage(msg);
-}
-
-sf::Time ServerConnection::TimeSinceLastMessage() const
-{
-	return m_timeSinceLastMessage.getElapsedTime();
 }
 
 void ServerConnection::receiveUDP()

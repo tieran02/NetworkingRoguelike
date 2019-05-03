@@ -44,7 +44,8 @@ void Network::Start()
     m_receiveUdpThread = std::thread(&Network::receiveUDP, this);;
     m_receiveTcpThread = std::thread(&Network::acceptTCP, this);;
 
-	std::queue<std::tuple<unsigned int, Protocol, Message>> messagesToSend;
+	//Client - (0 is to all), protocl to send, message to send, client to ignore in send to all
+	std::queue<std::tuple<unsigned int, Protocol, Message, unsigned int>> messagesToSend;
 
 	float m_lastTickTime{ 0.0 };
 	float m_lastPing{ 0.0 };
@@ -62,8 +63,8 @@ void Network::Start()
 			if (m_currentTime >= m_lastPing + 1)
 			{
 				//ping all clients every second
-				auto timestamp = std::chrono::steady_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
-				messagesToSend.push(std::make_tuple(0, Protocol::UPD, PingMessage(timestamp, 0)));
+				const long long now = std::chrono::steady_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
+				//SendToAllUDP(PingMessage(now, 0));
 				m_lastPing = m_currentTime;
 				LOG_INFO("Server ms = " + std::to_string(m_currentTickRate));
 			}
@@ -76,13 +77,14 @@ void Network::Start()
 				unsigned int clientID = std::get<0>(messageData);
 				Protocol protocol = std::get<1>(messageData);
 				Message& message = std::get<2>(messageData);
+				unsigned int ignore = std::get<3>(messageData);
 
 				switch (protocol)
 				{
 				case Protocol::UPD:
 					if (clientID == 0)
 					{
-						SendToAllUDP(message);
+						SendToAllUDP(message,ignore);
 					}
 					else
 					{
@@ -92,7 +94,7 @@ void Network::Start()
 				case Protocol::TCP:
 					if (clientID == 0)
 					{
-						SendToAllTCP(message);
+						SendToAllTCP(message, ignore);
 					}
 					else
 					{
@@ -134,7 +136,7 @@ void Network::Start()
 					//update world state with the new entity pos
 					m_worldState->MoveEntity(message->WorldID(), message->GetPosition(), message->GetVelocity());
 					//send movement message back to all clients (including itself)
-					messagesToSend.push(std::make_tuple(0, Protocol::UPD, *message));
+					messagesToSend.push(std::make_tuple(0, Protocol::UPD, *message, message->GetHeader().id)); //send to all except itself
 				}
 				else if (msg.message.GetHeader().type == MessageType::ENTITY_STATE)
 				{
@@ -143,7 +145,7 @@ void Network::Start()
 					//update world state with the new entity pos
 					m_worldState->MoveEntity(message->WorldID(), message->GetPosition(), message->GetVelocity());
 					//send entity state message back to all clients (including itself)
-					messagesToSend.push(std::make_tuple(0, Protocol::UPD, *message));
+					messagesToSend.push(std::make_tuple(0, Protocol::UPD, *message, 0));
 				}
 				else
 				{
@@ -151,7 +153,7 @@ void Network::Start()
 					stream << "UDP::Received '" << msg.message.ToString() << "' " << msg.message.GetHeader().size << " bytes from " << msg.senderAddress << " on port " << msg.senderPort;
 					LOG_TRACE(stream.str());
 					//echo to all the other clients
-					messagesToSend.push(std::make_tuple(0, Protocol::UPD, msg.message));
+					messagesToSend.push(std::make_tuple(0, Protocol::UPD, msg.message, 0));
 				}
 				break;
 			case Protocol::TCP:
@@ -182,7 +184,7 @@ void Network::Start()
 						//update world state with the new entity pos
 						m_worldState->MoveEntity(message->WorldID(), message->GetPosition(), message->GetVelocity());
 						//send entity state message back to all clients (including itself)
-						messagesToSend.push(std::make_tuple(0, Protocol::TCP, *message));
+						messagesToSend.push(std::make_tuple(0, Protocol::TCP, *message, 0));
 						//set active or not
 						m_worldState->SetEntityActive(message->WorldID(), message->IsActive());
 					}
@@ -218,7 +220,7 @@ void Network::Start()
 					LOG_TRACE(stream.str());
 
 					//echo to all the other clients
-					messagesToSend.push(std::make_tuple(0, Protocol::TCP, msg.message));
+					messagesToSend.push(std::make_tuple(0, Protocol::TCP, msg.message, 0));
 				}
 				break;
 			default:
@@ -319,7 +321,7 @@ void Network::SendToAllUDP(const Message& message, unsigned int ignore)
 	{
 		for (auto& connection : m_connections)
 		{
-			if (ignore != 0 && m_connections.find(ignore) != m_connections.end())
+			if (ignore != 0 && connection.first == ignore)
 			{
 				continue;
 			}

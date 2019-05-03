@@ -18,7 +18,7 @@ public:
 	void Generate(ServerConnection* connection);
 	void SetSeed(unsigned int);
 
-	void Update();
+	void Update(float deltaTime);
 	void Draw(sf::RenderWindow& window);
 
 	std::shared_ptr<Entity> SpawnEntity(unsigned int entityID, unsigned int worldID, sf::Vector2f pos, sf::Vector2f velocity, unsigned int ownership, CollisionLayer layerOverride);
@@ -41,9 +41,6 @@ public:
 	const sf::RenderWindow& GetWindow() const;
 
 private:
-	float currentTime{ 0.0f };
-	float lastTime{ 0.0f };
-	float deltaTime{ 0.0f };
 
 	const sf::RenderWindow& m_window;
 	Camera m_camera;
@@ -56,7 +53,7 @@ private:
 	std::unordered_map<unsigned int, std::shared_ptr<Entity>> m_entities;
 	std::vector<std::shared_ptr<Entity>> m_entitiesToDestroy;
 	EntityFactory m_entityFactory;
-	ServerConnection* m_serverConnection{};
+	ServerConnection* m_serverConnection{nullptr};
 	sf::Vector2u m_windowSize;
 
 	std::unordered_set<std::shared_ptr<Collider>> m_colliders;

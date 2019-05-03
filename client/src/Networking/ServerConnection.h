@@ -36,15 +36,8 @@ public:
 	void SendEntityDestroyMessage(unsigned int worldID);
 	void SendHealthMessage(unsigned int worldID, float health, float maxHealth);
 
-
-	sf::Time TimeSinceLastMessage() const;
 private:
-	//server tick rate in milliseconds
-	const float TICK_RATE{ 1.0f/64.0f };
-	sf::Time m_lastTick;
-	sf::Clock m_tickClock;
 	float m_ping;
-	sf::Clock m_timeSinceLastMessage;
 
 	World* m_world{ nullptr };
 	sf::IpAddress m_serverAddress{sf::IpAddress::None};

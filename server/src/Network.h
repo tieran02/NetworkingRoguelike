@@ -43,9 +43,9 @@ private:
 	ThreadPool m_threadPool{ 32 };
 
 	//server tick rate in milliseconds
-	const float TICK_RATE{ (1.0f / 64.0f)  };
+	const float TICK_RATE{ (1.0f / 32.0f)  };
 	float m_currentTime;
-	float m_currentTickRate{ 1.0 / 64.0f };
+	float m_currentTickRate{ 1.0 / 32.0f };
 
 	sf::UdpSocket m_udpSocket;
 	std::unordered_map<unsigned int,std::unique_ptr<Connection>> m_connections;

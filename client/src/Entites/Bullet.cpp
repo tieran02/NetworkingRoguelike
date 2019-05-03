@@ -20,11 +20,6 @@ void Bullet::Update(float deltaTime)
 	UpdatePosition(deltaTime);
 }
 
-void Bullet::Draw(sf::RenderWindow& window)
-{
-	window.draw(*GetSprite());
-}
-
 void Bullet::OnCollision(Collider& other)
 {
 	Entity* entity = other.GetEntity();

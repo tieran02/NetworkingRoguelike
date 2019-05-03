@@ -35,6 +35,8 @@ public:
 	void Heal(float amount);
 
 	void SetTarget(std::shared_ptr<Entity> target);
+	void SetLastFire(int lastFire) { m_lastFire = lastFire; }
+	int GetLastFire() const {return m_lastFire; }
 private:
 	EntityBaseData m_baseData;
 	unsigned int m_worldID;
@@ -47,4 +49,5 @@ private:
 	bool m_active;
 	std::shared_ptr<Collider> m_collider;
 	std::shared_ptr<Entity> m_target{nullptr}; //target for enemies
+	int m_lastFire{0};
 };

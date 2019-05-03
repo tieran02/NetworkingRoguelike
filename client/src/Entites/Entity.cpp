@@ -2,13 +2,13 @@
 #include "shared/Utility/Math.h"
 #include "shared/Utility/Log.h"
 #include "Networking/ServerConnection.h"
-#include "Graphics/SpriteManager.h"
+#include "Graphics/ResourceManager.h"
 #include "shared/EntityDataManager.h"
 
 Entity::Entity(const std::string& entityName)
 {
 	const auto& baseData = EntityDataManager::Instance().GetEntityData(entityName);
-	m_sprite = SpriteManager::Instance().CreateSprite(baseData.EntitySpriteName);
+	m_sprite = ResourceManager::Instance().CreateSprite(baseData.EntitySpriteName);
 	sf::FloatRect spriteBounds = m_sprite->getGlobalBounds();
 	m_sprite->setOrigin(m_sprite->getGlobalBounds().width / 2.0f, m_sprite->getGlobalBounds().height / 2.0f);
 
@@ -24,23 +24,23 @@ Entity::~Entity()
 {
 }
 
+void Entity::Draw(sf::RenderWindow & window)
+{
+	window.draw(*m_sprite);
+}
+
 void Entity::SetPosition(const sf::Vector2f& position)
 {
 	m_lastPosition = m_position;
 
-    m_sprite->setPosition(position);
 	m_collider->SetPosition(position);
+	m_sprite->setPosition(position);
     m_position = position;
 }
 
 void Entity::SetNetworkPosition(const sf::Vector2f& position)
 {
 	m_networkPosition = position;
-}
-
-void Entity::SetLastNetworkPosition(const sf::Vector2f& position)
-{
-	m_lastNetworkPosition = position;
 }
 
 sf::Vector2f Entity::GetDirection() const
@@ -56,11 +56,6 @@ void Entity::SetVelocity(sf::Vector2f velocity)
 sf::Vector2f Entity::GetVelocity() const
 {
 	return m_velocity;
-}
-
-void Entity::SetNetworkVelocity(const sf::Vector2f& velocity)
-{
-	m_networkVelocity = velocity;
 }
 
 void Entity::SetMovementSpeed(float speed)
@@ -180,11 +175,11 @@ void Entity::UpdatePosition(float deltaTime)
 
 void Entity::UpdatePredictedPosition(float deltaTime)
 {
-	if (Math::Distance(m_position, m_networkPosition) <= 0.5f)
-		return;
+	sf::Vector2f newPos = Math::MoveTowards(m_position, m_networkPosition, deltaTime * m_movementSpeed);
+	m_lastPosition = m_position;
 
-	sf::Vector2f newPos = Math::MoveTowards(m_lastNetworkPosition, m_networkPosition, deltaTime * m_movementSpeed);
-	SetPosition(newPos);
+	m_collider->SetPosition(newPos);
+	m_position = newPos;
 }
 
 

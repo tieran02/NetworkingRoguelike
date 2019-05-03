@@ -3,13 +3,13 @@
 #include "shared/Random.h"
 #include "Networking/ServerConnection.h"
 #include "shared/Utility/Math.h"
-#include "Graphics/SpriteManager.h"
+#include "Graphics/ResourceManager.h"
 #include "shared/Utility/Log.h"
 
 World::World(const sf::RenderWindow& window) : m_window(window), m_camera(sf::Vector2f{ 0.0f,0.0f }, GetWindowSize(), 1024)
 {
-	m_wallSprite = SpriteManager::Instance().CreateSprite("wall");
-	m_floorSprite = SpriteManager::Instance().CreateSprite("floor");
+	m_wallSprite = ResourceManager::Instance().CreateSprite("wall");
+	m_floorSprite = ResourceManager::Instance().CreateSprite("floor");
 }
 
 
@@ -29,6 +29,7 @@ void World::Generate(ServerConnection* connection)
 	connection->NotifyWorldGeneration();
 
 	m_camera.SetPosition(sf::Vector2f{ 2048.0f ,2048.0f });
+
 }
 
 void World::SetSeed(unsigned int seed)
@@ -45,9 +46,7 @@ std::shared_ptr<Entity> World::SpawnEntity(unsigned int entityID, unsigned int w
 	{
 		entity->SetPosition(pos);
 		entity->SetNetworkPosition(pos);
-		entity->SetLastNetworkPosition(pos);
 		entity->SetVelocity(velocity);
-		entity->SetNetworkVelocity(velocity);
 		m_entities.insert((std::make_pair(worldID, entity)));
 
 		//add entity collider to the collider vector
@@ -199,10 +198,8 @@ std::vector<sf::Vector2f> World::GetPlayerPositions() const
 }
 
 
-void World::Update()
+void World::Update(float deltaTime)
 {
-	float currentTime = std::chrono::duration<float>(std::chrono::steady_clock::now().time_since_epoch()).count();
-
 	if (!m_serverConnection->IsConnected() && !m_generated)
 		return;
 
@@ -219,11 +216,6 @@ void World::Update()
 	{
 		m_debug = !m_debug;
 	}
-
-	deltaTime = currentTime - lastTime;
-	//LOG_INFO("FPS = " + std::to_string(1.0f / (currentTime - lastTime)));
-
-	lastTime = currentTime;
 }
 
 
@@ -239,6 +231,7 @@ void World::Draw(sf::RenderWindow& window)
 
 	for (auto& entity : m_entities)
 	{
+		//TODO LERP POS
 		if (entity.second->IsActive())
 			entity.second->Draw(window);
 	}

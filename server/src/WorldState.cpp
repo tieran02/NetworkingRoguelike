@@ -31,7 +31,7 @@ void WorldState::Update()
 		if(!enemy.second->IsActive())
 			continue;
 
-		if(enemy.second->GetTarget() == nullptr)
+		if(enemy.second->GetTarget() == nullptr || !enemy.second->GetTarget()->IsActive())
 		{
 			//look for closest player
 			float distance = 0.0f;
@@ -50,6 +50,7 @@ void WorldState::Update()
 			sf::Vector2f direction = Math::Direction(enemy.second->Position(), enemy.second->GetTarget()->Position());
 			enemy.second->SetVelocity(direction * enemy.second->BaseData().MovementSpeed);
 			enemy.second->ApplyVelocity(m_network->GetCurrentTickRate());
+
 			//Send pos to all clients
 			const float distance = std::abs(Math::Distance(enemy.second->LastSentPosition(), enemy.second->Position()));
 			if (distance >= 5.0f)
@@ -57,6 +58,20 @@ void WorldState::Update()
 				m_network->SendMovementMessage(enemy.first, enemy.second->Position(), enemy.second->Velocity());
 				enemy.second->SetLastSentPosition(enemy.second->Position());
 			}
+
+			//shoot the target
+			auto lastFire = enemy.second->GetLastFire();
+			if(lastFire > 64)
+			{
+				auto bulletVelocity = direction * 200.0f;
+                auto bullet = SpawnNewEntity("Bullet", enemy.second->Position(), bulletVelocity, 0, CollisionLayer::PROJECTILE_ENEMY);
+                enemy.second->SetLastFire(0);
+                LOG_INFO(enemy.second->GetLastFire());
+            }
+            else
+            {
+                enemy.second->SetLastFire(lastFire+1);
+            }
 		}
 	}
 

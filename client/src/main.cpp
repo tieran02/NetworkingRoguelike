@@ -3,7 +3,7 @@
 #include "Networking/ServerConnection.h"
 #include "World.h"
 #include "shared/Utility/Log.h"
-#include "Graphics/SpriteManager.h"
+#include "Graphics/ResourceManager.h"
 
 int main()
 {
@@ -12,11 +12,12 @@ int main()
 	Log::Init();
 
 	LOG_INFO("Loading Resouces...");
-	SpriteManager::Instance().LoadTexture("player", "player.png");
-	SpriteManager::Instance().LoadTexture("wall", "wall.png");
-	SpriteManager::Instance().LoadTexture("floor", "floor.png");
-	SpriteManager::Instance().LoadTexture("bullet", "bullet.png");
-	SpriteManager::Instance().LoadTexture("skeleton", "skeleton.png");
+	ResourceManager::Instance().LoadFont("arial","arial.ttf");
+	ResourceManager::Instance().LoadTexture("player", "player.png");
+	ResourceManager::Instance().LoadTexture("wall", "wall.png");
+	ResourceManager::Instance().LoadTexture("floor", "floor.png");
+	ResourceManager::Instance().LoadTexture("bullet", "bullet.png");
+	ResourceManager::Instance().LoadTexture("skeleton", "skeleton.png");
 	LOG_INFO("Resouces Loaded");
 
 	//Create window
@@ -35,9 +36,22 @@ int main()
 
 	window.create(sf::VideoMode(width, height), "SFML window");
 
+	constexpr float NETWORK_TICK_RATE{ 1.0f / 32.0f };
+
+	float m_lastNetworkTick{ 0.0 };
+	float currentTime{ 0.0f };
+	float lastTime{ 0.0f };
+	float m_fps{ 0.0f };
+
+	sf::Text m_fpsText = sf::Text("FPS = ", ResourceManager::Instance().GetFont("arial"), 22);
+	m_fpsText.setColor(sf::Color::Blue);
+	m_fpsText.setPosition(0, 0);
+	sf::View uiView(sf::FloatRect(0.0f, 0.0f, width, height));
 
 	while (window.isOpen())
 	{
+		float currentTime = std::chrono::duration<float>(std::chrono::steady_clock::now().time_since_epoch()).count();
+
 		// Event processing
 		sf::Event event;
 		while (window.pollEvent(event))
@@ -49,6 +63,7 @@ int main()
 			{
 				width = event.size.width;
 				height = event.size.height;
+				uiView = sf::View(sf::FloatRect(0.0f, 0.0f, width, height));
 				world.SetWindowSize(sf::Vector2u(width, height));
 			}
 			else if (event.type == sf::Event::GainedFocus)
@@ -57,14 +72,33 @@ int main()
 				world.SetWindowFocused(false);
 		}
 
-		world.Update();
-		server_connection.UpdateTick();
+		//set view to camera view
+		window.setView(world.GetCamera().GetView());
+
+		//only simulate world and network 32 ticks per seconds
+		if (currentTime >= m_lastNetworkTick + NETWORK_TICK_RATE)
+		{
+			float t = currentTime - m_lastNetworkTick;
+			world.Update(t);
+			server_connection.UpdateTick();
+			m_lastNetworkTick = currentTime;
+		}
+
 		window.clear(sf::Color{ 80,64,64,255 });
 
 		world.Draw(window);
+
+		//Draw UI
+		window.setView(uiView);
+		m_fpsText.setString("FPS = " + std::to_string((int)m_fps) + "\nPing = " + std::to_string((int)server_connection.GetPing()));
+		window.draw(m_fpsText);
+
 		window.display();
 
 		server_connection.PollMessages();
+
+		m_fps = 1.0f / (currentTime - lastTime);
+		lastTime = currentTime;
 	}
 
 	server_connection.Disconnect();

@@ -20,11 +20,6 @@ void Skeleton::Update(float deltaTime)
 	UpdatePredictedPosition(deltaTime);
 }
 
-void Skeleton::Draw(sf::RenderWindow& window)
-{
-	window.draw(*GetSprite());
-}
-
 void Skeleton::OnCollision(Collider& other)
 {
 }

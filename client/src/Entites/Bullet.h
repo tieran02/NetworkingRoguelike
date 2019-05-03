@@ -8,7 +8,6 @@ public:
 	~Bullet() override;
 	void Start() override;
 	void Update(float deltaTime) override;
-	void Draw(sf::RenderWindow & window) override;
 	void OnCollision(Collider& other) override;
 	void OnLayerOverride(CollisionLayer layer) override;
 

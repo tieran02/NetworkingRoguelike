@@ -28,15 +28,6 @@ project "client"
 	files { "client/src/**.*" }
 	includedirs {"client/src", "shared_network/include", "dependencies/spdlog/include", "dependencies/json/include" }
 	libdirs {"bin/" .. outputdir .. "shared_network"}
-	links
-	{
-        "sfml-graphics",
-        "sfml-window",
-        "sfml-system",
-        "sfml-audio",
-        "sfml-network",
-		"shared_network"
-	}
 
 	filter "system:windows"
 		systemversion "latest"
@@ -50,6 +41,28 @@ project "client"
 			("{COPY} %{wks.location}/shared_network/resources/entities.json ../bin/" .. outputdir .. "/client/resources"),
 			("{COPY} %{wks.location}dependencies/windows/SFML/bin ../bin/" .. outputdir .. "/client")
 		}
+		
+		filter "configurations:Debug"
+			links
+			{
+				"sfml-graphics-d",
+				"sfml-window-d",
+				"sfml-system-d",
+				"sfml-audio-d",
+				"sfml-network-d",
+				"shared_network"
+			}
+			
+		filter "configurations:Release"
+			links
+			{
+				"sfml-graphics",
+				"sfml-window",
+				"sfml-system",
+				"sfml-audio",
+				"sfml-network",
+				"shared_network"
+			}
 
 
 	filter "system:linux"
@@ -59,6 +72,12 @@ project "client"
 		linkoptions { '-Wl,-rpath=\\$$ORIGIN' }
         links
         {
+			"sfml-graphics",
+			"sfml-window",
+			"sfml-system",
+			"sfml-audio",
+			"sfml-network",
+			"shared_network",
             "jpeg"
         }
 
