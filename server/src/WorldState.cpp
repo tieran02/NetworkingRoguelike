@@ -20,7 +20,7 @@ void WorldState::GenerateWorld()
 	m_dungeon = std::unique_ptr<Dungeon>(new Dungeon(2, 2,64, m_seed));
 	m_dungeon->Generate();
 
-	SpawnEnemies();
+	//SpawnEnemies();
 }
 
 void WorldState::Update()
@@ -49,15 +49,6 @@ void WorldState::Update()
 			//move towards target
 			sf::Vector2f direction = Math::Direction(enemy.second->Position(), enemy.second->GetTarget()->Position());
 			enemy.second->SetVelocity(direction * enemy.second->BaseData().MovementSpeed);
-			enemy.second->ApplyVelocity(m_network->GetCurrentTickRate());
-
-			//Send pos to all clients
-			const float distance = std::abs(Math::Distance(enemy.second->LastSentPosition(), enemy.second->Position()));
-			if (distance >= 5.0f)
-			{
-				m_network->SendMovementMessage(enemy.first, enemy.second->Position(), enemy.second->Velocity());
-				enemy.second->SetLastSentPosition(enemy.second->Position());
-			}
 
 			//shoot the target
 			auto lastFire = enemy.second->GetLastFire();
@@ -73,6 +64,12 @@ void WorldState::Update()
                 enemy.second->SetLastFire(lastFire+1);
             }
 		}
+	}
+
+	//update all entitie position
+	for (const auto& entity : m_entities) 
+	{
+		entity.second->ApplyVelocity(m_network->GetCurrentTickRate());
 	}
 
 	enemyCollisions();
@@ -164,12 +161,21 @@ void WorldState::SpawnEntity(int worldID)
 
 void WorldState::MoveEntity(int worldID, sf::Vector2f newPosition, sf::Vector2f velocity)
 {
-
 	//check if entity exists in the world state
 	if(m_entities.find(worldID) != m_entities.end())
 	{
 		m_entities.at(worldID)->SetPosition(newPosition);
 		m_entities.at(worldID)->SetVelocity(velocity);
+	}
+}
+
+void WorldState::updateEntityVelocityFromClient(int worldID, sf::Vector2f velocity)
+{
+	//check if entity exists in the world state
+	if (m_entities.find(worldID) != m_entities.end())
+	{
+		m_entities.at(worldID)->SetVelocity(velocity);
+		LOG_INFO("received new velocity from client");
 	}
 }
 

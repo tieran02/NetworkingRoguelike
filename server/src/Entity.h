@@ -14,8 +14,9 @@ public:
 	const unsigned int& WorldID() const { return m_worldID; }
 	const sf::Vector2f& Position() const { return m_position; }
 	const sf::Vector2f& LastPosition() const { return m_lastPosition; }
-	const sf::Vector2f& LastSentPosition() const { return m_lastSentPosition; }
+	const sf::Vector2f& ClientPosition() const { return m_clientPosition; }
 	const sf::Vector2f& Velocity() const { return m_velocity; }
+	const sf::Vector2f& ClientVelocity() const { return m_clientVelocity; }
 	const unsigned int& OwnershipID() const { return m_ownershipID; }
 	const bool& IsActive() const { return m_active; }
 	std::shared_ptr<Collider> GetCollider() { return m_collider; }
@@ -26,8 +27,9 @@ public:
 	void Move(sf::Vector2f amount);
 	void SetPosition(sf::Vector2f pos);
 	void SetLastPosition(sf::Vector2f pos);
-	void SetLastSentPosition(sf::Vector2f pos);
+	void SetClientPosition(sf::Vector2f pos);
 	void SetVelocity(sf::Vector2f velocity);
+	void SetClientVelocity(sf::Vector2f velocity);
 	void SetActive(bool active);
 	void SetHealth(float amount);
 	void SetMaxHealth(float amount);
@@ -42,9 +44,11 @@ private:
 	unsigned int m_worldID;
 	sf::Vector2f m_position;
 	sf::Vector2f m_lastPosition;
-	sf::Vector2f m_lastSentPosition;
+	sf::Vector2f m_clientPosition;
+
 
 	sf::Vector2f m_velocity;
+	sf::Vector2f m_clientVelocity;
 	unsigned int m_ownershipID;
 	bool m_active;
 	std::shared_ptr<Collider> m_collider;

@@ -93,12 +93,12 @@ void ServerConnection::PollMessages()
 			else if (msg.message.GetHeader().type == MessageType::MOVEMENT)
 			{
 				MovementMessage* message = static_cast<MovementMessage*>(&msg.message);
-				updateEntityNetworkState(message->WorldID(), message->GetPosition(),message->GetVelocity());
+				updateEntityVelocityFromServer(message->WorldID() ,message->GetVelocity());
 			}
 			else if	(msg.message.GetHeader().type == MessageType::ENTITY_STATE)
 			{
 				EntityStateMessage* message = static_cast<EntityStateMessage*>(&msg.message);
-				updateEntityNetworkState(message->WorldID(), message->GetPosition(), message->GetVelocity());
+				updateEntityPositionFromServer(message->WorldID(), message->GetPosition(), message->GetVelocity());
 
 			}
 			break;
@@ -142,7 +142,7 @@ void ServerConnection::PollMessages()
 					{
 						auto& entity = entities.at(message->WorldID());
 						entity->SetActive(message->IsActive(), true);
-						updateEntityNetworkState(message->WorldID(), message->GetPosition(), message->GetVelocity());
+						updateEntityPositionFromServer(message->WorldID(), message->GetPosition(), message->GetVelocity());
 					}
 
 				}
@@ -266,30 +266,46 @@ void ServerConnection::sendEntityStates()
 	for (const auto& entity : m_world->GetEntities())
 	{
 		//onlu send movement of the entity if the client has ownership of it
-		if (entity.second->hasOwnership()) {
-			//check if the enity has exceeded its threshold
-			const float distance = std::abs(Math::Distance(entity.second->GetNetworkPosition(), entity.second->GetPosition()));
-			constexpr float threshold = 5.0f;
-			if (distance >= threshold)
+		if (entity.second->hasOwnership()) 
+		{
+			//check if velocity matches the networkVelocity that was last sent
+			if (entity.second->GetVelocity() != entity.second->GetNetworkVelocity())
 			{
-				MovementMessage movement{ entity.second->GetWorldID(),entity.second->GetPosition(),entity.second->GetVelocity(), m_clientID };
+				//velocity changes so we need to send the new velocity to the server
+				MovementMessage movement{ entity.second->GetWorldID(), entity.second->GetVelocity(), m_clientID };
 				SendUdpMessage(movement);
+				LOG_INFO("Sent new velocity to client");
+
 				//Set network position and velocity to what we just sent to the server (This may get corrected later on when we receive a message)
 				entity.second->SetNetworkPosition(entity.second->GetPosition());
+				entity.second->SetNetworkVelocity(entity.second->GetVelocity());
 			}
 		}
 	}
 }
 
-void ServerConnection::updateEntityNetworkState(unsigned worldID, sf::Vector2f newPosition, sf::Vector2f velocity)
+void ServerConnection::updateEntityVelocityFromServer(unsigned int worldID, sf::Vector2f velocity)
 {
 	auto entities = m_world->GetEntities();
 	if (entities.find(worldID) != entities.end())
 	{
-		entities.at(worldID)->SetNetworkPosition(newPosition);
-		entities.at(worldID)->SetPosition(newPosition);
-
 		entities.at(worldID)->SetVelocity(velocity);
+		entities.at(worldID)->SetNetworkVelocity(velocity);
+		LOG_INFO("recieved updated velocity from server to client");
+
+	}
+}
+
+void ServerConnection::updateEntityPositionFromServer(unsigned int worldID, sf::Vector2f newPosition, sf::Vector2f velocity)
+{
+	auto entities = m_world->GetEntities();
+	if (entities.find(worldID) != entities.end())
+	{
+		entities.at(worldID)->SetVelocity(velocity);
+		entities.at(worldID)->SetNetworkVelocity(velocity);
+
+		entities.at(worldID)->SetPosition(newPosition);
+		entities.at(worldID)->SetNetworkPosition(newPosition);
 	}
 }
 
@@ -309,7 +325,7 @@ void ServerConnection::SendEntityStateMessage(const Entity& entity)
 	SendTcpMessage(stateMsg);
 }
 
-void ServerConnection::SendMovementMessage(unsigned int worldID, sf::Vector2f newPosition, sf::Vector2f velocity)
+void ServerConnection::SendMovementMessage(unsigned int worldID, sf::Vector2f velocity)
 {
 	//get entity
 	if (m_world->GetEntities().find(worldID) != m_world->GetEntities().end())
@@ -319,7 +335,7 @@ void ServerConnection::SendMovementMessage(unsigned int worldID, sf::Vector2f ne
 		//check if distance is greater than threshold
 		const float distance = std::abs(Math::Distance(entity->GetNetworkPosition(), entity->GetPosition()));
 		if (distance >= 16.0f) {
-			const MovementMessage message{ worldID,newPosition,velocity, m_clientID };
+			const MovementMessage message{ worldID,velocity, m_clientID };
 			SendUdpMessage(message);
 		}
 	}

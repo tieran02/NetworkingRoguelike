@@ -63,9 +63,11 @@ void Network::Start()
 
 		m_currentTime = std::chrono::duration<float>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
+
 		//Send message to clients
 		if (m_currentTime >= m_lastTickTime + TICK_RATE)
 		{
+			pollMessages();
 			m_worldState->Update();
 
 
@@ -73,9 +75,9 @@ void Network::Start()
 			{
 				//ping all clients every second
 				const long long now = std::chrono::steady_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
-				SendToAllUDP(PingMessage(now, 0));
+				//SendToAllUDP(PingMessage(now, 0));
 				m_lastPing = m_currentTime;
-				LOG_INFO("Server ms = " + std::to_string(m_currentTickRate));
+				//LOG_INFO("Server ms = " + std::to_string(m_currentTickRate));
 			}
 
 			while (!m_messagesToSend.empty())
@@ -113,11 +115,13 @@ void Network::Start()
 				default:;
 				}
 			}
+
+			//sent update data to clients
+			sendWorldState();
+
 			m_currentTickRate = m_currentTime - m_lastTickTime;
 			m_lastTickTime = m_currentTime;
 		}
-
-		pollMessages();
 	}
 	m_running = false;
 }
@@ -158,19 +162,9 @@ void Network::pollMessages()
 			{
 				MovementMessage* message = static_cast<MovementMessage*>(&msg.message);
 				LOG_TRACE("Recieved Movement message from entity:" + std::to_string(message->WorldID()));
-				//update world state with the new entity pos
-				m_worldState->MoveEntity(message->WorldID(), message->GetPosition(), message->GetVelocity());
-				//send movement message back to all clients (including itself)
-				m_messagesToSend.push(std::make_tuple(0, Protocol::UPD, *message, message->GetHeader().id)); //send to all except itself
-			}
-			else if (msg.message.GetHeader().type == MessageType::ENTITY_STATE)
-			{
-				EntityStateMessage* message = static_cast<EntityStateMessage*>(&msg.message);
-				LOG_TRACE("Recieved Entity state message from entity:" + std::to_string(message->WorldID()));
-				//update world state with the new entity pos
-				m_worldState->MoveEntity(message->WorldID(), message->GetPosition(), message->GetVelocity());
-				//send entity state message back to all clients (including itself)
-				m_messagesToSend.push(std::make_tuple(0, Protocol::UPD, *message, 0));
+
+				//update world state with the new entity velocity
+				m_worldState->updateEntityVelocityFromClient(message->WorldID(), message->GetVelocity());
 			}
 			else
 			{
@@ -353,21 +347,17 @@ void Network::acceptTCP()
 
 void Network::sendWorldState()
 {
-	/*std::shared_lock<std::shared_mutex> lock{ m_worldState->GetEntityMutex() };
-	//loop through all entities in the world
-	auto& entities = m_worldState->GetEntities();
-	MessageBatcher<EntityStateMessage> messageBatcher{ (int)entities.size() };
-
-	int i = 0;
-	for (auto& entity : entities)
+	for (const auto& entity : m_worldState->GetEntities())
 	{
-		EntityStateMessage msg{ entity.second->WorldID(),entity.second->Position(),sf::Vector2f{0,0},entity.second->IsActive(),false,0 };
-		messageBatcher.AddMessage(msg);
-		i++;
-	}
+		if (entity.second->Velocity() != entity.second->ClientVelocity())
+		{
+			entity.second->SetClientVelocity(entity.second->Velocity()); //set client velocity to current velocity
+			//sent new velocity to client
+			SendMovementMessage(entity.first, entity.second->Velocity());
+			LOG_INFO("sending updated velocity from server to client");
 
-	LOG_INFO("Sending World State Update To All Clients");
-	messageBatcher.SentToAllTCP(this);*/
+		}
+	}
 }
 
 void Network::calculateClientPing(unsigned id, long long clientTimestamp)
@@ -421,9 +411,9 @@ void Network::SendSpawnMessage(unsigned int worldID, unsigned int entityID, sf::
 	LOG_INFO(stream.str());
 }
 
-void Network::SendMovementMessage(unsigned worldID, sf::Vector2f newPosition, sf::Vector2f velocity)
+void Network::SendMovementMessage(unsigned worldID, sf::Vector2f velocity)
 {
-	MovementMessage message{ worldID,newPosition,velocity, 0 };
+	MovementMessage message{ worldID,velocity, 0 };
 	SendToAllUDP(message);
 	LOG_TRACE("Sending movement message to all connections");
 

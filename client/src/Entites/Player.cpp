@@ -67,7 +67,7 @@ void Player::Update(float deltaTime)
 	}
 	else
 	{
-		UpdatePredictedPosition(deltaTime); //network player
+		UpdatePosition(deltaTime); //network player
 	}
 }
 

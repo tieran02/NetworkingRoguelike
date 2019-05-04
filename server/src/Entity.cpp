@@ -4,8 +4,9 @@ Entity::Entity(const std::string& entityName, unsigned worldID, sf::Vector2f pos
 	m_worldID(worldID),
 	m_position(pos),
 	m_lastPosition(pos),
-	m_lastSentPosition(pos),
+	m_clientPosition(pos),
 	m_velocity(velocity),
+	m_clientVelocity(velocity),
 	m_ownershipID(ownership),
 	m_active(true)
 {
@@ -40,14 +41,19 @@ void Entity::SetLastPosition(sf::Vector2f pos)
 	m_lastPosition = pos;
 }
 
-void Entity::SetLastSentPosition(sf::Vector2f pos)
+void Entity::SetClientPosition(sf::Vector2f pos)
 {
-	m_lastSentPosition = pos;
+	m_clientPosition = pos;
 }
 
 void Entity::SetVelocity(sf::Vector2f velocity)
 {
 	m_velocity = velocity;
+}
+
+void Entity::SetClientVelocity(sf::Vector2f velocity)
+{
+	m_clientVelocity = velocity;
 }
 
 void Entity::SetActive(bool active)

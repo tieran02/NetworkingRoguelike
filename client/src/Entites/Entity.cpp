@@ -58,6 +58,16 @@ sf::Vector2f Entity::GetVelocity() const
 	return m_velocity;
 }
 
+void Entity::SetNetworkVelocity(sf::Vector2f velocity)
+{
+	m_networkVelocity = velocity;
+}
+
+sf::Vector2f Entity::GetNetworkVelocity() const
+{
+	return m_networkVelocity;
+}
+
 void Entity::SetMovementSpeed(float speed)
 {
 	m_movementSpeed = speed;

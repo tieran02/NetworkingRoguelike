@@ -32,7 +32,7 @@ public:
 	unsigned int GetClientID() const { return m_clientID; }
 
 	void SendEntityStateMessage(const Entity& entity);
-	void SendMovementMessage(unsigned int worldID, sf::Vector2f newPosition, sf::Vector2f velocity);
+	void SendMovementMessage(unsigned int worldID, sf::Vector2f velocity);
 	void SendSpawnRequestMessage(const std::string& entityName, sf::Vector2f position, sf::Vector2f velocity);
 	void SendProjectileRequestMessage(const std::string& entityName, sf::Vector2f position, sf::Vector2f velocity, CollisionLayer side);
 	void SendEntityDestroyMessage(unsigned int worldID);
@@ -74,7 +74,9 @@ private:
 	void receiveTCP();
 
 	void sendEntityStates();
-	void updateEntityNetworkState(unsigned int worldID, sf::Vector2f newPosition, sf::Vector2f velocity);
+	void updateEntityVelocityFromServer(unsigned int worldID, sf::Vector2f velocity);
+	void updateEntityPositionFromServer(unsigned int worldID, sf::Vector2f newPosition, sf::Vector2f velocity);
+
 	void calculatePing(long long  serverTimestamp);
 
 };

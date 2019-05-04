@@ -31,6 +31,8 @@ public:
 	sf::Vector2f GetDirection() const;
 	void SetVelocity(sf::Vector2f velocity);
 	sf::Vector2f GetVelocity() const;
+	void SetNetworkVelocity(sf::Vector2f velocity);
+	sf::Vector2f GetNetworkVelocity() const;
 	void SetMovementSpeed(float speed);
 	float GetMovementSpeed() const;
 
@@ -46,8 +48,6 @@ public:
 	void Heal(float amount);
 
 	sf::Vector2f CalculatePredictedPosition() const;
-
-
 	void UpdatePosition(float deltaTime);
 	void UpdatePredictedPosition(float deltaTime);
 	void Translate(const sf::Vector2f& position);
@@ -76,5 +76,5 @@ private:
 
 	//Server positions
 	sf::Vector2f m_networkPosition;
-
+	sf::Vector2f m_networkVelocity;
 };

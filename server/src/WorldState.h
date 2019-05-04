@@ -27,6 +27,8 @@ public:
 
 	void SpawnEntity(int worldID);
 	void MoveEntity(int worldID, sf::Vector2f newPosition, sf::Vector2f velocity);
+	void updateEntityVelocityFromClient(int worldID, sf::Vector2f velocity);
+
 	void SetEntityHealth(unsigned int worldID, float health, float maxHealth);
 	void DamageEntity(unsigned int worldID, float damage);
 
