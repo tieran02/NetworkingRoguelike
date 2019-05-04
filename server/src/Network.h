@@ -24,7 +24,7 @@ public:
 	void SendToAllTCP(const Message& message, unsigned int ignore = 0);
 
 	void SendSpawnMessage(unsigned int worldID, unsigned int entityID, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownershipID = 0, CollisionLayer layerOverride = CollisionLayer::NONE);
-	void SendMovementMessage(unsigned int worldID, sf::Vector2f velocity);
+	void SendMovementMessage(unsigned int worldID, sf::Vector2f position, sf::Vector2f velocity);
 	void SendHealthMessage(unsigned int worldID, float health, float maxHealth);
 
 	void Connect(std::unique_ptr<sf::TcpSocket> connection);
@@ -51,6 +51,7 @@ private:
 	const float TICK_RATE{ (1.0f / 32.0f)  };
 	float m_currentTime;
 	float m_currentTickRate{ 1.0 / 32.0f };
+	unsigned int ticksSinceReSync{ 0 };
 
 	sf::UdpSocket m_udpSocket;
 	std::unordered_map<unsigned int,std::unique_ptr<Connection>> m_connections;

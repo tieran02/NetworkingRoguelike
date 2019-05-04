@@ -272,7 +272,7 @@ void ServerConnection::sendEntityStates()
 			if (entity.second->GetVelocity() != entity.second->GetNetworkVelocity())
 			{
 				//velocity changes so we need to send the new velocity to the server
-				MovementMessage movement{ entity.second->GetWorldID(), entity.second->GetVelocity(), m_clientID };
+				MovementMessage movement{ entity.second->GetWorldID(), entity.second->GetPosition(), entity.second->GetVelocity(), m_clientID };
 				SendUdpMessage(movement);
 				LOG_INFO("Sent new velocity to client");
 
@@ -325,7 +325,7 @@ void ServerConnection::SendEntityStateMessage(const Entity& entity)
 	SendTcpMessage(stateMsg);
 }
 
-void ServerConnection::SendMovementMessage(unsigned int worldID, sf::Vector2f velocity)
+void ServerConnection::SendMovementMessage(unsigned int worldID, sf::Vector2f position, sf::Vector2f velocity)
 {
 	//get entity
 	if (m_world->GetEntities().find(worldID) != m_world->GetEntities().end())
@@ -335,7 +335,7 @@ void ServerConnection::SendMovementMessage(unsigned int worldID, sf::Vector2f ve
 		//check if distance is greater than threshold
 		const float distance = std::abs(Math::Distance(entity->GetNetworkPosition(), entity->GetPosition()));
 		if (distance >= 16.0f) {
-			const MovementMessage message{ worldID,velocity, m_clientID };
+			const MovementMessage message{ worldID,position,velocity, m_clientID };
 			SendUdpMessage(message);
 		}
 	}
