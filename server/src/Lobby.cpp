@@ -15,6 +15,18 @@ void Lobby::Create(int maxConnections)
 	m_maxConnections = maxConnections;
 }
 
+void Lobby::Start()
+{
+	LOG_INFO("Starting Game");
+	m_startGame = true;
+
+	//spawn players
+	for (auto& connection : m_network->GetConnections())
+	{
+		m_network->SpawnPlayer(connection.first);
+	}
+}
+
 bool Lobby::ShouldStart() const
 {
 	return m_startGame;
@@ -35,21 +47,8 @@ bool Lobby::IsFull() const
 	return m_connectedPlayers > m_maxConnections;
 }
 
-void Lobby::startGame()
-{
-	LOG_INFO("Starting Game");
-	m_startGame = true;
-
-	//spawn players
-	for(auto& connection : m_network->GetConnections())
-	{
-		m_network->SpawnPlayer(connection.first);
-	}
-}
 
 void Lobby::Update()
 {
-	if (m_connectedPlayers >= 2) {
-		startGame();
-	}
+
 }

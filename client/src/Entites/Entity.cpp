@@ -190,5 +190,5 @@ void Entity::Translate(const sf::Vector2f& position)
 
 bool Entity::hasOwnership() const
 {
-	return m_ownership == m_connection->GetColientID();
+	return m_ownership == m_connection->GetClientID();
 }

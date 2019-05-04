@@ -5,6 +5,7 @@
 #include "shared/Utility/Log.h"
 #include "Graphics/ResourceManager.h"
 #include "Lobby.h"
+#include <iostream>
 
 int main()
 {
@@ -21,6 +22,10 @@ int main()
 	ResourceManager::Instance().LoadTexture("skeleton", "skeleton.png");
 	LOG_INFO("Resouces Loaded");
 
+	LOG_INFO("Enter Player Name:");
+	std::string playerName;
+	std::cin >> playerName;
+
 	//Create window
 	sf::RenderWindow window;
 
@@ -29,13 +34,12 @@ int main()
 	world.SetWindowSize(sf::Vector2u(width, height));
 
 	//networking
-	ServerConnection server_connection{ 8305, &world };
+	ServerConnection server_connection{ 8305, &world, playerName };
 	server_connection.FindServer();
 	server_connection.Connect();
 
 
-	TODO LOBBY
-	Lobby lobby{ server_connection };
+	Lobby lobby{ server_connection, sf::Vector2u{width,height } };
 
 
 	//Generate World
@@ -77,6 +81,19 @@ int main()
 				world.SetWindowFocused(true);
 			else if (event.type == sf::Event::LostFocus)
 				world.SetWindowFocused(false);
+		}
+
+		//wait for game to start
+		if (!lobby.ShouldStart())
+		{
+			server_connection.PollMessages();
+
+			lobby.Update();
+
+			window.clear(sf::Color{ 80,64,64,255 });
+			lobby.Draw(window);
+			window.display();
+			continue;
 		}
 
 		//set view to camera view

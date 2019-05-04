@@ -186,8 +186,20 @@ void Network::pollMessages()
 			{
 				ConnectionMessage* message = static_cast<ConnectionMessage*>(&msg.message);
 				m_connections[message->GetClientID()]->m_portUDP = message->GetUdpPort();
+				m_connections[message->GetClientID()]->SetClientName(message->GetName());
+
+				std::string names = "";
+				//Sent client names back to all clients
+				for (const auto& connection : m_connections)
+				{
+					names.append( "," + connection.second->GetName());
+				}
+				names.erase(0, 1); //remove first comma
+				TextMessage clientNames{ names,TextType::PLAYER_NAMES };
+				SendToAllTCP(clientNames);
+
 				std::stringstream stream;
-				stream << "Set Client " << message->GetClientID() << " UDP port to " << message->GetUdpPort();
+				stream << "Set Client: " << message->GetName() << "::" << message->GetClientID() << " UDP port to " << message->GetUdpPort();
 				LOG_INFO(stream.str());
 
 			}
@@ -237,6 +249,14 @@ void Network::pollMessages()
 				HealthMessage* healthMessage = static_cast<HealthMessage*>(&msg.message);
 				LOG_TRACE("Recieved Entity health message from entity:" + std::to_string(healthMessage->GetWorldID()));
 				m_worldState->SetEntityHealth(healthMessage->GetWorldID(), healthMessage->GetHealth(), healthMessage->GetMaxHealth());
+			}
+			else if (msg.message.GetHeader().type == MessageType::GAME_START)
+			{
+				if (!m_lobby.ShouldStart())
+				{
+					SendToAllTCP(msg.message);
+					m_lobby.Start();
+				}
 			}
 			else
 			{
@@ -408,7 +428,7 @@ void Network::Connect(std::unique_ptr<sf::TcpSocket> socket)
         m_connections.at(id)->Connect(id, m_worldState->GetSeed());
 
         //Send client connection data
-        const ConnectionMessage message(id, m_worldState->GetSeed(), 0); //send the seed to the client (UDP port of the client will be sent back)
+        const ConnectionMessage message(id,"ServerPlayerName", m_worldState->GetSeed(), 0); //send the seed to the client (UDP port of the client will be sent back)
         m_connections.at(id)->SendTCP(message);
 
 		m_lobby.AddPlayerToLobby();
@@ -422,24 +442,17 @@ void Network::Connect(std::unique_ptr<sf::TcpSocket> socket)
 	}
 	else  //Spawn the player when the client is setup and not in lobby
 	{
-		SpawnPlayer(id);
+		//TODO IGNORE CONNECTIONS
     }
 }
 
-void Network::SpawnPlayer(unsigned int connectionID)
-{
-	//make sure the player is ready then spawn the player 
-	std::unique_lock<std::mutex> lock{ m_connections[connectionID]->m_setupMutex };
-	m_connections.at(connectionID)->m_cv.wait(lock, [this, &connectionID]() { return m_connections[connectionID]->IsSetup(); });
-	m_worldState->SpawnPlayer(*m_connections.at(connectionID));
-}
-
-void Network::Disconnect(unsigned connectionID)
+void Network::Disconnect(unsigned int connectionID)
 {
 	std::unique_lock<std::mutex> l(m_connectionMutex);
 
 	//disconect client
 	m_connections[connectionID]->Disconnect();
+
 	m_lobby.PlayerDisconnected();
 
 	//remove connection from connection list
@@ -456,10 +469,29 @@ void Network::Disconnect(unsigned connectionID)
 	}
 
 
-	for(auto& entity : entitiesToRemove)
+	for (auto& entity : entitiesToRemove)
 	{
-        EntityStateMessage entityState(entity->WorldID(), sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false, true, 0);
+		EntityStateMessage entityState(entity->WorldID(), sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false, true, 0);
 		SendToAllTCP(entityState);
 		m_worldState->GetEntities().erase(entity->WorldID());
 	}
+
+	//send updated player names
+	std::string names = "";
+	//Sent client names back to all clients
+	for (const auto& connection : m_connections)
+	{
+		names.append("," + connection.second->GetName());
+	}
+	names.erase(0, 1); //remove first comma
+	TextMessage clientNames{ names,TextType::PLAYER_NAMES };
+	SendToAllTCP(clientNames);
+}
+
+void Network::SpawnPlayer(unsigned int connectionID)
+{
+	//make sure the player is ready then spawn the player 
+	std::unique_lock<std::mutex> lock{ m_connections[connectionID]->m_setupMutex };
+	m_connections.at(connectionID)->m_cv.wait(lock, [this, &connectionID]() { return m_connections[connectionID]->IsSetup(); });
+	m_worldState->SpawnPlayer(*m_connections.at(connectionID));
 }

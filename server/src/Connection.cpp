@@ -53,6 +53,11 @@ void Connection::Disconnect()
 	LOG_INFO(stream.str());
 }
 
+void Connection::SetClientName(const std::string & name)
+{
+	m_name = name;
+}
+
 void Connection::ReceiveTCP()
 {
 	const size_t maxMessageSize = 256;

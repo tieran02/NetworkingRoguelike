@@ -5,11 +5,12 @@
 #include "shared/CircularBuffer.h"
 #include "World.h"
 #include "shared/Queue.h"
+#include <string>
 
 class ServerConnection
 {
 public:
-	ServerConnection(unsigned short port, World* world);
+	ServerConnection(unsigned short port, World* world, const std::string& playerName);
 	~ServerConnection();
 
 	void FindServer();
@@ -27,7 +28,7 @@ public:
 
 	void NotifyWorldGeneration();
 
-	unsigned int GetColientID() const { return m_clientID; }
+	unsigned int GetClientID() const { return m_clientID; }
 
 	void SendEntityStateMessage(const Entity& entity);
 	void SendMovementMessage(unsigned int worldID, sf::Vector2f newPosition, sf::Vector2f velocity);
@@ -36,6 +37,8 @@ public:
 	void SendEntityDestroyMessage(unsigned int worldID);
 	void SendHealthMessage(unsigned int worldID, float health, float maxHealth);
 
+	const std::vector<std::string>& GetPlayerNames() { return m_connectedClientNames; }
+	bool InProgress() const { return m_gameInProgress; }
 private:
 	float m_ping;
 
@@ -45,12 +48,14 @@ private:
 	const unsigned short m_broadcastUdpPort;
 	sf::IpAddress m_serverIP;
 	unsigned short m_serverTcpPort;
-
+	std::string m_clientName;
+	std::vector<std::string> m_connectedClientNames;
 
 	sf::TcpSocket m_serverTcpSocket;
 	sf::UdpSocket m_serverUdpSocket;
 	bool m_isConnected{ false };
 	unsigned int m_clientID;
+	bool m_gameInProgress{ false };
 
 	Queue<ServerMessage> m_serverMessages;
 

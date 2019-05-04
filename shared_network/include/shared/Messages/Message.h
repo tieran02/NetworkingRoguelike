@@ -21,7 +21,8 @@ enum class MessageType
 	CLIENT_SETUP,
 	PING,
 	HEALTH,
-	COLLIDE
+	COLLIDE,
+	GAME_START
 };
 
 struct Header

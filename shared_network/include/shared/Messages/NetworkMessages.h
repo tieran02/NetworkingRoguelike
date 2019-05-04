@@ -6,3 +6,4 @@
 #include "ConnectionMessage.h"
 #include "SpawnMessage.h"
 #include "HealthMessage.h"
+#include "TextMessage.h"

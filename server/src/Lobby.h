@@ -12,6 +12,7 @@ public:
 	void Create(int maxConnections);
 	void Update();
 
+	void Start();
 	bool ShouldStart() const;
 
 	void AddPlayerToLobby();
@@ -23,7 +24,5 @@ private:
 	bool m_startGame{ false };
 	int m_maxConnections;
 	int m_connectedPlayers;
-
-	void startGame();
 
 };

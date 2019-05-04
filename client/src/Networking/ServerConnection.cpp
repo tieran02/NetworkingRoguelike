@@ -8,7 +8,7 @@
 #include "shared/EntityDataManager.h"
 
 
-ServerConnection::ServerConnection(unsigned short port, World* world) : m_world(world), m_broadcastUdpPort(port)
+ServerConnection::ServerConnection(unsigned short port, World* world, const std::string& playerName) : m_world(world), m_broadcastUdpPort(port), m_clientName(playerName)
 {
     m_receiveUdpThread = std::thread(&ServerConnection::receiveUDP, this);
     m_receiveTcpThread = std::thread(&ServerConnection::receiveTCP, this);
@@ -111,7 +111,7 @@ void ServerConnection::PollMessages()
 				m_clientID = message->GetClientID();
 
 				//send client udp port to server
-				ConnectionMessage updPortMessage{ m_clientID ,0,m_serverUdpSocket.getLocalPort() };
+				ConnectionMessage updPortMessage{ m_clientID, m_clientName ,0,m_serverUdpSocket.getLocalPort() };
 				SendTcpMessage(updPortMessage);
 			}
 			else if(msg.message.GetHeader().type == MessageType::SPAWN)
@@ -153,6 +153,28 @@ void ServerConnection::PollMessages()
 					entity->SetHealth(message->GetHealth(), true);
 					entity->SetMaxHealth(message->GetMaxHealth(), true);
 				}
+			}
+			else if (msg.message.GetHeader().type == MessageType::TEXT)
+			{
+				TextMessage* message = static_cast<TextMessage*>(&msg.message);
+				
+				std::string str = message->GetText();
+				if (message->GetTextType() == TextType::PLAYER_NAMES)
+				{
+					m_connectedClientNames.clear();
+					std::stringstream ss(str);
+					//split name string by comma
+					while (ss.good())
+					{
+						std::string name;
+						std::getline(ss, name, ',');
+						m_connectedClientNames.push_back(name);
+					}
+				}
+			}
+			else if (msg.message.GetHeader().type == MessageType::GAME_START)
+			{
+				m_gameInProgress = true;
 			}
 		}
 
@@ -378,9 +400,6 @@ void ServerConnection::receiveTCP()
 		serverMessage.protocol = Protocol::TCP;
 		serverMessage.senderAddress = m_serverTcpSocket.getRemoteAddress();
 		serverMessage.senderPort = m_serverTcpSocket.getRemotePort();
-
-
-
 		m_serverMessages.enqueue(serverMessage);
 	}
 }

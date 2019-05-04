@@ -6,8 +6,9 @@ class ConnectionMessage : public Message
 public:
 	ConnectionMessage() = default;;
     ConnectionMessage(char* buffer);
-    ConnectionMessage(unsigned int clientID, unsigned int seed, unsigned short udpPort);
+    ConnectionMessage(unsigned int clientID, const std::string& clientName, unsigned int seed, unsigned short udpPort);
     unsigned int GetClientID() const;
+	std::string GetName() const;
     unsigned int GetSeed() const;
 	unsigned short GetUdpPort() const;
 };

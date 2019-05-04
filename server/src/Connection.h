@@ -28,6 +28,8 @@ public:
 	const unsigned short& GetPort() const { return m_portTCP; }
 	bool IsConnected() const { return m_isConnected; }
 	bool IsSetup() const { return m_isSetup; }
+	void SetClientName(const std::string& name);
+	const std::string& GetName() { return m_name; }
 
 	unsigned int GetConnectionID() const { return m_connectionID; }
 
@@ -44,6 +46,7 @@ private:
 	unsigned short m_portTCP;
 	unsigned short m_portUDP{0};
 	unsigned int m_entityID{0};
+	std::string m_name;
 	float m_ping;
 
 	std::unique_ptr<sf::TcpSocket> m_tcpSocket;
