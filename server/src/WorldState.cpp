@@ -328,25 +328,26 @@ void WorldState::entityWorldCollision(Entity& entity)
 
 void WorldState::enemyCollisions()
 {
-	for (auto& enemy : m_enemies)
+	for (auto& entity : m_entities)
 	{
-		entityWorldCollision(*enemy.second);
+		entityWorldCollision(*entity.second);
 
         //check enemy collisions against other entities
-        for(auto& entity : m_entities)
+        for(auto& otherEntity : m_entities)
         {
-            if(enemy == entity)
+            if(entity == otherEntity)
             {
                 continue;
             }
 
-            auto entityCollider = entity.second->GetCollider();
-            if(entityCollider->CheckCollision(*enemy.second->GetCollider()))
+            auto entityCollider = otherEntity.second->GetCollider();
+            if(entityCollider->CheckCollision(*entity.second->GetCollider()))
             {
-                enemy.second->SetPosition(enemy.second->LastPosition());
+                entity.second->SetPosition(entity.second->LastPosition());
                 break;
             }
         }
 	}
 }
+
 

@@ -165,19 +165,6 @@ void Network::pollMessages()
 
 				//update world state with the new entity velocity
 				m_worldState->updateEntityVelocityFromClient(message->WorldID(), message->GetVelocity());
-
-				//get distance between server position and client position that was just received
-				//if the distance is over a threshold then resync that entity
-				const auto& entity = m_worldState->GetEntities().at(message->WorldID());
-				float distance = Math::Distance(entity->Position(), message->GetPosition());
-				if (distance >= 32.0f)
-				{
-					LOG_INFO("entity out of sync, sending updated positions from server");
-
-					//resyn all entities
-					EntityStateMessage msg{ entity->WorldID(),entity->Position(),entity->Velocity(),entity->IsActive(), false, 0 };
-					SendToAllTCP(msg);
-				}
 			}
 			else
 			{
@@ -360,7 +347,7 @@ void Network::acceptTCP()
 
 void Network::sendWorldState()
 {
-	ticksSinceReSync;
+	ticksSinceReSync++;
 
 	for (const auto& entity : m_worldState->GetEntities())
 	{
@@ -368,12 +355,12 @@ void Network::sendWorldState()
 		{
 			entity.second->SetClientVelocity(entity.second->Velocity()); //set client velocity to current velocity
 			//sent new velocity to client
-			SendMovementMessage(entity.first, entity.second->Position(), entity.second->Velocity());
+			SendMovementMessage(entity.first, entity.second->Velocity());
 			LOG_INFO("sending updated velocity from server to client");
 
 		}
 		//every 5 seconds resync
-		if (ticksSinceReSync >= 32 * 5)
+		if (ticksSinceReSync >= 32 * 1)
 		{
 			//resyn all entities
 			EntityStateMessage msg{ entity.first,entity.second->Position(),entity.second->Velocity(),entity.second->IsActive(), false, 0 };
@@ -434,9 +421,9 @@ void Network::SendSpawnMessage(unsigned int worldID, unsigned int entityID, sf::
 	LOG_INFO(stream.str());
 }
 
-void Network::SendMovementMessage(unsigned worldID, sf::Vector2f position, sf::Vector2f velocity)
+void Network::SendMovementMessage(unsigned worldID, sf::Vector2f velocity)
 {
-	MovementMessage message{ worldID, position,velocity, 0 };
+	MovementMessage message{ worldID,velocity, 0 };
 	SendToAllUDP(message);
 	LOG_TRACE("Sending movement message to all connections");
 

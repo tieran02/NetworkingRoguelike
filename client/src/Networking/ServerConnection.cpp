@@ -142,7 +142,13 @@ void ServerConnection::PollMessages()
 					{
 						auto& entity = entities.at(message->WorldID());
 						entity->SetActive(message->IsActive(), true);
-						updateEntityPositionFromServer(message->WorldID(), message->GetPosition(), message->GetVelocity());
+						//check distance between server pos and client
+						float distance = Math::Distance(entity->GetPosition(), message->GetPosition());
+						if (distance >= 4.0f) 
+						{
+							//sync entity as it is beyond the distancee threshold
+							updateEntityPositionFromServer(message->WorldID(), message->GetPosition(), message->GetVelocity());
+						}
 					}
 
 				}
@@ -272,7 +278,7 @@ void ServerConnection::sendEntityStates()
 			if (entity.second->GetVelocity() != entity.second->GetNetworkVelocity())
 			{
 				//velocity changes so we need to send the new velocity to the server
-				MovementMessage movement{ entity.second->GetWorldID(), entity.second->GetPosition(), entity.second->GetVelocity(), m_clientID };
+				MovementMessage movement{ entity.second->GetWorldID(), entity.second->GetVelocity(), m_clientID };
 				SendUdpMessage(movement);
 				LOG_INFO("Sent new velocity to client");
 
@@ -325,17 +331,18 @@ void ServerConnection::SendEntityStateMessage(const Entity& entity)
 	SendTcpMessage(stateMsg);
 }
 
-void ServerConnection::SendMovementMessage(unsigned int worldID, sf::Vector2f position, sf::Vector2f velocity)
+void ServerConnection::SendMovementMessage(unsigned int worldID,sf::Vector2f velocity)
 {
 	//get entity
 	if (m_world->GetEntities().find(worldID) != m_world->GetEntities().end())
 	{
 		auto& entity = m_world->GetEntities().at(worldID);
 
-		//check if distance is greater than threshold
+		//check if distance is greater than threshold 
+		//TODO:: use velocity instead of distance
 		const float distance = std::abs(Math::Distance(entity->GetNetworkPosition(), entity->GetPosition()));
 		if (distance >= 16.0f) {
-			const MovementMessage message{ worldID,position,velocity, m_clientID };
+			const MovementMessage message{ worldID,velocity, m_clientID };
 			SendUdpMessage(message);
 		}
 	}
