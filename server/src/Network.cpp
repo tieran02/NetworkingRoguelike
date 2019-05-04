@@ -383,35 +383,32 @@ void Network::SendToAllUDP(const Message& message, unsigned int ignore)
 {
 	if (m_connections.empty())
 		return;
-	m_threadPool.enqueue([=]
-	{
-		for (auto& connection : m_connections)
-		{
-			if (ignore != 0 && connection.first == ignore)
-			{
-				continue;
-			}
 
-			connection.second->SendUDP(message);
+	for (auto& connection : m_connections)
+	{
+		if (ignore != 0 && connection.first == ignore)
+		{
+			continue;
 		}
-	});
+
+		connection.second->SendUDP(message);
+	}
 }
 
 void Network::SendToAllTCP(const Message& message, unsigned int ignore)
 {
 	if (m_connections.empty())
 		return;
-	m_threadPool.enqueue([=] {
-		for (auto& connection : m_connections)
-		{
-			if (ignore != 0 && connection.first == ignore)
-			{
-				continue;
-			}
 
-			connection.second->SendTCP(message);
+	for (auto& connection : m_connections)
+	{
+		if (ignore != 0 && connection.first == ignore)
+		{
+			continue;
 		}
-	});
+
+		connection.second->SendTCP(message);
+	}
 }
 
 void Network::SendSpawnMessage(unsigned int worldID, unsigned int entityID, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownershipID, CollisionLayer layerOverride)
