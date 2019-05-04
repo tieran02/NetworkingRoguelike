@@ -1,5 +1,6 @@
 #pragma once
 #include "Networking/ServerConnection.h"
+#include "ChatBox.h"
 
 class Lobby
 {

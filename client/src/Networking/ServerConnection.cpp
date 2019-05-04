@@ -6,9 +6,13 @@
 #include "shared/Utility/Log.h"
 #include <sstream>
 #include "shared/EntityDataManager.h"
+#include "ChatBox.h"
 
-
-ServerConnection::ServerConnection(unsigned short port, World* world, const std::string& playerName) : m_world(world), m_broadcastUdpPort(port), m_clientName(playerName)
+ServerConnection::ServerConnection(unsigned short port, World* world, const std::string& playerName)
+	: m_world(world),
+	m_broadcastUdpPort(port), 
+	m_clientName(playerName),
+	m_chatBox{1.5f,1.25f, this }
 {
     m_receiveUdpThread = std::thread(&ServerConnection::receiveUDP, this);
     m_receiveTcpThread = std::thread(&ServerConnection::receiveTCP, this);
@@ -175,6 +179,10 @@ void ServerConnection::PollMessages()
 				{
 					LOG_INFO(message->GetText());
 				}
+				else if (message->GetTextType() == TextType::CHAT)
+				{
+					m_chatBox.AddMessage(message->GetText());
+				}
 			}
 			else if (msg.message.GetHeader().type == MessageType::GAME_START)
 			{
@@ -329,6 +337,12 @@ void ServerConnection::SendProjectileRequestMessage(const std::string& entityNam
 	const auto& entityID = EntityDataManager::Instance().GetEntityData(entityName).EntityID;
 	const SpawnMessage message{ 0,entityID,position,velocity,m_clientID,side };
 	SendTcpMessage(message);
+}
+
+void ServerConnection::SendChatMessage(const std::string & message)
+{
+	TextMessage msg{ message,TextType::CHAT, m_clientID };
+	SendTcpMessage(msg);
 }
 
 void ServerConnection::SendEntityDestroyMessage(unsigned worldID)

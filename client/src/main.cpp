@@ -6,6 +6,7 @@
 #include "Graphics/ResourceManager.h"
 #include "Lobby.h"
 #include <iostream>
+#include "TextInput.h"
 
 int main()
 {
@@ -37,7 +38,7 @@ int main()
 	ServerConnection server_connection{ 8305, &world, playerName };
 	server_connection.FindServer();
 	server_connection.Connect();
-
+	server_connection.GetChatBox().SetScreenSize(width, height);
 
 	Lobby lobby{ server_connection, sf::Vector2u{width,height } };
 
@@ -65,6 +66,7 @@ int main()
 
 		// Event processing
 		sf::Event event;
+		TextInput::Clear();
 		while (window.pollEvent(event))
 		{
 			// Request for closing the window
@@ -76,11 +78,16 @@ int main()
 				height = event.size.height;
 				uiView = sf::View(sf::FloatRect(0.0f, 0.0f, width, height));
 				world.SetWindowSize(sf::Vector2u(width, height));
+				server_connection.GetChatBox().SetScreenSize(width, height);
 			}
 			else if (event.type == sf::Event::GainedFocus)
 				world.SetWindowFocused(true);
 			else if (event.type == sf::Event::LostFocus)
 				world.SetWindowFocused(false);
+			else if (event.type == sf::Event::TextEntered && world.IsWindowFocused())
+			{
+				TextInput::AddKey(static_cast<char>(event.text.unicode));
+			}
 		}
 
 		//wait for game to start
@@ -95,6 +102,9 @@ int main()
 			window.display();
 			continue;
 		}
+
+		//update chatbox
+		server_connection.GetChatBox().Update();
 
 		//set view to camera view
 		window.setView(world.GetCamera().GetView());
@@ -116,7 +126,7 @@ int main()
 		window.setView(uiView);
 		m_fpsText.setString("FPS = " + std::to_string((int)m_fps) + "\nPing = " + std::to_string((int)server_connection.GetPing()));
 		window.draw(m_fpsText);
-
+		server_connection.GetChatBox().Draw(window);
 		window.display();
 
 		server_connection.PollMessages();

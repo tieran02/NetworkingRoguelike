@@ -5,10 +5,11 @@ TextMessage::TextMessage(char* buffer) : Message(buffer)
 
 }
 
-TextMessage::TextMessage(const std::string& text, TextType textType)
+TextMessage::TextMessage(const std::string& text, TextType textType, unsigned int senderID)
 {
 	header.type = MessageType::TEXT;
 	header.size = sizeof(TextType) + sizeof(uint8_t) + text.size();
+	header.id = senderID;
 
 	//copy data to message data
 	data.resize(header.size);

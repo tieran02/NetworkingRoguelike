@@ -1,5 +1,6 @@
 #include "Lobby.h"
 #include "Graphics/ResourceManager.h"
+#include "TextInput.h"
 
 Lobby::Lobby(ServerConnection& connection, sf::Vector2u screenSize) : m_connection(connection), m_screenSize(screenSize)
 {
@@ -17,6 +18,9 @@ void Lobby::Update()
 		m_startGame = true;
 	}
 
+	//chatbox input
+	m_connection.GetChatBox().Update();
+
 	std::string playerNames = "";
 
 	for (size_t i = 0; i < m_connection.GetPlayerNames().size(); i++)
@@ -32,12 +36,13 @@ void Lobby::Update()
 	}
 	m_playersText.setString(playerNames);
 
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space) && !m_sentRequest)
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space) && !m_sentRequest && !m_connection.GetChatBox().IsActive())
 	{
 		Message gameStart{ MessageType::GAME_START,nullptr,0,(uint16_t)m_connection.GetClientID() };
 		m_connection.SendTcpMessage(gameStart);
 		m_sentRequest = true;
 	}
+
 }
 
 void Lobby::Draw(sf::RenderWindow & window)
@@ -45,6 +50,7 @@ void Lobby::Draw(sf::RenderWindow & window)
 	window.draw(m_mainText);
 	window.draw(m_connectedPlayerTitle);
 	window.draw(m_playersText);
+	m_connection.GetChatBox().Draw(window);
 
 }
 
@@ -55,6 +61,7 @@ bool Lobby::ShouldStart() const
 
 void Lobby::setup()
 {
+
 	m_mainText = sf::Text("Lobby", ResourceManager::Instance().GetFont("arial"), 48);
 	AlignText(m_mainText, 2.0f, 16.0f);
 
@@ -63,7 +70,6 @@ void Lobby::setup()
 
 	m_playersText = sf::Text("Player 1", ResourceManager::Instance().GetFont("arial"), 28);
 	AlignText(m_playersText, 16.0f, 3.25f);
-
 }
 
 void Lobby::AlignText(sf::Text & text, float percentX, float percentY)

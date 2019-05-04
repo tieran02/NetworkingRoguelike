@@ -14,7 +14,7 @@ class TextMessage : public Message
 public:
 	TextMessage() = default;;
 	TextMessage(char* buffer);
-	TextMessage(const std::string& text, TextType textType);
+	TextMessage(const std::string& text, TextType textType, unsigned int senderID);
 
 	TextType GetTextType() const;
 	std::string GetText() const;

@@ -7,6 +7,7 @@
 #include "shared/Queue.h"
 #include <string>
 
+class ChatBox;
 class ServerConnection
 {
 public:
@@ -37,11 +38,17 @@ public:
 	void SendEntityDestroyMessage(unsigned int worldID);
 	void SendHealthMessage(unsigned int worldID, float health, float maxHealth);
 
+	void SendChatMessage(const std::string& message);
+
+	const std::string& GetPlayerName() { return m_clientName; }
 	const std::vector<std::string>& GetPlayerNames() { return m_connectedClientNames; }
 	bool InProgress() const { return m_gameInProgress; }
+
+	ChatBox& GetChatBox() { return m_chatBox; }
 private:
 	float m_ping;
 
+	ChatBox m_chatBox;
 	World* m_world{ nullptr };
 	sf::IpAddress m_serverAddress{sf::IpAddress::None};
 
@@ -58,7 +65,6 @@ private:
 	bool m_gameInProgress{ false };
 
 	Queue<ServerMessage> m_serverMessages;
-
 	//receive threads
 	bool m_close{false};
 	std::thread m_receiveUdpThread;
@@ -72,4 +78,3 @@ private:
 	void calculatePing(long long  serverTimestamp);
 
 };
-

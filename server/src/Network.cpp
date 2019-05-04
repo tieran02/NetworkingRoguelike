@@ -73,7 +73,7 @@ void Network::Start()
 			{
 				//ping all clients every second
 				const long long now = std::chrono::steady_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
-				//SendToAllUDP(PingMessage(now, 0));
+				SendToAllUDP(PingMessage(now, 0));
 				m_lastPing = m_currentTime;
 				LOG_INFO("Server ms = " + std::to_string(m_currentTickRate));
 			}
@@ -195,7 +195,7 @@ void Network::pollMessages()
 					names.append( "," + connection.second->GetName());
 				}
 				names.erase(0, 1); //remove first comma
-				TextMessage clientNames{ names,TextType::PLAYER_NAMES };
+				TextMessage clientNames{ names,TextType::PLAYER_NAMES, 0};
 				SendToAllTCP(clientNames);
 
 				std::stringstream stream;
@@ -256,6 +256,16 @@ void Network::pollMessages()
 				{
 					SendToAllTCP(msg.message);
 					m_lobby.Start();
+				}
+			}
+			else if (msg.message.GetHeader().type == MessageType::TEXT)
+			{
+				TextMessage* message = static_cast<TextMessage*>(&msg.message);
+
+				//check if the text is a chat message
+				if (message->GetTextType() == TextType::CHAT)
+				{
+					SendToAllTCP(msg.message, message->GetHeader().id); //send to all other clients
 				}
 			}
 			else
@@ -319,7 +329,7 @@ void Network::acceptTCP()
 			if (m_lobby.IsFull())
 			{
 				LOG_WARN("Client tried connecting but the game is full");
-				TextMessage msg("Failed to join game (game is full)", TextType::PLAIN);
+				TextMessage msg("Failed to join game (game is full)", TextType::PLAIN,0);
 				auto buffer = msg.GetBuffer();
 				socket->send(buffer.data(), buffer.size());
 				socket->disconnect();
@@ -328,7 +338,7 @@ void Network::acceptTCP()
 			{
 
 				LOG_WARN("Client tried connecting but the game is in-progress");
-				TextMessage msg("Failed to join game (game in progress)", TextType::PLAIN);
+				TextMessage msg("Failed to join game (game in progress)", TextType::PLAIN,0);
 				auto buffer = msg.GetBuffer();
 				socket->send(buffer.data(), buffer.size());
 				socket->disconnect();
@@ -392,7 +402,7 @@ void Network::SendToAllTCP(const Message& message, unsigned int ignore)
 	m_threadPool.enqueue([=] {
 		for (auto& connection : m_connections)
 		{
-			if (ignore != 0 && m_connections.find(ignore) != m_connections.end())
+			if (ignore != 0 && connection.first == ignore)
 			{
 				continue;
 			}
@@ -504,7 +514,7 @@ void Network::Disconnect(unsigned int connectionID)
 		names.append("," + connection.second->GetName());
 	}
 	names.erase(0, 1); //remove first comma
-	TextMessage clientNames{ names,TextType::PLAYER_NAMES };
+	TextMessage clientNames{ names,TextType::PLAYER_NAMES, 0 };
 	SendToAllTCP(clientNames);
 }
 

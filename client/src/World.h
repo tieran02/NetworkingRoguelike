@@ -4,6 +4,7 @@
 #include "EntityFactory.h"
 #include "shared/DungeonGeneration/Dungeon.h"
 #include "Camera.h"
+#include "ChatBox.h"
 
 class Entity;
 class ServerConnection;
@@ -41,7 +42,6 @@ public:
 	const sf::RenderWindow& GetWindow() const;
 
 private:
-
 	const sf::RenderWindow& m_window;
 	Camera m_camera;
 
