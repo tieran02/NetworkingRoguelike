@@ -171,6 +171,10 @@ void ServerConnection::PollMessages()
 						m_connectedClientNames.push_back(name);
 					}
 				}
+				else if (message->GetTextType() == TextType::PLAIN)
+				{
+					LOG_INFO(message->GetText());
+				}
 			}
 			else if (msg.message.GetHeader().type == MessageType::GAME_START)
 			{

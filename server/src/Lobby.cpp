@@ -44,7 +44,7 @@ void Lobby::PlayerDisconnected()
 
 bool Lobby::IsFull() const
 {
-	return m_connectedPlayers > m_maxConnections;
+	return m_connectedPlayers >= m_maxConnections;
 }
 
 

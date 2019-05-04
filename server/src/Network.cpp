@@ -316,7 +316,27 @@ void Network::acceptTCP()
         std::unique_ptr<sf::TcpSocket> socket(new sf::TcpSocket);
 		if (listener.accept(*socket) == sf::Socket::Done)
 		{
-			Connect(std::move(socket));
+			if (m_lobby.IsFull())
+			{
+				LOG_WARN("Client tried connecting but the game is full");
+				TextMessage msg("Failed to join game (game is full)", TextType::PLAIN);
+				auto buffer = msg.GetBuffer();
+				socket->send(buffer.data(), buffer.size());
+				socket->disconnect();
+			}
+			else if (m_lobby.ShouldStart())
+			{
+
+				LOG_WARN("Client tried connecting but the game is in-progress");
+				TextMessage msg("Failed to join game (game in progress)", TextType::PLAIN);
+				auto buffer = msg.GetBuffer();
+				socket->send(buffer.data(), buffer.size());
+				socket->disconnect();
+			}
+			else 
+			{
+				Connect(std::move(socket));
+			}
 		}
 	}
 }
