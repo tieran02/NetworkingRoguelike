@@ -15,7 +15,7 @@ int main()
 	Log::Init();
 
 	LOG_INFO("Loading Resouces...");
-	ResourceManager::Instance().LoadFont("arial","arial.ttf");
+	ResourceManager::Instance().LoadFont("arial","Arial.ttf");
 	ResourceManager::Instance().LoadTexture("player", "player.png");
 	ResourceManager::Instance().LoadTexture("wall", "wall.png");
 	ResourceManager::Instance().LoadTexture("floor", "floor.png");
