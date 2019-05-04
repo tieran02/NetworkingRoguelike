@@ -41,6 +41,7 @@ void EntityDataManager::load()
 		baseData.MaxHealth = element.at("MaxHealth").get<float>();
 		baseData.Layer = element.at("Layer").get<CollisionLayer>();
 		baseData.MovementSpeed = element.at("MoveSpeed").get<float>();
+		baseData.ServerCollisions = element.at("ServerCollisions").get<bool>();
 
 		m_entityMap.insert(std::make_pair(baseData.EntityName, baseData));
 	}

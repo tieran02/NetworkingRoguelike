@@ -8,6 +8,7 @@
 Entity::Entity(const std::string& entityName)
 {
 	const auto& baseData = EntityDataManager::Instance().GetEntityData(entityName);
+	m_entityID = baseData.EntityID;
 	m_sprite = ResourceManager::Instance().CreateSprite(baseData.EntitySpriteName);
 	sf::FloatRect spriteBounds = m_sprite->getGlobalBounds();
 	m_sprite->setOrigin(m_sprite->getGlobalBounds().width / 2.0f, m_sprite->getGlobalBounds().height / 2.0f);

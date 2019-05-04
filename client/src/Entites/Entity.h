@@ -19,6 +19,7 @@ public:
     virtual std::shared_ptr<Entity> Clone(unsigned int worldID, unsigned int ownership, ServerConnection* connection, World* world) = 0;
 
 	unsigned int GetWorldID() const { return m_worldID; }
+	unsigned int GetEntityID() const { return m_entityID; }
 	const std::shared_ptr<sf::Sprite>& GetSprite() const { return m_sprite; }
     void SetPosition(const sf::Vector2f& position);
 
@@ -58,6 +59,7 @@ protected:
 	World* m_world;
 
 	unsigned int m_worldID;
+	unsigned int m_entityID;
 	unsigned int m_ownership;
 
 	float m_health{ 1.0f };

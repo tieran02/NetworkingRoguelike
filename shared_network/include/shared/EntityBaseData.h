@@ -13,4 +13,5 @@ struct EntityBaseData
 	float MaxHealth;
 	CollisionLayer Layer;
 	float MovementSpeed;
+	bool ServerCollisions;
 };

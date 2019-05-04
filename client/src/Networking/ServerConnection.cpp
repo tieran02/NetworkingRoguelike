@@ -143,12 +143,10 @@ void ServerConnection::PollMessages()
 						auto& entity = entities.at(message->WorldID());
 						entity->SetActive(message->IsActive(), true);
 						//check distance between server pos and client
+						//sync entity as it is beyond the distancee threshold
 						float distance = Math::Distance(entity->GetPosition(), message->GetPosition());
-						if (distance >= 4.0f) 
-						{
-							//sync entity as it is beyond the distancee threshold
+						if(distance >= 4.0f)
 							updateEntityPositionFromServer(message->WorldID(), message->GetPosition(), message->GetVelocity());
-						}
 					}
 
 				}
@@ -312,6 +310,7 @@ void ServerConnection::updateEntityPositionFromServer(unsigned int worldID, sf::
 
 		entities.at(worldID)->SetPosition(newPosition);
 		entities.at(worldID)->SetNetworkPosition(newPosition);
+
 	}
 }
 

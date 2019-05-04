@@ -9,7 +9,8 @@
       "Health": 100,
       "MaxHealth": 100,
       "Layer": 1,
-      "MoveSpeed": 200
+      "MoveSpeed": 200,
+      "ServerCollisions": true
     },
     {
       "EntityID": 1,
@@ -20,7 +21,8 @@
       "Health": 1,
       "MaxHealth": 1,
       "Layer": 16,
-      "MoveSpeed": 400
+      "MoveSpeed": 400,
+      "ServerCollisions": false
     },
     {
       "EntityID": 2,
@@ -31,7 +33,8 @@
       "Health": 25,
       "MaxHealth": 25,
       "Layer": 2,
-      "MoveSpeed": 150
+      "MoveSpeed": 150,
+      "ServerCollisions": true
     }
   ]
 }

@@ -20,7 +20,7 @@ void WorldState::GenerateWorld()
 	m_dungeon = std::unique_ptr<Dungeon>(new Dungeon(2, 2,64, m_seed));
 	m_dungeon->Generate();
 
-	//SpawnEnemies();
+	SpawnEnemies();
 }
 
 void WorldState::Update()
@@ -72,7 +72,7 @@ void WorldState::Update()
 		entity.second->ApplyVelocity(m_network->GetCurrentTickRate());
 	}
 
-	enemyCollisions();
+	entityCollisions();
 }
 
 void WorldState::SetNetwork(Network& network)
@@ -111,7 +111,7 @@ std::shared_ptr<Entity> WorldState::SpawnNewEntity(const std::string& entityName
 
 	unsigned int worldID = entityIdCounter++;
 	//add to entity list
-	auto entity = std::make_shared<Entity>(entityName ,worldID, position, velocity, ownership, layerOverride);
+	auto entity = std::make_shared<Entity>(entityName ,worldID,position, velocity, ownership, layerOverride);
 	m_entities.insert(std::make_pair(worldID, entity));
 
 	if(m_network != nullptr)
@@ -161,6 +161,8 @@ void WorldState::SpawnEntity(int worldID)
 
 void WorldState::MoveEntity(int worldID, sf::Vector2f newPosition, sf::Vector2f velocity)
 {
+	std::unique_lock<std::mutex> l{ m_entityMapMutex };
+
 	//check if entity exists in the world state
 	if(m_entities.find(worldID) != m_entities.end())
 	{
@@ -171,6 +173,8 @@ void WorldState::MoveEntity(int worldID, sf::Vector2f newPosition, sf::Vector2f 
 
 void WorldState::updateEntityVelocityFromClient(int worldID, sf::Vector2f velocity)
 {
+	std::unique_lock<std::mutex> l{ m_entityMapMutex };
+
 	//check if entity exists in the world state
 	if (m_entities.find(worldID) != m_entities.end())
 	{
@@ -181,6 +185,7 @@ void WorldState::updateEntityVelocityFromClient(int worldID, sf::Vector2f veloci
 
 void WorldState::SetEntityHealth(unsigned worldID, float health, float maxHealth)
 {
+	std::unique_lock<std::mutex> l{ m_entityMapMutex };
 
 	//check if entity exists in the world state
 	if (m_entities.find(worldID) != m_entities.end())
@@ -204,6 +209,8 @@ void WorldState::SetEntityHealth(unsigned worldID, float health, float maxHealth
 
 void WorldState::DamageEntity(unsigned worldID, float damage)
 {
+	std::unique_lock<std::mutex> l{ m_entityMapMutex };
+
 	if (m_entities.find(worldID) != m_entities.end())
 	{
 		auto& entity = m_entities.at(worldID);
@@ -216,6 +223,7 @@ void WorldState::DamageEntity(unsigned worldID, float damage)
 
 bool WorldState::IsColliding(unsigned worldID, unsigned otherWorldID) const
 {
+
 	if(m_entities.find(worldID) != m_entities.end() && m_entities.find(otherWorldID) != m_entities.end())
 	{
 		const auto& firstEntity = m_entities.at(worldID);
@@ -326,16 +334,21 @@ void WorldState::entityWorldCollision(Entity& entity)
 	}
 }
 
-void WorldState::enemyCollisions()
+void WorldState::entityCollisions()
 {
 	for (auto& entity : m_entities)
 	{
+		if (!entity.second->BaseData().ServerCollisions)
+		{
+			continue;
+		}
+
 		entityWorldCollision(*entity.second);
 
         //check enemy collisions against other entities
         for(auto& otherEntity : m_entities)
         {
-            if(entity == otherEntity)
+            if(entity == otherEntity || !otherEntity.second->BaseData().ServerCollisions)
             {
                 continue;
             }

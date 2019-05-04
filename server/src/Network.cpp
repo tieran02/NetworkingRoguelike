@@ -236,7 +236,8 @@ void Network::pollMessages()
 
 				//TODO get name from Entity data manager
 				const auto& entityName = EntityDataManager::Instance().GetEntityData(requestMsg->GetEntityID()).EntityName;
-				m_worldState->SpawnNewEntity(entityName, requestMsg->GetPosition(), requestMsg->GetVelocity(), requestMsg->GetOwnershipID(), requestMsg->GetLayerOverride());
+				auto entity = m_worldState->SpawnNewEntity(entityName, requestMsg->GetPosition(), requestMsg->GetVelocity(), requestMsg->GetOwnershipID(), requestMsg->GetLayerOverride());
+				entity->SetClientVelocity(requestMsg->GetVelocity());
 			}
 			else if (msg.message.GetHeader().type == MessageType::HEALTH)
 			{
@@ -347,8 +348,7 @@ void Network::acceptTCP()
 
 void Network::sendWorldState()
 {
-	ticksSinceReSync++;
-
+	std::unique_lock<std::mutex> lock{ m_worldState->GetEntityMutex() };
 	for (const auto& entity : m_worldState->GetEntities())
 	{
 		if (entity.second->Velocity() != entity.second->ClientVelocity())
@@ -357,16 +357,18 @@ void Network::sendWorldState()
 			//sent new velocity to client
 			SendMovementMessage(entity.first, entity.second->Velocity());
 			LOG_INFO("sending updated velocity from server to client");
+		}
+	}
 
-		}
-		//every 5 seconds resync
-		if (ticksSinceReSync >= 32 * 1)
+	if (ticksSinceReSync++ >= 32 * 1) 
+	{
+		for (const auto& entity : m_worldState->GetEntities())
 		{
-			//resyn all entities
-			EntityStateMessage msg{ entity.first,entity.second->Position(),entity.second->Velocity(),entity.second->IsActive(), false, 0 };
+			//resync all entities
+			EntityStateMessage msg{ entity.second->WorldID(),entity.second->Position(),entity.second->Velocity(),entity.second->IsActive(), false, 0 };
 			SendToAllTCP(msg);
-			ticksSinceReSync = 0;
 		}
+		ticksSinceReSync = 0;
 	}
 }
 
@@ -490,20 +492,24 @@ void Network::Disconnect(unsigned int connectionID)
 
 	std::vector<std::shared_ptr<Entity>> entitiesToRemove;
 	//remove all entities with the ownership associated with the connectionID
-	for (auto& entity : m_worldState->GetEntities())
 	{
-		if (entity.second->OwnershipID() == connectionID)
+		std::unique_lock<std::mutex> lock{ m_worldState->GetEntityMutex() };
+
+		for (auto& entity : m_worldState->GetEntities())
 		{
-			entitiesToRemove.push_back(entity.second);
+			if (entity.second->OwnershipID() == connectionID)
+			{
+				entitiesToRemove.push_back(entity.second);
+			}
 		}
-	}
 
 
-	for (auto& entity : entitiesToRemove)
-	{
-		EntityStateMessage entityState(entity->WorldID(), sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false, true, 0);
-		SendToAllTCP(entityState);
-		m_worldState->GetEntities().erase(entity->WorldID());
+		for (auto& entity : entitiesToRemove)
+		{
+			EntityStateMessage entityState(entity->WorldID(), sf::Vector2f{ 0,0 }, sf::Vector2f{ 0,0 }, false, true, 0);
+			SendToAllTCP(entityState);
+			m_worldState->GetEntities().erase(entity->WorldID());
+		}
 	}
 
 	//send updated player names

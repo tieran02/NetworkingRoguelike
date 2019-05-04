@@ -17,7 +17,7 @@ void Skeleton::Start()
 
 void Skeleton::Update(float deltaTime)
 {
-	UpdatePredictedPosition(deltaTime);
+	UpdatePosition(deltaTime);
 }
 
 void Skeleton::OnCollision(Collider& other)

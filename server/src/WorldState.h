@@ -55,5 +55,5 @@ private:
 	void SpawnEnemies();
 	std::shared_ptr<Entity> GetClosestPlayer(const Entity& sourceEntity, float& distance) const;
 	void entityWorldCollision(Entity& entity);
-	void enemyCollisions();
+	void entityCollisions();
 };
