@@ -12,6 +12,7 @@ Lobby::~Lobby()
 
 void Lobby::Create(int maxConnections)
 {
+	m_startGame = false;
 	m_maxConnections = maxConnections;
 }
 

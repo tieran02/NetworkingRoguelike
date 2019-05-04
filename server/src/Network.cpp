@@ -35,12 +35,6 @@ void Network::Start()
 		return;
 	}
 
-	m_threadPool.enqueue([this]
-	{
-		LOG_INFO("THREAD POOL TASK RAN 1");
-	});
-
-
     m_receiveUdpThread = std::thread(&Network::receiveUDP, this);;
     m_receiveTcpThread = std::thread(&Network::acceptTCP, this);;
 
@@ -59,6 +53,15 @@ void Network::Start()
 			m_lobby.Update();
 			continue;
 		}
+
+		//are player still in the game? if not return to lobby
+		if (m_connections.empty())
+		{
+			LOG_INFO("Remaking lobby");
+			m_worldState->GenerateWorld();
+			m_lobby.Create(4);
+		}
+
 
 
 		m_currentTime = std::chrono::duration<float>(std::chrono::steady_clock::now().time_since_epoch()).count();
