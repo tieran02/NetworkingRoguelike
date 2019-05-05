@@ -341,7 +341,7 @@ void Network::acceptTCP()
 				socket->send(buffer.data(), buffer.size());
 				socket->disconnect();
 			}
-			else 
+			else
 			{
 				Connect(std::move(socket));
 			}
@@ -363,13 +363,13 @@ void Network::sendWorldState()
 		}
 	}
 
-	if (ticksSinceReSync++ >= 32 * 1) 
+	if (ticksSinceReSync++ >= 32 * 1)
 	{
 		for (const auto& entity : m_worldState->GetEntities())
 		{
 			//resync all entities
 			EntityStateMessage msg{ entity.second->WorldID(),entity.second->Position(),entity.second->Velocity(),entity.second->IsActive(), false, 0 };
-			SendToAllTCP(msg);
+			SendToAllUDP(msg);
 		}
 		ticksSinceReSync = 0;
 	}
@@ -525,7 +525,7 @@ void Network::Disconnect(unsigned int connectionID)
 
 void Network::SpawnPlayer(unsigned int connectionID)
 {
-	//make sure the player is ready then spawn the player 
+	//make sure the player is ready then spawn the player
 	std::unique_lock<std::mutex> lock{ m_connections[connectionID]->m_setupMutex };
 	m_connections.at(connectionID)->m_cv.wait(lock, [this, &connectionID]() { return m_connections[connectionID]->IsSetup(); });
 	m_worldState->SpawnPlayer(*m_connections.at(connectionID));

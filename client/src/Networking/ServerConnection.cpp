@@ -22,7 +22,7 @@ std::vector<std::string> split(std::string str, std::string sep) {
 
 ServerConnection::ServerConnection(unsigned short port, World* world, const std::string& playerName)
 	: m_world(world),
-	m_broadcastUdpPort(port), 
+	m_broadcastUdpPort(port),
 	m_clientName(playerName),
 	m_chatBox{1.5f,1.25f, this }
 {
@@ -177,7 +177,7 @@ void ServerConnection::PollMessages()
 			else if (msg.message.GetHeader().type == MessageType::TEXT)
 			{
 				TextMessage* message = static_cast<TextMessage*>(&msg.message);
-				
+
 				std::string str = message->GetText();
 				if (message->GetTextType() == TextType::PLAYER_NAMES)
 				{
@@ -284,7 +284,7 @@ void ServerConnection::sendEntityStates()
 	for (const auto& entity : m_world->GetEntities())
 	{
 		//onlu send movement of the entity if the client has ownership of it
-		if (entity.second->hasOwnership()) 
+		if (entity.second->hasOwnership())
 		{
 			//check if velocity matches the networkVelocity that was last sent
 			if (entity.second->GetVelocity() != entity.second->GetNetworkVelocity())
@@ -351,7 +351,7 @@ void ServerConnection::SendMovementMessage(unsigned int worldID,sf::Vector2f vel
 	{
 		auto& entity = m_world->GetEntities().at(worldID);
 
-		//check if distance is greater than threshold 
+		//check if distance is greater than threshold
 		//TODO:: use velocity instead of distance
 		const float distance = std::abs(Math::Distance(entity->GetNetworkPosition(), entity->GetPosition()));
 		if (distance >= 16.0f) {
@@ -425,16 +425,13 @@ void ServerConnection::receiveUDP()
 
 void ServerConnection::receiveTCP()
 {
-    size_t received;
-    const size_t maxMessageSize = 256;
-    char buffer[maxMessageSize];
-
 	while (!m_close)
 	{
 		if (m_serverTcpSocket.getLocalPort() == 0)
 			continue;
-        std::memset(buffer, 0, maxMessageSize);
-
+        size_t received;
+        const size_t maxMessageSize = 256;
+		char buffer[maxMessageSize];
 
         auto receive = m_serverTcpSocket.receive(buffer, maxMessageSize, received);
 		if (receive != sf::Socket::Done)
