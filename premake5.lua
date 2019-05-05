@@ -29,6 +29,7 @@ project "client"
 	includedirs {"client/src", "shared_network/include", "dependencies/spdlog/include", "dependencies/json/include" }
 	libdirs {"bin/" .. outputdir .. "shared_network"}
 
+	
 	filter "system:windows"
 		systemversion "latest"
 		includedirs { "dependencies/windows/SFML/include"}
@@ -41,29 +42,28 @@ project "client"
 			("{COPY} %{wks.location}/shared_network/resources/entities.json ../bin/" .. outputdir .. "/client/resources"),
 			("{COPY} %{wks.location}dependencies/windows/SFML/bin ../bin/" .. outputdir .. "/client")
 		}
-		
-		filter "configurations:Debug"
-			links
-			{
-				"sfml-graphics-d",
-				"sfml-window-d",
-				"sfml-system-d",
-				"sfml-audio-d",
-				"sfml-network-d",
-				"shared_network"
-			}
-			
-		filter "configurations:Release"
-			links
-			{
-				"sfml-graphics",
-				"sfml-window",
-				"sfml-system",
-				"sfml-audio",
-				"sfml-network",
-				"shared_network"
-			}
 
+	filter {"system:windows", "configurations:Debug"}
+		links
+		{
+			"sfml-graphics-d",
+			"sfml-window-d",
+			"sfml-system-d",
+			"sfml-audio-d",
+			"sfml-network-d",
+			"shared_network"
+		}
+		
+	filter {"system:windows", "configurations:Release"}
+		links
+		{
+			"sfml-graphics",
+			"sfml-window",
+			"sfml-system",
+			"sfml-audio",
+			"sfml-network",
+			"shared_network"
+		}
 
 	filter "system:linux"
 		includedirs { "dependencies/linux/SFML/include" }
@@ -114,15 +114,6 @@ project "server"
 
 	includedirs {"server/src", "shared_network/include", "dependencies/spdlog/include", "dependencies/json/include"}
 	libdirs { "shared_network/src" }
-	links
-	{
-        "sfml-graphics",
-        "sfml-window",
-        "sfml-system",
-        "sfml-audio",
-        "sfml-network",
-		"shared_network"
-	}
 
 	filter "system:windows"
 		includedirs { "dependencies/windows/SFML/include" }
@@ -133,6 +124,28 @@ project "server"
 			("{COPY} %{wks.location}/shared_network/resources/ ../bin/" .. outputdir .. "/server/resources"),
 			("{COPY} %{wks.location}dependencies/windows/SFML/bin ../bin/" .. outputdir .. "/server")
 		}
+	
+	filter {"system:windows", "configurations:Debug"}
+		links
+		{
+			"sfml-graphics-d",
+			"sfml-window-d",
+			"sfml-system-d",
+			"sfml-audio-d",
+			"sfml-network-d",
+			"shared_network"
+		}
+		
+	filter {"system:windows", "configurations:Release"}
+		links
+		{
+			"sfml-graphics",
+			"sfml-window",
+			"sfml-system",
+			"sfml-audio",
+			"sfml-network",
+			"shared_network"
+		}
 
 	filter "system:linux"
 		includedirs { "dependencies/linux/SFML/include" }
@@ -140,6 +153,12 @@ project "server"
 		linkoptions { '-Wl,-rpath=\\$$ORIGIN' }
 		links
         {
+			"sfml-graphics",
+			"sfml-window",
+			"sfml-system",
+			"sfml-audio",
+			"sfml-network",
+			"shared_network",
             "jpeg"
         }
 
