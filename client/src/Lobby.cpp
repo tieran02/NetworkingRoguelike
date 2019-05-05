@@ -23,15 +23,15 @@ void Lobby::Update()
 
 	std::string playerNames = "";
 
-	for (size_t i = 0; i < m_connection.GetPlayerNames().size(); i++)
+	for (const auto& name : m_connection.GetPlayerNames())
 	{
-		if (i == 0) //add first name
+		if (playerNames.empty()) //add first name
 		{
-			playerNames = m_connection.GetPlayerNames()[i];
+			playerNames = name.second;
 		}
 		else
 		{
-			playerNames.append("\n" + m_connection.GetPlayerNames()[i]);
+			playerNames.append("\n" + name.second);
 		}
 	}
 	m_playersText.setString(playerNames);

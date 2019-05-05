@@ -1,4 +1,5 @@
 #include "Skeleton.h"
+#include "Graphics/ResourceManager.h"
 
 Skeleton::Skeleton() : Entity("Skeleton")
 {
@@ -13,11 +14,23 @@ Skeleton::~Skeleton()
 
 void Skeleton::Start()
 {
+	healthText = sf::Text("Health = 100", ResourceManager::Instance().GetFont("arial"), 16);
+	sf::FloatRect healthRect = healthText.getLocalBounds();
+	healthText.setOrigin(healthRect.left + healthRect.width / 2.0f, (healthRect.top + healthRect.height / 2.0f) + 38.0f);
 }
 
 void Skeleton::Update(float deltaTime)
 {
 	UpdatePosition(deltaTime);
+
+	healthText.setString("Health = " + std::to_string((int)m_health));
+	healthText.setPosition(GetPosition());
+}
+
+void Skeleton::Draw(sf::RenderWindow & window)
+{
+	Entity::Draw(window);
+	window.draw(healthText);
 }
 
 void Skeleton::OnCollision(Collider& other)

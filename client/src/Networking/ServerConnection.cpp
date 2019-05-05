@@ -8,6 +8,18 @@
 #include "shared/EntityDataManager.h"
 #include "ChatBox.h"
 
+std::vector<std::string> split(std::string str, std::string sep) {
+	char* cstr = const_cast<char*>(str.c_str());
+	char* current;
+	std::vector<std::string> arr;
+	current = strtok(cstr, sep.c_str());
+	while (current != NULL) {
+		arr.push_back(current);
+		current = strtok(NULL, sep.c_str());
+	}
+	return arr;
+}
+
 ServerConnection::ServerConnection(unsigned short port, World* world, const std::string& playerName)
 	: m_world(world),
 	m_broadcastUdpPort(port), 
@@ -170,13 +182,15 @@ void ServerConnection::PollMessages()
 				if (message->GetTextType() == TextType::PLAYER_NAMES)
 				{
 					m_connectedClientNames.clear();
-					std::stringstream ss(str);
-					//split name string by comma
-					while (ss.good())
+					auto namesWithIDs = split(message->GetText(), ",");
+
+					for (const auto& names : namesWithIDs)
 					{
-						std::string name;
-						std::getline(ss, name, ',');
-						m_connectedClientNames.push_back(name);
+						auto nameID = split(names, ":");
+						unsigned int id = std::stoi(nameID[0]);
+						std::string name = nameID[1];
+						m_connectedClientNames.insert(std::make_pair(id, name));
+
 					}
 				}
 				else if (message->GetTextType() == TextType::PLAIN)

@@ -7,6 +7,7 @@ public:
 	~Skeleton();
 	void Start() override;
 	void Update(float deltaTime) override;
+	void Draw(sf::RenderWindow& window);
 	void OnCollision(Collider& other) override;
 	void OnLayerOverride(CollisionLayer layer) override;
 
@@ -14,5 +15,6 @@ public:
 private:
     float fireRate = {.25f};
     float lastFire = 0.0f;
+	sf::Text healthText;
 };
 

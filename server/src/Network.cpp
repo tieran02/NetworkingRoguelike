@@ -189,7 +189,7 @@ void Network::pollMessages()
 				//Sent client names back to all clients
 				for (const auto& connection : m_connections)
 				{
-					names.append( "," + connection.second->GetName());
+					names.append( "," + std::to_string(connection.first) + ":" + connection.second->GetName());
 				}
 				names.erase(0, 1); //remove first comma
 				TextMessage clientNames{ names,TextType::PLAYER_NAMES, 0};
@@ -512,12 +512,11 @@ void Network::Disconnect(unsigned int connectionID)
 		}
 	}
 
-	//send updated player names
 	std::string names = "";
 	//Sent client names back to all clients
 	for (const auto& connection : m_connections)
 	{
-		names.append("," + connection.second->GetName());
+		names.append("," + std::to_string(connection.first) + ":" + connection.second->GetName());
 	}
 	names.erase(0, 1); //remove first comma
 	TextMessage clientNames{ names,TextType::PLAYER_NAMES, 0 };

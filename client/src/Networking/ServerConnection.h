@@ -41,7 +41,7 @@ public:
 	void SendChatMessage(const std::string& message);
 
 	const std::string& GetPlayerName() { return m_clientName; }
-	const std::vector<std::string>& GetPlayerNames() { return m_connectedClientNames; }
+	const std::unordered_map<unsigned int, std::string>& GetPlayerNames() { return m_connectedClientNames; }
 	bool InProgress() const { return m_gameInProgress; }
 
 	ChatBox& GetChatBox() { return m_chatBox; }
@@ -56,7 +56,7 @@ private:
 	sf::IpAddress m_serverIP;
 	unsigned short m_serverTcpPort;
 	std::string m_clientName;
-	std::vector<std::string> m_connectedClientNames;
+	std::unordered_map<unsigned int,std::string> m_connectedClientNames;
 
 	sf::TcpSocket m_serverTcpSocket;
 	sf::UdpSocket m_serverUdpSocket;

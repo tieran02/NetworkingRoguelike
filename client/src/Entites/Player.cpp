@@ -2,6 +2,7 @@
 #include "Networking/ServerConnection.h"
 #include "World.h"
 #include "shared/Utility/Math.h"
+#include "Graphics/ResourceManager.h"
 
 Player::Player() : Entity("Player")
 {
@@ -16,6 +17,14 @@ Player::~Player()
 
 void Player::Start()
 {
+	nameText = sf::Text(m_connection->GetPlayerNames().at(m_ownership), ResourceManager::Instance().GetFont("arial"), 24);
+	sf::FloatRect textRect = nameText.getLocalBounds();
+	nameText.setOrigin(textRect.left + textRect.width / 2.0f, (textRect.top + textRect.height / 2.0f) + 54.0f);
+
+	healthText = sf::Text("Health = 100", ResourceManager::Instance().GetFont("arial"), 18);
+	sf::FloatRect healthRect = healthText.getLocalBounds();
+	healthText.setOrigin(healthRect.left + healthRect.width / 2.0f, (healthRect.top + healthRect.height / 2.0f) + 38.0f);
+
 	if (hasOwnership())
 	{
 		GetCollider()->SetMoveable(true);
@@ -69,6 +78,18 @@ void Player::Update(float deltaTime)
 	{
 		UpdatePosition(deltaTime); //network player
 	}
+
+	nameText.setPosition(GetPosition());
+
+	healthText.setString("Health = " + std::to_string((int)m_health));
+	healthText.setPosition(GetPosition());
+}
+
+void Player::Draw(sf::RenderWindow & window)
+{
+	Entity::Draw(window);
+	window.draw(nameText);
+	window.draw(healthText);
 }
 
 void Player::OnCollision(Collider& other)
