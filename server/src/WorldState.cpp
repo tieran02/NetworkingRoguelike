@@ -262,7 +262,7 @@ sf::Vector2f WorldState::findRandomPos() const
 	const std::vector<DungeonRoom>& rooms = chunks[randomChunk]->GetRooms();
 
 	//Room tiles
-	int randomRoom = Random::randInt(0, rooms.size()-1);
+	int randomRoom = Random::randInt(0, (int)rooms.size()-1);
 	const std::vector<DungeonTile*>& tiles = rooms[randomRoom].GetTiles();
 
 	//Get a random point within this room
@@ -300,7 +300,7 @@ void WorldState::SpawnPickups()
 
 	for (int i = 0; i < PICKUP_COUNT; i++)
 	{
-		const std::string& pickupName = pickupNames[Random::randInt(0, pickupNames.size() - 1)];
+		const std::string& pickupName = pickupNames[Random::randInt(0, (int)pickupNames.size() - 1)];
 		sf::Vector2f spawnPos = findRandomPos();
 		std::shared_ptr<Entity> entity = SpawnNewEntity(pickupName, spawnPos, sf::Vector2f(), 0, CollisionLayer::PICKUP);
 	}

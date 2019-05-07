@@ -8,7 +8,7 @@ ConnectionMessage::ConnectionMessage(char* buffer) : Message(buffer)
 ConnectionMessage::ConnectionMessage(unsigned int clientID, const std::string& clientName, unsigned int seed, unsigned short udpPort)
 {
     header.type = MessageType::CONNECTION_ID;
-	header.size = sizeof(unsigned int) + sizeof(unsigned int) + sizeof(unsigned short) + sizeof(uint8_t) + clientName.size();
+	header.size = sizeof(unsigned int) + sizeof(unsigned int) + sizeof(unsigned short) + sizeof(uint8_t) + (uint16_t)clientName.size();
 
 	//copy data to message data
 	data.resize(header.size);

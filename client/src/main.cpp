@@ -65,7 +65,7 @@ int main()
 	sf::Text m_fpsText = sf::Text("FPS = ", ResourceManager::Instance().GetFont("arial"), 22);
 	m_fpsText.setColor(sf::Color::Blue);
 	m_fpsText.setPosition(0, 0);
-	sf::View uiView(sf::FloatRect(0.0f, 0.0f, width, height));
+	sf::View uiView(sf::FloatRect(0.0f, 0.0f, (float)width, (float)height));
 
 	while (window.isOpen())
 	{
@@ -83,7 +83,7 @@ int main()
 			{
 				width = event.size.width;
 				height = event.size.height;
-				uiView = sf::View(sf::FloatRect(0.0f, 0.0f, width, height));
+				uiView = sf::View(sf::FloatRect(0.0f, 0.0f, (float)width, (float)height));
 				world.SetWindowSize(sf::Vector2u(width, height));
 				server_connection.GetChatBox().SetScreenSize(width, height);
 			}

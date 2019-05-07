@@ -12,6 +12,7 @@ const EntityBaseData& EntityDataManager::GetEntityData(unsigned entityID)
 		if(entity.second.EntityID == entityID)
 			return entity.second;
 	}
+	return m_entityMap.at(0);
 }
 
 const EntityBaseData& EntityDataManager::GetEntityData(const std::string& entityName)
