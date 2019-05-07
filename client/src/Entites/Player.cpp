@@ -4,7 +4,7 @@
 #include "shared/Utility/Math.h"
 #include "Graphics/ResourceManager.h"
 
-Player::Player() : Entity("Player"), m_weapon("Bullet", AreaOfAttack::CIRCLE, CollisionLayer::PROJECTILE_PLAYER, 400.0f, 250.0f, 12, 1000.0f)
+Player::Player() : Entity("Player"), m_weapon("Bullet", AreaOfAttack::SINGLE, CollisionLayer::PROJECTILE_PLAYER, 250.0f, 250.0f)
 {
 	//collide with everything except player projectiles
 	GetCollider()->SetCollideMask(Collider::AllLayers() & ~(CollisionLayer::PROJECTILE_PLAYER));
@@ -98,6 +98,16 @@ void Player::OnCollision(Collider& other)
 
 void Player::OnLayerOverride(CollisionLayer layer)
 {
+}
+
+void Player::SetWeapon(const Weapon & weapon)
+{
+	m_weapon = weapon;
+}
+
+Weapon & Player::GetWeapon()
+{
+	return m_weapon;
 }
 
 std::shared_ptr<Entity> Player::Clone(unsigned int worldID, unsigned int ownership, ServerConnection* connection, World* world)

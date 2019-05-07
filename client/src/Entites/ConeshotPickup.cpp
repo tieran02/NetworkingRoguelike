@@ -1,5 +1,6 @@
 #include "ConeshotPickup.h"
 #include "World.h"
+#include "Player.h"
 
 ConeshotPickup::ConeshotPickup() : Entity("ConeshotPickup")
 {
@@ -22,6 +23,14 @@ void ConeshotPickup::Update(float deltaTime)
 void ConeshotPickup::OnCollision(Collider& other)
 {
 	//pickup
+	Entity* entity = other.GetEntity();
+	if (entity != nullptr && entity->GetEntityID() == 0)
+	{
+		Player* player = (Player*)entity;
+		//create random cone weapon
+		player->SetWeapon(Weapon::CreateWeapon(AreaOfAttack::CONE));
+	}
+
 
 	m_world->RequestDestroyEntity(m_worldID);
 }

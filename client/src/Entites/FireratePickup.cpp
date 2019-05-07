@@ -1,5 +1,6 @@
 #include "FireratePickup.h"
 #include "World.h"
+#include "Player.h"
 
 FireratePickup::FireratePickup() : Entity("FireratePickup")
 {
@@ -22,6 +23,13 @@ void FireratePickup::Update(float deltaTime)
 void FireratePickup::OnCollision(Collider& other)
 {
 	//pickup
+	Entity* entity = other.GetEntity();
+	if (entity != nullptr && entity->GetEntityID() == 0)
+	{
+		Player* player = (Player*)entity;
+		//create random cone weapon
+		player->GetWeapon().AddFirerate(-100.0f);
+	}
 
 	m_world->RequestDestroyEntity(m_worldID);
 }

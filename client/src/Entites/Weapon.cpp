@@ -1,6 +1,7 @@
 #include "Weapon.h"
 #include <thread>
 #include <chrono>
+#include "shared/Random.h"
 
 Weapon::Weapon(const std::string& bulletEntity, AreaOfAttack areaOfAttack, CollisionLayer side, float speed, float cooldown, int bulletCount, float delay) :
 	m_entityName(bulletEntity),
@@ -15,6 +16,34 @@ Weapon::Weapon(const std::string& bulletEntity, AreaOfAttack areaOfAttack, Colli
 
 Weapon::~Weapon()
 {
+}
+
+Weapon Weapon::CreateWeapon(AreaOfAttack areaOfAttack)
+{
+	float speed = 200.0f;
+	float cooldown = 100.0f;
+	int bulletCount = 1;
+	switch (areaOfAttack)
+	{
+	case AreaOfAttack::SINGLE:
+		speed = (float)Random::randInt(250, 500);
+		cooldown = (float)Random::randInt(100, 500);
+		break;
+	case AreaOfAttack::CONE:
+		speed = (float)Random::randInt(250, 400);
+		cooldown = (float)Random::randInt(400, 1000);
+		bulletCount = Random::randInt(3, 9);
+
+		break;
+	case AreaOfAttack::CIRCLE:
+		speed = (float)Random::randInt(225, 350);
+		cooldown = (float)Random::randInt(400, 1500);
+		bulletCount = Random::randInt(6, 16);
+		break;
+	default:
+		break;
+	}
+	return Weapon{ "Bullet",areaOfAttack,CollisionLayer::PLAYER,speed, cooldown,bulletCount };
 }
 
 void Weapon::Fire(World& world, sf::Vector2f position, sf::Vector2f direction)
@@ -39,6 +68,11 @@ void Weapon::Fire(World& world, sf::Vector2f position, sf::Vector2f direction)
 
 		lastFire = time;
 	}
+}
+
+void Weapon::AddFirerate(float rate)
+{
+	m_coolDown = std::max(m_coolDown - rate, 100.0f);
 }
 
 void Weapon::singleShot(World& world, sf::Vector2f position, sf::Vector2f direction)

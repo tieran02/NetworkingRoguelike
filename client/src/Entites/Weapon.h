@@ -15,7 +15,11 @@ public:
 	Weapon(const std::string& bulletEntity, AreaOfAttack areaOfAttack, CollisionLayer side, float speed, float cooldown = 100.0f, int bulletCount = 1, float delay = 100.0f);
 	~Weapon();
 
+	static Weapon CreateWeapon(AreaOfAttack areaOfAttack);
+
 	void Fire(World& world, sf::Vector2f position, sf::Vector2f direction);
+
+	void AddFirerate(float rate);
 private:
 	std::string m_entityName;
 	CollisionLayer m_side;

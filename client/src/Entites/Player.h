@@ -13,6 +13,8 @@ public:
 	void OnCollision(Collider& other) override;
 	void OnLayerOverride(CollisionLayer layer) override;
 
+	void SetWeapon(const Weapon& weapon);
+	Weapon& GetWeapon();
 
     std::shared_ptr<Entity> Clone(unsigned int worldID, unsigned int ownership, ServerConnection* connection, World* world) override;
 private:

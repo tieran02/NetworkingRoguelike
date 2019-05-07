@@ -22,6 +22,11 @@ void HealthPickup::Update(float deltaTime)
 void HealthPickup::OnCollision(Collider& other)
 {
 	//pickup
+	Entity* entity = other.GetEntity();
+	if (entity != nullptr)
+	{
+		entity->Heal(25.0f);
+	}
 
 	m_world->RequestDestroyEntity(m_worldID);
 }

@@ -1,5 +1,6 @@
 #include "MultishotPickup.h"
 #include "World.h"
+#include "Player.h"
 
 MultishotPickup::MultishotPickup() : Entity("MultishotPickup")
 {
@@ -22,6 +23,13 @@ void MultishotPickup::Update(float deltaTime)
 void MultishotPickup::OnCollision(Collider& other)
 {
 	//pickup
+	Entity* entity = other.GetEntity();
+	if (entity != nullptr && entity->GetEntityID() == 0)
+	{
+		Player* player = (Player*)entity;
+		//create random cone weapon
+		player->SetWeapon(Weapon::CreateWeapon(AreaOfAttack::CIRCLE));
+	}
 
 	m_world->RequestDestroyEntity(m_worldID);
 }
