@@ -1,6 +1,8 @@
 #include "Camera.h"
+#include "shared/Utility/Log.h"
+#include "shared/Utility/Math.h"
 
-Camera::Camera(sf::Vector2f pos, sf::Vector2u windowSize, float cameraSize) : m_zoom(0.0f)
+Camera::Camera(sf::Vector2f pos, sf::Vector2u windowSize, float cameraSize) : m_zoom(1.0f)
 {
 	SetSize(windowSize, cameraSize);
 	SetPosition(pos);
@@ -20,8 +22,18 @@ sf::Vector2f Camera::GetPosition() const
 	return m_view.getCenter();
 }
 
+void Camera::Zoom(float amount)
+{
+
+	m_zoom = Math::Clamp(m_zoom + amount, 0.0f, 1.0f);
+	m_view.zoom(m_zoom);
+	LOG_INFO("Zoom level = " + std::to_string(m_zoom));
+}
+
 void Camera::SetZoom(float zoom)
 {
+	LOG_INFO("Zoom level = " + std::to_string(m_zoom));
+
 	m_zoom = zoom;
 	m_view.zoom(zoom);
 }

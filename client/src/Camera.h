@@ -11,6 +11,7 @@ public:
 
 	void SetPosition(sf::Vector2f position);
 	sf::Vector2f GetPosition() const;
+	void Zoom(float amount);
 	void SetZoom(float zoom);
 	float GetZoom() const;
 	void SetSize(sf::Vector2u windowSize, float cameraSize);

@@ -88,6 +88,17 @@ int main()
 			{
 				TextInput::AddKey(static_cast<char>(event.text.unicode));
 			}
+			else if (event.type == sf::Event::MouseWheelMoved)
+			{
+				if (event.mouseWheel.delta > 0)
+				{
+					world.GetCamera().SetZoom(1.5f);
+				}
+				else 
+				{
+					world.GetCamera().SetZoom(0.5f);
+				}
+			}
 		}
 
 		//wait for game to start
