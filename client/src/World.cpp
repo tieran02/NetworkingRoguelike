@@ -200,6 +200,8 @@ std::vector<sf::Vector2f> World::GetPlayerPositions() const
 
 void World::Update(float deltaTime)
 {
+	m_worldTime += (double)deltaTime;
+
 	if (!m_serverConnection->IsConnected() && !m_generated)
 		return;
 

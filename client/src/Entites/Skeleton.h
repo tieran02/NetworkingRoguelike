@@ -1,5 +1,6 @@
 #pragma once
 #include "Entity.h"
+
 class Skeleton : public Entity
 {
 public:
@@ -13,8 +14,6 @@ public:
 
 	std::shared_ptr<Entity> Clone(unsigned worldID, unsigned ownership, ServerConnection* connection, World* world) override;
 private:
-    float fireRate = {.25f};
-    float lastFire = 0.0f;
 	sf::Text healthText;
 };
 

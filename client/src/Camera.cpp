@@ -25,7 +25,7 @@ sf::Vector2f Camera::GetPosition() const
 void Camera::Zoom(float amount)
 {
 
-	m_zoom = Math::Clamp(m_zoom + amount, 0.0f, 1.0f);
+	m_zoom += amount;
 	m_view.zoom(m_zoom);
 	LOG_INFO("Zoom level = " + std::to_string(m_zoom));
 }

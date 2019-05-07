@@ -19,8 +19,15 @@ int main()
 	ResourceManager::Instance().LoadTexture("player", "player.png");
 	ResourceManager::Instance().LoadTexture("wall", "wall.png");
 	ResourceManager::Instance().LoadTexture("floor", "floor.png");
-	ResourceManager::Instance().LoadTexture("bullet", "bullet.png");
 	ResourceManager::Instance().LoadTexture("skeleton", "skeleton.png");
+	ResourceManager::Instance().LoadTexture("bullet", "bullet.png");
+	ResourceManager::Instance().LoadTexture("multishot", "multishot.png");
+	ResourceManager::Instance().LoadTexture("coneshot", "coneshot.png");
+	ResourceManager::Instance().LoadTexture("firerate", "firerate.png");
+	ResourceManager::Instance().LoadTexture("health", "health.png");
+	ResourceManager::Instance().LoadTexture("singleshot", "singleshot.png");
+
+
 	LOG_INFO("Resouces Loaded");
 
 	LOG_INFO("Enter Player Name:");

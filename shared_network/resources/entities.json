@@ -4,8 +4,8 @@
       "EntityID": 0,
       "EntityName": "Player",
       "EntitySpriteName": "player",
-      "SpriteWidth": 32,
-      "SpriteHeight": 64,
+      "SpriteWidth": 43,
+      "SpriteHeight": 50,
       "Health": 100,
       "MaxHealth": 100,
       "Layer": 1,
@@ -35,6 +35,66 @@
       "Layer": 2,
       "MoveSpeed": 150,
       "ServerCollisions": true
+    },
+    {
+      "EntityID": 3,
+      "EntityName": "MultishotPickup",
+      "EntitySpriteName": "multishot",
+      "SpriteWidth": 16,
+      "SpriteHeight": 16,
+      "Health": 1,
+      "MaxHealth": 1,
+      "Layer": 32,
+      "MoveSpeed": 0,
+      "ServerCollisions": false
+    },
+    {
+      "EntityID": 4,
+      "EntityName": "ConeshotPickup",
+      "EntitySpriteName": "coneshot",
+      "SpriteWidth": 16,
+      "SpriteHeight": 16,
+      "Health": 1,
+      "MaxHealth": 1,
+      "Layer": 32,
+      "MoveSpeed": 0,
+      "ServerCollisions": false
+    },
+    {
+      "EntityID": 5,
+      "EntityName": "SingleshotPickup",
+      "EntitySpriteName": "singleshot",
+      "SpriteWidth": 16,
+      "SpriteHeight": 16,
+      "Health": 1,
+      "MaxHealth": 1,
+      "Layer": 32,
+      "MoveSpeed": 0,
+      "ServerCollisions": false
+    },
+    {
+      "EntityID": 6,
+      "EntityName": "FireratePickup",
+      "EntitySpriteName": "firerate",
+      "SpriteWidth": 16,
+      "SpriteHeight": 16,
+      "Health": 1,
+      "MaxHealth": 1,
+      "Layer": 32,
+      "MoveSpeed": 0,
+      "ServerCollisions": false
+    },
+    {
+      "EntityID": 7,
+      "EntityName": "HealthPickup",
+      "EntitySpriteName": "health",
+      "SpriteWidth": 16,
+      "SpriteHeight": 16,
+      "Health": 1,
+      "MaxHealth": 1,
+      "Layer": 32,
+      "MoveSpeed": 0,
+      "ServerCollisions": false
     }
   ]
 }

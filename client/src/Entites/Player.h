@@ -1,5 +1,6 @@
 #pragma once
 #include "Entity.h"
+#include "Weapon.h"
 
 class Player : public Entity
 {
@@ -15,7 +16,7 @@ public:
 
     std::shared_ptr<Entity> Clone(unsigned int worldID, unsigned int ownership, ServerConnection* connection, World* world) override;
 private:
-	float m_fireTimeCounter{0.0f};
 	sf::Text nameText;
 	sf::Text healthText;
+	Weapon m_weapon;
 };

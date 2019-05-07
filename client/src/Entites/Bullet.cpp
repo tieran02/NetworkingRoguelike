@@ -34,7 +34,7 @@ void Bullet::OnCollision(Collider& other)
 void Bullet::OnLayerOverride(CollisionLayer layer)
 {
 	//make sure bullets don't collide with self
-	GetCollider()->SetCollideMask(Collider::AllLayers() & ~layer);
+	GetCollider()->SetCollideMask(Collider::AllLayers() & ~(layer | CollisionLayer::PROJECTILE_ENEMY | CollisionLayer::PROJECTILE_NEUTRAL | CollisionLayer::PROJECTILE_PLAYER));
 }
 
 std::shared_ptr<Entity> Bullet::Clone(unsigned worldID, unsigned ownership, ServerConnection* connection, World* world)

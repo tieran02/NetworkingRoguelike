@@ -12,7 +12,8 @@ enum CollisionLayer
 	PROJECTILE_ENEMY = 4,
 	PROJECTILE_PLAYER = 8,
 	PROJECTILE_NEUTRAL = 16,
-	WALL = 32,
+	PICKUP = 32,
+	WALL = 64,
 };
 
 class Collider

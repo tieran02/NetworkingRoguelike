@@ -40,10 +40,11 @@ public:
 
 	Camera& GetCamera();
 	const sf::RenderWindow& GetWindow() const;
-
+	double GetWorldTime() const { return m_worldTime; }
 private:
 	const sf::RenderWindow& m_window;
 	Camera m_camera;
+	double m_worldTime{ 0.0f };
 
 	bool m_windowFocused{ true };
 	bool m_generated{ false };

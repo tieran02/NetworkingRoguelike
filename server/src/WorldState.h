@@ -53,6 +53,7 @@ private:
 	sf::Vector2f findValidSpawnPos() const;
 	sf::Vector2f findRandomPos() const;
 	void SpawnEnemies();
+	void SpawnPickups();
 	std::shared_ptr<Entity> GetClosestPlayer(const Entity& sourceEntity, float& distance) const;
 	void entityWorldCollision(Entity& entity);
 	void entityCollisions();

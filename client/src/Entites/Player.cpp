@@ -4,7 +4,7 @@
 #include "shared/Utility/Math.h"
 #include "Graphics/ResourceManager.h"
 
-Player::Player() : Entity("Player")
+Player::Player() : Entity("Player"), m_weapon("Bullet", AreaOfAttack::CIRCLE, CollisionLayer::PROJECTILE_PLAYER, 400.0f, 250.0f, 12, 1000.0f)
 {
 	//collide with everything except player projectiles
 	GetCollider()->SetCollideMask(Collider::AllLayers() & ~(CollisionLayer::PROJECTILE_PLAYER));
@@ -58,16 +58,15 @@ void Player::Update(float deltaTime)
 			newVelocity += sf::Vector2f(0.0f, GetMovementSpeed());
 		}
 
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && m_fireTimeCounter >= .25f)
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
 		{
 			const sf::Vector2i mousePos = sf::Mouse::getPosition(m_world->GetWindow());
 			const sf::Vector2f mouseWorldPos = Camera::ScreenToWorldPos(mousePos, m_world->GetWindow());
 			const sf::Vector2f dir = Math::Direction(GetPosition(), mouseWorldPos);
 
-			m_world->ShootBullet(GetPosition(), dir * 400.0f, CollisionLayer::PROJECTILE_PLAYER);
-			m_fireTimeCounter = 0.0f;
+			m_weapon.Fire(*m_world, GetPosition(), dir);
 		}
-		m_fireTimeCounter += deltaTime;
+
 		SetVelocity(newVelocity);
 		UpdatePosition(deltaTime);
 

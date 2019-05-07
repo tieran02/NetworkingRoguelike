@@ -17,10 +17,16 @@ WorldState::~WorldState()
 
 void WorldState::GenerateWorld()
 {
+	entityIdCounter = 0;
+	m_entities.clear();
+	m_enemies.clear();
+	m_players.clear();
+
 	m_dungeon = std::unique_ptr<Dungeon>(new Dungeon(2, 2,64, m_seed));
 	m_dungeon->Generate();
 
 	SpawnEnemies();
+	SpawnPickups();
 }
 
 void WorldState::Update()
@@ -275,6 +281,28 @@ void WorldState::SpawnEnemies()
 		sf::Vector2f spawnPos = findRandomPos();
 		std::shared_ptr<Entity> entity = SpawnNewEntity("Skeleton", spawnPos, sf::Vector2f(), 0, CollisionLayer::NONE);
 		m_enemies.insert(std::make_pair(entity->WorldID(), entity));
+	}
+}
+
+void WorldState::SpawnPickups()
+{
+	LOG_INFO("Spawning Pickups");
+	constexpr int PICKUP_COUNT = 50;
+
+	std::vector<std::string> pickupNames
+	{ 
+		"MultishotPickup", 
+		"ConeshotPickup",
+		"SingleshotPickup",
+		"FireratePickup",
+		"HealthPickup"
+	};
+
+	for (int i = 0; i < PICKUP_COUNT; i++)
+	{
+		const std::string& pickupName = pickupNames[Random::randInt(0, pickupNames.size() - 1)];
+		sf::Vector2f spawnPos = findRandomPos();
+		std::shared_ptr<Entity> entity = SpawnNewEntity(pickupName, spawnPos, sf::Vector2f(), 0, CollisionLayer::PICKUP);
 	}
 }
 

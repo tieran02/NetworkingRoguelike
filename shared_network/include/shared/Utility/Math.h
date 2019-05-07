@@ -1,7 +1,9 @@
 #pragma once
 #include <SFML/System.hpp>
+#include <cmath>
 
 namespace Math {
+	# define PI 3.14159265358979323846  /* pi */
 
 	struct Rect
 	{
@@ -46,6 +48,25 @@ namespace Math {
 			return *this;
 		}
 	};
+
+	static const double DegToRad = (double)PI / (double)180;
+
+	static sf::Vector2f RotateRadians(const sf::Vector2f& v, double radians)
+	{
+		auto ca = std::cos(radians);
+		auto sa = std::sin(radians);
+		return sf::Vector2f(ca*v.x - sa * v.y, sa*v.x + ca * v.y);
+	}
+
+	static sf::Vector2f Rotate(const sf::Vector2f& v, double degrees)
+	{
+		return RotateRadians(v, degrees * DegToRad);
+	}
+
+	static float Clamp(float n, float lower, float upper) 
+	{
+		return std::max(lower, std::min(n, upper));
+	}
 
 	static float Dot(const sf::Vector2f& v1, const sf::Vector2f& v2)
 	{
