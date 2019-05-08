@@ -32,7 +32,7 @@ public:
 
 
 	bool IsGenerated() const { return m_generated; }
-	std::unordered_map<unsigned int, std::shared_ptr<Entity>>& GetEntities() { return m_entities; }
+	std::unordered_map<unsigned int, std::shared_ptr<Entity>> GetEntities() { return m_entities; }
 	void SetWindowFocused(bool focused);
 	bool IsWindowFocused() const;
 

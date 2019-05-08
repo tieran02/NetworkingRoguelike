@@ -137,28 +137,23 @@ void Connection::ReceiveTCP()
 
 void Connection::SendTCP(const Message& msg) const
 {
-	std::thread([this, msg] 
+	const auto buffer = msg.GetBuffer();
+	if (m_tcpSocket->send(buffer.data(), buffer.size()) != sf::Socket::Done)
 	{
-		const auto buffer = msg.GetBuffer();
-		if (m_tcpSocket->send(buffer.data(), buffer.size()) != sf::Socket::Done)
-		{
-			std::stringstream stream;
-			stream << "Failed To send message over TCP to client: " << m_connectionID;
-			LOG_ERROR(stream.str());
-		}
-	}).detach();
+		std::stringstream stream;
+		stream << "Failed To send message over TCP to client: " << m_connectionID;
+		LOG_ERROR(stream.str());
+	}
+	std::this_thread::sleep_for(std::chrono::microseconds(300));
 }
 
 void Connection::SendUDP(const Message& msg) const
 {
-	std::thread([this, msg]
+	auto buffer = msg.GetBuffer();
+	if (m_udpSocket->send(buffer.data(), buffer.size(), m_address, m_portUDP) != sf::Socket::Done)
 	{
-		auto buffer = msg.GetBuffer();
-		if (m_udpSocket->send(buffer.data(), buffer.size(), m_address, m_portUDP) != sf::Socket::Done)
-		{
-			std::stringstream stream;
-			stream << "Failed To send message over UDP to client: " << m_connectionID;
-			LOG_ERROR(stream.str());
-		}
-	}).detach();
+		std::stringstream stream;
+		stream << "Failed To send message over UDP to client: " << m_connectionID;
+		LOG_ERROR(stream.str());
+	}
 }

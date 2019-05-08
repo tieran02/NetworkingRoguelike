@@ -158,7 +158,7 @@ void ServerConnection::PollMessages()
 						//check distance between server pos and client
 						//sync entity as it is beyond the distancee threshold
 						float distance = Math::Distance(entity->GetPosition(), message->GetPosition());
-						if(distance >= 4.0f)
+						if(distance >= 16.0f)
 							updateEntityPositionFromServer(message->WorldID(), message->GetPosition(), message->GetVelocity());
 					}
 
@@ -269,6 +269,7 @@ void ServerConnection::SendTcpMessage(const Message& message)
 		stream << "Sent TCP message of size " << message.GetHeader().size << " to server";
 		LOG_TRACE(stream.str());
 	}
+	std::this_thread::sleep_for(std::chrono::microseconds(300));
 }
 
 void ServerConnection::NotifyWorldGeneration()

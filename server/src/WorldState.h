@@ -32,7 +32,7 @@ public:
 	void SetEntityHealth(unsigned int worldID, float health, float maxHealth);
 	void DamageEntity(unsigned int worldID, float damage);
 
-	std::unordered_map<unsigned int, std::shared_ptr<Entity>>& GetEntities() { return m_entities; }
+	std::unordered_map<unsigned int, std::shared_ptr<Entity>> GetEntities() { return m_entities; }
 	std::mutex& GetEntityMutex() { return m_entityMapMutex; }
 
 	bool IsColliding(unsigned int worldID, unsigned int otherWorldID) const;

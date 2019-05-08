@@ -391,7 +391,7 @@ void Network::sendWorldState()
 		batcher.BatchMessages();
 		for (const auto& batch : batcher.GetBatches())
 		{
-			SendToAllUDP(batch);
+			SendToAllTCP(batch);
 			LOG_INFO("SENDING SYNC BATCH");
 		}
 		ticksSinceReSync = 0;
