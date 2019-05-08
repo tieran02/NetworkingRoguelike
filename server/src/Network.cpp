@@ -300,11 +300,28 @@ void Network::receiveUDP()
 
 		Message message{ buffer };
 
-		ServerMessage serverMessage(message);
-		serverMessage.protocol = Protocol::UPD;
-		serverMessage.senderAddress = sender;
-		serverMessage.senderPort = port;
-		m_serverMessages.enqueue(serverMessage);
+		if (message.GetHeader().type == MessageType::BATCH)
+		{
+			BatchMessage* batch = static_cast<BatchMessage*>(&message);
+			auto count = batch->GetCount();
+
+			for (auto i = 0; i < count; i++)
+			{
+				ServerMessage serverMessage(batch->GetMessageAt(i));
+				serverMessage.protocol = Protocol::UPD;
+				serverMessage.senderAddress = sender;
+				serverMessage.senderPort = port;
+				m_serverMessages.enqueue(serverMessage);
+			}
+		}
+		else
+		{
+			ServerMessage serverMessage(message);
+			serverMessage.protocol = Protocol::UPD;
+			serverMessage.senderAddress = sender;
+			serverMessage.senderPort = port;
+			m_serverMessages.enqueue(serverMessage);
+		}
 	}
 }
 

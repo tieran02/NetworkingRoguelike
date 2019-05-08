@@ -101,20 +101,37 @@ void Connection::ReceiveTCP()
             continue;
 		}
 
-		const Message message{ buffer };
+		Message message{ buffer };
 
-		ServerMessage serverMessage(message);
-		serverMessage.protocol = Protocol::TCP;
-		serverMessage.senderAddress = m_address;
-		serverMessage.senderPort = m_portTCP;
-
-		if(serverMessage.message.GetHeader().type == MessageType::CLIENT_SETUP)
+		if (message.GetHeader().type == MessageType::BATCH)
 		{
-			m_isSetup = true;
-			m_cv.notify_all();
-			continue;
+			BatchMessage* batch = static_cast<BatchMessage*>(&message);
+			auto count = batch->GetCount();
+
+			for (auto i = 0; i < count; i++)
+			{
+				ServerMessage serverMessage(batch->GetMessageAt(i));
+				serverMessage.protocol = Protocol::TCP;
+				serverMessage.senderAddress = m_address;
+				serverMessage.senderPort = m_portTCP;
+				m_network->GetMessageQueue().enqueue(serverMessage);
+			}
 		}
-		m_network->GetMessageQueue().enqueue(serverMessage);
+		else
+		{
+			ServerMessage serverMessage(message);
+			serverMessage.protocol = Protocol::TCP;
+			serverMessage.senderAddress = m_address;
+			serverMessage.senderPort = m_portTCP;
+
+			if (serverMessage.message.GetHeader().type == MessageType::CLIENT_SETUP)
+			{
+				m_isSetup = true;
+				m_cv.notify_all();
+				continue;
+			}
+			m_network->GetMessageQueue().enqueue(serverMessage);
+		}
 	}
 }
 

@@ -175,6 +175,11 @@ void World::ShootBullet(sf::Vector2f startPos, sf::Vector2f velocity, CollisionL
 	m_serverConnection->SendProjectileRequestMessage("Bullet", startPos, velocity, side);
 }
 
+void World::ShootBullets(std::vector<std::tuple<sf::Vector2f, sf::Vector2f, CollisionLayer>> bullets)
+{
+	m_serverConnection->SendProjectileRequestMessages(bullets);
+}
+
 void World::RequestDestroyEntity(unsigned worldID)
 {
 	if (m_entities.find(worldID) != m_entities.end())

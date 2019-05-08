@@ -376,6 +376,31 @@ void ServerConnection::SendProjectileRequestMessage(const std::string& entityNam
 	SendTcpMessage(message);
 }
 
+void ServerConnection::SendProjectileRequestMessages(std::vector<std::tuple<sf::Vector2f, sf::Vector2f, CollisionLayer>> projectiles)
+{
+	MessageBatcher batcher(SpawnMessage::SIZE);
+	for (const auto& projectile : projectiles)
+	{
+		const auto& entityID = EntityDataManager::Instance().GetEntityData("Bullet").EntityID;
+		const SpawnMessage msg
+		{
+			0,
+			entityID,
+			std::get<0>(projectile),
+			std::get<1>(projectile),
+			m_clientID,
+			std::get<2>(projectile)
+		};
+		batcher.AddMessage(msg);
+	}
+	batcher.BatchMessages();
+
+	for (const auto& batch : batcher.GetBatches())
+	{
+		SendTcpMessage(batch);
+	}
+}
+
 void ServerConnection::SendChatMessage(const std::string & message)
 {
 	TextMessage msg{ message,TextType::CHAT, m_clientID };

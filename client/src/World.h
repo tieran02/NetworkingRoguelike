@@ -24,6 +24,7 @@ public:
 
 	std::shared_ptr<Entity> SpawnEntity(unsigned int entityID, unsigned int worldID, sf::Vector2f pos, sf::Vector2f velocity, unsigned int ownership, CollisionLayer layerOverride);
 	void ShootBullet(sf::Vector2f startPos, sf::Vector2f velocity, CollisionLayer side);
+	void ShootBullets(std::vector< std::tuple< sf::Vector2f, sf::Vector2f, CollisionLayer>> bullets);
 
 
 	void RequestDestroyEntity(unsigned int worldID);

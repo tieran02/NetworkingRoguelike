@@ -84,8 +84,10 @@ void Weapon::coneShot(World & world, sf::Vector2f position, sf::Vector2f directi
 {
 	constexpr float MAX_ANGLE = 15.0;
 
+	std::vector< std::tuple< sf::Vector2f, sf::Vector2f, CollisionLayer>> bullets;
+
 	//center 
-	world.ShootBullet(position, direction * m_speed, m_side);
+	bullets.emplace_back(std::make_tuple(position, direction * m_speed, m_side));
 
 	int halfBulletCount = std::max(1, (m_bulletCount - 1) / 2);
 	const float ANGLE_OFFSET = MAX_ANGLE / (float)halfBulletCount;
@@ -94,27 +96,29 @@ void Weapon::coneShot(World & world, sf::Vector2f position, sf::Vector2f directi
 	for (int i = 0; i < halfBulletCount; i++)
 	{
 		sf::Vector2f dir = Math::Rotate(direction, -ANGLE_OFFSET * (i+1));
-		world.ShootBullet(position, dir * m_speed, m_side);
-
+		bullets.emplace_back(std::make_tuple(position, dir * m_speed, m_side));
 	}
 
 	//right side
 	for (int i = 0; i < halfBulletCount; i++)
 	{
 		sf::Vector2f dir = Math::Rotate(direction, ANGLE_OFFSET * (i+1));
-		world.ShootBullet(position, dir * m_speed, m_side);
+		bullets.emplace_back(std::make_tuple(position, dir * m_speed, m_side));
 	}
 
-
+	world.ShootBullets(bullets);
 }
 
 void Weapon::circleShot(World & world, sf::Vector2f position)
 {
+	std::vector< std::tuple< sf::Vector2f, sf::Vector2f, CollisionLayer>> bullets;
+
 	const float ANGLE_OFFSET = 360.0f / m_bulletCount;
 	sf::Vector2f upVector{ 0.0f,1.0f };
 	for (int i = 0; i < m_bulletCount; i++)
 	{
 		sf::Vector2f dir = Math::Rotate(upVector, ANGLE_OFFSET * (i + 1));
-		world.ShootBullet(position, dir * m_speed, m_side);
+		bullets.emplace_back(std::make_tuple(position, dir * m_speed, m_side));
 	}
+	world.ShootBullets(bullets);
 }

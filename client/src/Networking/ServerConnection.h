@@ -35,6 +35,7 @@ public:
 	void SendMovementMessage(unsigned int worldID, sf::Vector2f velocity);
 	void SendSpawnRequestMessage(const std::string& entityName, sf::Vector2f position, sf::Vector2f velocity);
 	void SendProjectileRequestMessage(const std::string& entityName, sf::Vector2f position, sf::Vector2f velocity, CollisionLayer side);
+	void SendProjectileRequestMessages(std::vector< std::tuple<sf::Vector2f, sf::Vector2f, CollisionLayer>> projectiles);
 	void SendEntityDestroyMessage(unsigned int worldID);
 	void SendHealthMessage(unsigned int worldID, float health, float maxHealth);
 
