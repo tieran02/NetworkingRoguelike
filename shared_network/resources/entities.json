@@ -6,8 +6,8 @@
       "EntitySpriteName": "player",
       "SpriteWidth": 43,
       "SpriteHeight": 50,
-      "Health": 100,
-      "MaxHealth": 100,
+      "Health": 250,
+      "MaxHealth": 250,
       "Layer": 1,
       "MoveSpeed": 200,
       "ServerCollisions": true

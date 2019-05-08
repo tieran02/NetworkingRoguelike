@@ -1,0 +1,21 @@
+Linux:
+	- Run generateProject.sh (This will create the code blocks project)
+	- Open the codeblocks project
+	- Build projects within code blocks
+	- Run the server and client
+
+Window:
+	- Run GenerateProject.sh (This will create the visual studio project)
+	- Open the visual studio project
+	- Build projects within visual studio
+	- Run the server and client
+
+How to play
+	-Run server and enter a level seed (Must be an interger)
+	-Run the client and enter your name
+	-Wait for other players to connect
+
+Controls
+	-When ready press space to start
+	-WASD / Arrow keys to move
+	-Mouse to fire (Shoots towards the mouse cursor) 

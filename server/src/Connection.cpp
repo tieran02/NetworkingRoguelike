@@ -70,7 +70,9 @@ void Connection::ReceiveTCP()
         {
             continue;
         }
+
 		std::memset(buffer, 0, maxMessageSize);
+
         //error
 		auto data = m_tcpSocket->receive(buffer, maxMessageSize, received);
 		if (data != sf::Socket::Done)
@@ -100,6 +102,9 @@ void Connection::ReceiveTCP()
             LOG_FATAL("MESSAGE IS EMPTY!");
             continue;
 		}
+
+        if(received < sizeof(Header) || received > maxMessageSize)
+            continue;
 
 		Message message{ buffer };
 
@@ -144,7 +149,7 @@ void Connection::SendTCP(const Message& msg) const
 		stream << "Failed To send message over TCP to client: " << m_connectionID;
 		LOG_ERROR(stream.str());
 	}
-	std::this_thread::sleep_for(std::chrono::microseconds(300));
+	std::this_thread::sleep_for(std::chrono::microseconds(500));
 }
 
 void Connection::SendUDP(const Message& msg) const

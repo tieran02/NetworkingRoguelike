@@ -284,19 +284,24 @@ void Network::pollMessages()
 
 void Network::receiveUDP()
 {
+    sf::IpAddress sender;
+    unsigned short port;
+    size_t received;
+    const size_t maxMessageSize = Config::MAX_PACKET_SIZE;
+    char buffer[maxMessageSize];
+
 	while (!m_close)
 	{
-		sf::IpAddress sender;
-		unsigned short port;
-		size_t received;
-		const size_t maxMessageSize = Config::MAX_PACKET_SIZE;
-		char buffer[maxMessageSize];
+        std::memset(&buffer, 0, maxMessageSize);
 
 		if (m_udpSocket.receive(buffer, maxMessageSize, received, sender, port) != sf::Socket::Done)
 		{
 			LOG_ERROR("Failed To receive udp packet");
 			continue;
 		}
+
+        if(received < sizeof(Header) || received > maxMessageSize)
+            continue;
 
 		Message message{ buffer };
 

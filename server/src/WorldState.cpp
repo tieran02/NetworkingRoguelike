@@ -287,7 +287,7 @@ sf::Vector2f WorldState::findRandomPos() const
 void WorldState::SpawnEnemies()
 {
     LOG_INFO("Spawning Enemies");
-	constexpr int ENEMY_COUNT = 50;
+	constexpr int ENEMY_COUNT = 75;
 	for (int i = 0; i < ENEMY_COUNT; ++i)
 	{
 		sf::Vector2f spawnPos = findRandomPos();
@@ -299,7 +299,7 @@ void WorldState::SpawnEnemies()
 void WorldState::SpawnPickups()
 {
 	LOG_INFO("Spawning Pickups");
-	constexpr int PICKUP_COUNT = 50;
+	constexpr int PICKUP_COUNT = 150;
 
 	std::vector<std::string> pickupNames
 	{

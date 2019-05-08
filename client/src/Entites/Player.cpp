@@ -4,7 +4,7 @@
 #include "shared/Utility/Math.h"
 #include "Graphics/ResourceManager.h"
 
-Player::Player() : Entity("Player"), m_weapon("Bullet", AreaOfAttack::SINGLE, CollisionLayer::PROJECTILE_PLAYER, 250.0f, 250.0f)
+Player::Player() : Entity("Player"), m_weapon("Bullet", AreaOfAttack::CIRCLE, CollisionLayer::PROJECTILE_PLAYER, 350.0f, 100.0f,16)
 {
 	//collide with everything except player projectiles
 	GetCollider()->SetCollideMask(Collider::AllLayers() & ~(CollisionLayer::PROJECTILE_PLAYER));
@@ -37,22 +37,22 @@ void Player::Update(float deltaTime)
 	{
 		sf::Vector2f newVelocity;
 
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) || sf::Keyboard::isKeyPressed(sf::Keyboard::A))
 		{
 			// left key is pressed: move our character
 			newVelocity += sf::Vector2f(-GetMovementSpeed(), 0.0f);
 		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) || sf::Keyboard::isKeyPressed(sf::Keyboard::D))
 		{
 			// left key is pressed: move our character
 			newVelocity += sf::Vector2f(GetMovementSpeed(), 0.0f);
 		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) || sf::Keyboard::isKeyPressed(sf::Keyboard::W))
 		{
 			// left key is pressed: move our character
 			newVelocity += sf::Vector2f(0.0f, -GetMovementSpeed());
 		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) || sf::Keyboard::isKeyPressed(sf::Keyboard::S))
 		{
 			// left key is pressed: move our character
 			newVelocity += sf::Vector2f(0.0f, GetMovementSpeed());

@@ -269,7 +269,7 @@ void ServerConnection::SendTcpMessage(const Message& message)
 		stream << "Sent TCP message of size " << message.GetHeader().size << " to server";
 		LOG_TRACE(stream.str());
 	}
-	std::this_thread::sleep_for(std::chrono::microseconds(300));
+	std::this_thread::sleep_for(std::chrono::microseconds(500));
 }
 
 void ServerConnection::NotifyWorldGeneration()
@@ -422,16 +422,18 @@ void ServerConnection::SendHealthMessage(unsigned worldID, float health, float m
 
 void ServerConnection::receiveUDP()
 {
+    sf::IpAddress sender;
+    unsigned short port;
+    size_t received;
+    const size_t maxMessageSize = Config::MAX_PACKET_SIZE;
+    char buffer[maxMessageSize];
+
 	while (!m_close)
 	{
 		if (m_serverUdpSocket.getLocalPort() == 0)
 			continue;
 
-		sf::IpAddress sender;
-		unsigned short port;
-		size_t received;
-		const size_t maxMessageSize = Config::MAX_PACKET_SIZE;
-		char buffer[maxMessageSize];
+        memset(&buffer, 0, maxMessageSize);
 
         auto receive = m_serverUdpSocket.receive(buffer, maxMessageSize, received, sender, port);
 		if (receive != sf::Socket::Done)
@@ -439,6 +441,9 @@ void ServerConnection::receiveUDP()
 			LOG_ERROR("Failed To receive udp packet");
 			continue;
 		}
+
+        if(received < sizeof(Header) || received > maxMessageSize)
+            continue;
 
 		Message message{ buffer };
 
@@ -496,6 +501,8 @@ void ServerConnection::receiveTCP()
 		}
 		LOG_INFO("Recieved TCP message of size:" + std::to_string(received));
 
+        if(received < sizeof(Header) || received > maxMessageSize)
+            continue;
 		Message message{ buffer };
 
 		if (message.GetHeader().type == MessageType::BATCH)

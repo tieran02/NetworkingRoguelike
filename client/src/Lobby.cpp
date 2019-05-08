@@ -65,7 +65,7 @@ void Lobby::setup()
 	m_mainText = sf::Text("Lobby", ResourceManager::Instance().GetFont("arial"), 48);
 	AlignText(m_mainText, 2.0f, 16.0f);
 
-	m_connectedPlayerTitle = sf::Text("Connected Players:", ResourceManager::Instance().GetFont("arial"), 30);
+	m_connectedPlayerTitle = sf::Text("Connected Players: (Press 'T' to chat)", ResourceManager::Instance().GetFont("arial"), 30);
 	AlignText(m_connectedPlayerTitle, 16.0f, 4.0f);
 
 	m_playersText = sf::Text("Player 1", ResourceManager::Instance().GetFont("arial"), 28);
