@@ -1,0 +1,11 @@
+Linux:
+	- Run generateProject.sh (This will create the code blocks project)
+	- Open the codeblocks project
+	- Build projects within code blocks
+	- Run the server and client
+
+Window:
+	- Run GenerateProject.sh (This will create the visual studio project)
+	- Open the visual studio project
+	- Build projects within visual studio
+	- Run the server and client

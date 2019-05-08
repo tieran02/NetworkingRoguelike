@@ -5,3 +5,4 @@ find . -type f -name '*.workspace' -exec rm {} +
 find . -type f -name '*.layout' -exec rm {} +
 find . -type f -name '*.depend' -exec rm {} +
 find . -type f -name '*.cbp' -exec rm {} +
+rm Makefile
