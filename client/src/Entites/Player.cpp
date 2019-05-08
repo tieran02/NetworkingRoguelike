@@ -4,7 +4,7 @@
 #include "shared/Utility/Math.h"
 #include "Graphics/ResourceManager.h"
 
-Player::Player() : Entity("Player"), m_weapon("Bullet", AreaOfAttack::CIRCLE, CollisionLayer::PROJECTILE_PLAYER, 350.0f, 100.0f,16)
+Player::Player() : Entity("Player"), m_weapon("Bullet", AreaOfAttack::SINGLE, CollisionLayer::PROJECTILE_PLAYER, 350.0f, 250.0f)
 {
 	//collide with everything except player projectiles
 	GetCollider()->SetCollideMask(Collider::AllLayers() & ~(CollisionLayer::PROJECTILE_PLAYER));
