@@ -52,15 +52,25 @@ void WorldState::Update()
 		}
 		else
 		{
+
+            //get distance from player
+            float distance = Math::Distance(enemy.second->Position(), enemy.second->GetTarget()->Position());
+            if(distance > 380.0f)
+            {
+                enemy.second->SetTarget(nullptr);
+                enemy.second->SetVelocity(sf::Vector2f(0.0f,0.0f));
+                continue;
+            }
+
 			//move towards target
 			sf::Vector2f direction = Math::Direction(enemy.second->Position(), enemy.second->GetTarget()->Position());
 			enemy.second->SetVelocity(direction * enemy.second->BaseData().MovementSpeed);
 
 			//shoot the target
 			auto lastFire = enemy.second->GetLastFire();
-			if(lastFire > 64)
+			if(lastFire > 16)
 			{
-				auto bulletVelocity = direction * 200.0f;
+				auto bulletVelocity = direction * 350.0f;
                 auto bullet = SpawnNewEntity("Bullet", enemy.second->Position(), bulletVelocity, 0, CollisionLayer::PROJECTILE_ENEMY);
                 enemy.second->SetLastFire(0);
                 LOG_INFO(enemy.second->GetLastFire());
@@ -73,7 +83,7 @@ void WorldState::Update()
 	}
 
 	//update all entitie position
-	for (const auto& entity : m_entities) 
+	for (const auto& entity : m_entities)
 	{
 		entity.second->ApplyVelocity(m_network->GetCurrentTickRate());
 	}
@@ -292,8 +302,8 @@ void WorldState::SpawnPickups()
 	constexpr int PICKUP_COUNT = 50;
 
 	std::vector<std::string> pickupNames
-	{ 
-		"MultishotPickup", 
+	{
+		"MultishotPickup",
 		"ConeshotPickup",
 		"SingleshotPickup",
 		"FireratePickup",

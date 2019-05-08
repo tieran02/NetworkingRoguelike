@@ -150,7 +150,7 @@ void ServerConnection::PollMessages()
 				}
 				else
 				{
-					auto& entities = m_world->GetEntities();
+					const auto& entities = m_world->GetEntities();
 					if (entities.find(message->WorldID()) != entities.end())
 					{
 						auto& entity = entities.at(message->WorldID());
@@ -167,7 +167,7 @@ void ServerConnection::PollMessages()
 			else if (msg.message.GetHeader().type == MessageType::HEALTH)
 			{
 				HealthMessage* message = static_cast<HealthMessage*>(&msg.message);
-				auto& entities = m_world->GetEntities();
+				const auto& entities = m_world->GetEntities();
 				if (entities.find(message->GetWorldID()) != entities.end())
 				{
 					auto& entity = entities.at(message->GetWorldID());
@@ -512,7 +512,7 @@ void ServerConnection::receiveTCP()
 				m_serverMessages.enqueue(serverMessage);
 			}
 		}
-		else 
+		else
 		{
 
 			ServerMessage serverMessage(message);

@@ -114,7 +114,8 @@ void World::collisionDetection()
 			if (other->CheckCollision(*entity.second->GetCollider()))
 			{
 				entity.second->OnCollision(*other);
-				entity.second->SetPosition(entity.second->GetLastPosition());
+				if(entity.second->GetCollider()->GetLayer() != CollisionLayer::PICKUP && other->GetLayer() != CollisionLayer::PICKUP)
+                    entity.second->SetPosition(entity.second->GetLastPosition());
 				break;
 			}
 		}
