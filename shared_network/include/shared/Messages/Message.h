@@ -28,8 +28,8 @@ enum class MessageType
 struct Header
 {
 	int16_t size;
-	MessageType type;
 	uint16_t id{ 0 };
+	MessageType type;
 };
 
 class Message
@@ -55,7 +55,6 @@ public:
 protected:
 	Header header{};
 	std::vector<char> data;
-
 };
 
 //Message wrapper for the client/server. Includes the protocol, address and port of the sender
