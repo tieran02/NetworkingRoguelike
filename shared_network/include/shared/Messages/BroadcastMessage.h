@@ -5,6 +5,9 @@
 class BroadcastMessage : public Message
 {
 public:
+	//Size of message includng header
+	const static size_t SIZE;
+
 	BroadcastMessage() = default;;
     BroadcastMessage(char* buffer);
 };

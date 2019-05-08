@@ -7,8 +7,8 @@ public:
 	BatchMessage() = default;
 	BatchMessage(char* buffer);
 	BatchMessage(uint8_t count, size_t sizeOfMessage);
-	void InsertMessageAt(int index, Message* message, size_t sizeOfMessage);
+	void InsertMessageAt(int index, const Message& message);
 
 	const uint8_t GetCount() const;
-	const Message* GetMessageAt(int index) const;
+	const Message GetMessageAt(int index) const;
 };

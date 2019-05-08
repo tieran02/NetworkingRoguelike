@@ -39,19 +39,20 @@ public:
 	~Message() {}
 
 	Message(char* buffer);
+	//Copy message from another message pointer
+	Message(Message* message);
 
 	Message(MessageType type, char* src, size_t size, uint16_t id);
 
 	const Header& GetHeader() const;
 
-	const char* GetData() const;
+	const std::vector<char>& GetData() const;
 
 	std::string ToString() const;
 
 	std::vector<char> GetBuffer() const;
 
 	size_t Size() const;
-
 protected:
 	Header header{};
 	std::vector<char> data;

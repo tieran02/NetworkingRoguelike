@@ -3,10 +3,12 @@
 #include "SFML/Graphics.hpp"
 #include "../Collider.h"
 
-
 class SpawnMessage : public Message
 {
 public:
+	//Size of message includng header
+	const static size_t SIZE;
+
 	SpawnMessage() = default;;
     SpawnMessage(char* buffer);
     SpawnMessage(unsigned int worldID, unsigned int entityID, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownerID, CollisionLayer layerOverride);

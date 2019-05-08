@@ -289,7 +289,7 @@ void Network::receiveUDP()
 		sf::IpAddress sender;
 		unsigned short port;
 		size_t received;
-		const size_t maxMessageSize = 256;
+		const size_t maxMessageSize = Config::MAX_PACKET_SIZE;
 		char buffer[maxMessageSize];
 
 		if (m_udpSocket.receive(buffer, maxMessageSize, received, sender, port) != sf::Socket::Done)
@@ -365,11 +365,17 @@ void Network::sendWorldState()
 
 	if (ticksSinceReSync++ >= 32 * 1)
 	{
+		MessageBatcher batcher(EntityStateMessage::SIZE);
 		for (const auto& entity : m_worldState->GetEntities())
 		{
 			//resync all entities
-			EntityStateMessage msg{ entity.second->WorldID(),entity.second->Position(),entity.second->Velocity(),entity.second->IsActive(), false, 0 };
-			SendToAllUDP(msg);
+			batcher.AddMessage(EntityStateMessage{ entity.second->WorldID(),entity.second->Position(),entity.second->Velocity(),entity.second->IsActive(), false, 0 });
+		}
+		batcher.BatchMessages();
+		for (const auto& batch : batcher.GetBatches())
+		{
+			SendToAllUDP(batch);
+			LOG_INFO("SENDING SYNC BATCH");
 		}
 		ticksSinceReSync = 0;
 	}
@@ -421,6 +427,31 @@ void Network::SendSpawnMessage(unsigned int worldID, unsigned int entityID, sf::
 	std::stringstream stream;
 	stream << "Spawning entity: worldID:" << worldID << " entityID:" << entityID << " ownershipID:" << ownershipID;
 	LOG_INFO(stream.str());
+}
+
+void Network::SendSpawnMessages(const std::vector<std::shared_ptr<Entity>>& entities)
+{
+	MessageBatcher batcher{ SpawnMessage::SIZE };
+	for (const auto& entity : entities)
+	{
+		SpawnMessage spawnMessage
+		{
+			entity->WorldID(),
+			entity->BaseData().EntityID,
+			entity->Position(),
+			entity->Velocity(),
+			entity->OwnershipID(),
+			CollisionLayer::NONE
+		};
+
+		batcher.AddMessage(spawnMessage);
+	}
+	batcher.BatchMessages();
+
+	for (const auto& batch : batcher.GetBatches())
+	{
+		SendToAllTCP(batch);
+	}
 }
 
 void Network::SendMovementMessage(unsigned worldID, sf::Vector2f velocity)

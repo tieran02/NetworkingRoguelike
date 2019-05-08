@@ -1,5 +1,8 @@
 #include "Messages/TextMessage.h"
 
+//CANT SET SIZE OF DYNAMIC DATA SUCH AS STRINGS
+const size_t TextMessage::SIZE = sizeof(Header);
+
 TextMessage::TextMessage(char* buffer) : Message(buffer)
 {
 

@@ -60,7 +60,7 @@ void Connection::SetClientName(const std::string & name)
 
 void Connection::ReceiveTCP()
 {
-	const size_t maxMessageSize = 256;
+	const size_t maxMessageSize = Config::MAX_PACKET_SIZE;
 	char buffer[maxMessageSize];
 	size_t received;
 
@@ -120,22 +120,28 @@ void Connection::ReceiveTCP()
 
 void Connection::SendTCP(const Message& msg) const
 {
-	auto buffer = msg.GetBuffer();
-	if (m_tcpSocket->send(buffer.data(), buffer.size()) != sf::Socket::Done)
+	std::thread([this, msg] 
 	{
-		std::stringstream stream;
-		stream << "Failed To send message over TCP to client: " << m_connectionID;
-		LOG_ERROR(stream.str());
-	}
+		const auto buffer = msg.GetBuffer();
+		if (m_tcpSocket->send(buffer.data(), buffer.size()) != sf::Socket::Done)
+		{
+			std::stringstream stream;
+			stream << "Failed To send message over TCP to client: " << m_connectionID;
+			LOG_ERROR(stream.str());
+		}
+	}).detach();
 }
 
 void Connection::SendUDP(const Message& msg) const
 {
-	auto buffer = msg.GetBuffer();
-	if (m_udpSocket->send(buffer.data(), buffer.size(), m_address, m_portUDP) != sf::Socket::Done)
+	std::thread([this, msg]
 	{
-		std::stringstream stream;
-		stream << "Failed To send message over UDP to client: " << m_connectionID;
-		LOG_ERROR(stream.str());
-	}
+		auto buffer = msg.GetBuffer();
+		if (m_udpSocket->send(buffer.data(), buffer.size(), m_address, m_portUDP) != sf::Socket::Done)
+		{
+			std::stringstream stream;
+			stream << "Failed To send message over UDP to client: " << m_connectionID;
+			LOG_ERROR(stream.str());
+		}
+	}).detach();
 }

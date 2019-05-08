@@ -4,6 +4,9 @@
 class HealthMessage : public Message
 {
 public:
+	//Size of message includng header
+	const static size_t SIZE;
+
 	HealthMessage() = default;;
 	HealthMessage(char* buffer);
 	HealthMessage(unsigned int worldID, float health, float maxHealth, unsigned int senderID);

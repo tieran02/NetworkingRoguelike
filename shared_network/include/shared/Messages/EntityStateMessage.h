@@ -7,6 +7,9 @@
 class EntityStateMessage : public Message
 {
 public:
+	//Size of message includng header
+	const static size_t SIZE;
+
 	EntityStateMessage() = default;;
 	EntityStateMessage(char* buffer);
 	EntityStateMessage(unsigned int worldID, sf::Vector2f position, sf::Vector2f velocity, bool active, bool destroy, unsigned int senderID);

@@ -4,6 +4,9 @@
 class ConnectionMessage : public Message
 {
 public:
+	//Size of message includng header
+	const static size_t SIZE;
+
 	ConnectionMessage() = default;;
     ConnectionMessage(char* buffer);
     ConnectionMessage(unsigned int clientID, const std::string& clientName, unsigned int seed, unsigned short udpPort);

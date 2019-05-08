@@ -1,5 +1,8 @@
 #include "Messages/MovementMessage.h"
 
+//CANT SET SIZE OF DYNAMIC DATA SUCH AS STRINGS
+const size_t MovementMessage::SIZE = sizeof(Header) + sizeof(unsigned int) + sizeof(sf::Vector2f) * 2 + sizeof(float);
+
 MovementMessage::MovementMessage(char* buffer) : Message(buffer)
 {
 

@@ -93,6 +93,7 @@ void ServerConnection::PollMessages()
 		//Get Data
 		ServerMessage msg = m_serverMessages.dequeue();
 
+
 		switch (msg.protocol)
 		{
 		case Protocol::UPD:
@@ -403,7 +404,7 @@ void ServerConnection::receiveUDP()
 		sf::IpAddress sender;
 		unsigned short port;
 		size_t received;
-		const size_t maxMessageSize = 256;
+		const size_t maxMessageSize = Config::MAX_PACKET_SIZE;
 		char buffer[maxMessageSize];
 
         auto receive = m_serverUdpSocket.receive(buffer, maxMessageSize, received, sender, port);
@@ -414,24 +415,46 @@ void ServerConnection::receiveUDP()
 		}
 
 		Message message{ buffer };
-		ServerMessage serverMessage(message);
-		serverMessage.protocol = Protocol::UPD;
-		serverMessage.senderAddress = sender;
-		serverMessage.senderPort = port;
-		m_serverMessages.enqueue(serverMessage);
+
+		if (message.GetHeader().type == MessageType::BATCH)
+		{
+			BatchMessage* batch = static_cast<BatchMessage*>(&message);
+			auto count = batch->GetCount();
+
+			for (auto i = 0; i < count; i++)
+			{
+				ServerMessage serverMessage(batch->GetMessageAt(i));
+				serverMessage.protocol = Protocol::UPD;
+				serverMessage.senderAddress = sender;
+				serverMessage.senderPort = port;
+				m_serverMessages.enqueue(serverMessage);
+			}
+		}
+		else
+		{
+
+			ServerMessage serverMessage(message);
+			serverMessage.protocol = Protocol::UPD;
+			serverMessage.senderAddress = sender;
+			serverMessage.senderPort = port;
+			m_serverMessages.enqueue(serverMessage);
+		}
 
 	}
 }
 
 void ServerConnection::receiveTCP()
 {
+	size_t received;
+	const size_t maxMessageSize = Config::MAX_PACKET_SIZE;
+	char buffer[maxMessageSize];
+
 	while (!m_close)
 	{
 		if (m_serverTcpSocket.getLocalPort() == 0)
 			continue;
-        size_t received;
-        const size_t maxMessageSize = 256;
-		char buffer[maxMessageSize];
+
+		std::memset(&buffer, 0, maxMessageSize);
 
         auto receive = m_serverTcpSocket.receive(buffer, maxMessageSize, received);
 		if (receive != sf::Socket::Done)
@@ -445,12 +468,32 @@ void ServerConnection::receiveTCP()
 			continue;
 
 		}
+		LOG_INFO("Recieved TCP message of size:" + std::to_string(received));
+
 		Message message{ buffer };
 
-		ServerMessage serverMessage(message);
-		serverMessage.protocol = Protocol::TCP;
-		serverMessage.senderAddress = m_serverTcpSocket.getRemoteAddress();
-		serverMessage.senderPort = m_serverTcpSocket.getRemotePort();
-		m_serverMessages.enqueue(serverMessage);
+		if (message.GetHeader().type == MessageType::BATCH)
+		{
+			BatchMessage* batch = static_cast<BatchMessage*>(&message);
+			auto count = batch->GetCount();
+
+			for (auto i = 0; i < count; i++)
+			{
+				ServerMessage serverMessage(batch->GetMessageAt(i));
+				serverMessage.protocol = Protocol::TCP;
+				serverMessage.senderAddress = m_serverTcpSocket.getRemoteAddress();
+				serverMessage.senderPort = m_serverTcpSocket.getRemotePort();
+				m_serverMessages.enqueue(serverMessage);
+			}
+		}
+		else 
+		{
+
+			ServerMessage serverMessage(message);
+			serverMessage.protocol = Protocol::TCP;
+			serverMessage.senderAddress = m_serverTcpSocket.getRemoteAddress();
+			serverMessage.senderPort = m_serverTcpSocket.getRemotePort();
+			m_serverMessages.enqueue(serverMessage);
+		}
 	}
 }

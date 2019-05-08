@@ -1,5 +1,8 @@
 #include "Messages/HealthMessage.h"
 
+//CANT SET SIZE OF DYNAMIC DATA SUCH AS STRINGS
+const size_t HealthMessage::SIZE = sizeof(Header) + sizeof(unsigned int) + sizeof(float) + sizeof(float);
+
 HealthMessage::HealthMessage(char* buffer) : Message(buffer)
 {
 }

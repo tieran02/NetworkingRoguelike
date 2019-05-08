@@ -12,6 +12,9 @@ enum class TextType
 class TextMessage : public Message
 {
 public:
+	//Size of message includng header
+	const static size_t SIZE;
+
 	TextMessage() = default;;
 	TextMessage(char* buffer);
 	TextMessage(const std::string& text, TextType textType, unsigned int senderID);

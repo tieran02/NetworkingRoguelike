@@ -1,6 +1,9 @@
 #include "Messages/SpawnMessage.h"
 #include "./Utility/Log.h"
 
+//CANT SET SIZE OF DYNAMIC DATA SUCH AS STRINGS
+const size_t SpawnMessage::SIZE = sizeof(Header) + sizeof(unsigned int) + sizeof(unsigned int) + sizeof(sf::Vector2f) + sizeof(sf::Vector2f) + sizeof(unsigned int) + sizeof(CollisionLayer);
+
 SpawnMessage::SpawnMessage(char* buffer) : Message(buffer)
 {
     LOG_INFO("Creating Spawn message from buffer" + std::to_string(GetWorldID()));

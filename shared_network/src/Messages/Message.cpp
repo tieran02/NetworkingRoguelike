@@ -11,6 +11,15 @@ Message::Message(char* buffer)
 	memcpy(data.data(), buffer, header.size);
 }
 
+Message::Message(Message * message)
+{
+	header = message->GetHeader();
+
+	data.resize(header.size);
+	memcpy(data.data(), message->data.data(), header.size);
+}
+
+
 Message::Message(MessageType type, char* src, size_t size, uint16_t id)
 {
 	header.type = type;
@@ -27,9 +36,9 @@ const Header& Message::GetHeader() const
 	return header;
 }
 
-const char* Message::GetData() const
+const std::vector<char>& Message::GetData() const
 {
-	return data.data();
+	return data;
 }
 
 std::string Message::ToString() const

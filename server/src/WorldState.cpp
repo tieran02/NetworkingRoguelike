@@ -105,10 +105,12 @@ void WorldState::SpawnAllEntities()
 {
 	//TODO: only send messages once the client has generated the level
 
+	std::vector<std::shared_ptr<Entity>> entities;
 	for (auto& entity : m_entities)
 	{
-		SpawnEntity(entity.first);
+		entities.push_back(entity.second);
 	}
+	m_network->SendSpawnMessages(entities);
 }
 
 std::shared_ptr<Entity> WorldState::SpawnNewEntity(const std::string& entityName, sf::Vector2f position, sf::Vector2f velocity, unsigned int ownership, CollisionLayer layerOverride)

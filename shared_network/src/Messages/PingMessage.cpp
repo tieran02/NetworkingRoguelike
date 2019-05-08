@@ -1,5 +1,8 @@
 #include "Messages/PingMessage.h"
 
+//CANT SET SIZE OF DYNAMIC DATA SUCH AS STRINGS
+const size_t PingMessage::SIZE = sizeof(Header) + sizeof(long long);
+
 PingMessage::PingMessage(char* buffer) : Message(buffer)
 {
 

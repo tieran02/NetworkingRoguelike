@@ -8,7 +8,7 @@ public:
 	MessageBatcher(size_t sizeOfMessage);
 	~MessageBatcher();
 
-	void AddMessage(Message* message);
+	void AddMessage(const Message& message);
 
 	void BatchMessages();
 
@@ -16,7 +16,7 @@ public:
 private:
 	//Size of the message including the header
 	size_t m_sizeOfMessage;
-	std::vector<Message*> m_messages;
+	std::vector<Message> m_messages;
 	std::vector<BatchMessage> m_batches;
 };
 

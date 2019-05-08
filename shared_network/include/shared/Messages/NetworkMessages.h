@@ -1,4 +1,5 @@
 #pragma once
+#include "../Config.h"
 #include "BroadcastMessage.h"
 #include "PingMessage.h"
 #include "MovementMessage.h"

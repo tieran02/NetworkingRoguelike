@@ -1,5 +1,8 @@
 #include "Messages/ConnectionMessage.h"
 
+const size_t ConnectionMessage::SIZE = sizeof(Header);
+
+
 ConnectionMessage::ConnectionMessage(char* buffer) : Message(buffer)
 {
 

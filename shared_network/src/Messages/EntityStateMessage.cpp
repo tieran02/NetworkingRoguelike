@@ -1,5 +1,8 @@
 #include "Messages/EntityStateMessage.h"
 
+//CANT SET SIZE OF DYNAMIC DATA SUCH AS STRINGS
+const size_t EntityStateMessage::SIZE = sizeof(Header) + sizeof(unsigned int) + sizeof(sf::Vector2f) + sizeof(sf::Vector2f) + sizeof(bool) + sizeof(bool);
+
 EntityStateMessage::EntityStateMessage(char* buffer) : Message(buffer)
 {
 
