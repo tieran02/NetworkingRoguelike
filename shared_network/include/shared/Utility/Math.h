@@ -49,16 +49,16 @@ namespace Math {
 		}
 	};
 
-	static const float DegToRad = (float)PI / (float)180;
+	static const double DegToRad = (double)PI / (double)180;
 
-	static sf::Vector2f RotateRadians(const sf::Vector2f& v, float radians)
+	static sf::Vector2f RotateRadians(const sf::Vector2f& v, double radians)
 	{
-		float ca = std::cos(radians);
-		float sa = std::sin(radians);
+		auto ca = std::cos(radians);
+		auto sa = std::sin(radians);
 		return sf::Vector2f(ca*v.x - sa * v.y, sa*v.x + ca * v.y);
 	}
 
-	static sf::Vector2f Rotate(const sf::Vector2f& v, float degrees)
+	static sf::Vector2f Rotate(const sf::Vector2f& v, double degrees)
 	{
 		return RotateRadians(v, degrees * DegToRad);
 	}

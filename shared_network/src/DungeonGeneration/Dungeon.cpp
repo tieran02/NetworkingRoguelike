@@ -91,7 +91,7 @@ const DungeonTile* Dungeon::GetTileFromWorld(const sf::Vector2f& worldPos) const
 	int tileX = (intPos.x / m_tileSize) % (int)DungeonChunk::CHUNK_SIZE;
 	int tileY = (intPos.y / m_tileSize) % (int)DungeonChunk::CHUNK_SIZE;
 
-	if (chunkX < 0 || chunkY < 0 || tileX < 0 || tileY < 0 || chunkX >= (int)WIDTH || chunkY >= (int)HEIGHT)
+	if (chunkX < 0 || chunkY < 0 || tileX < 0 || tileY < 0 || chunkX >= WIDTH || chunkY >= HEIGHT)
 		return nullptr;
 
 	const unsigned int chunkOffset = (chunkX + chunkY * WIDTH);
@@ -102,7 +102,7 @@ const DungeonTile* Dungeon::GetTileFromWorld(const sf::Vector2f& worldPos) const
 
 const DungeonTile* Dungeon::GetTileFromChunk(int chunkX, int chunkY, int tileX, int tileY)
 {
-	if (chunkX < 0 || chunkY < 0 || tileX < 0 || tileY < 0 || chunkX >= (int)WIDTH || chunkY >= (int)HEIGHT || tileX >= m_tileSize || tileY >= m_tileSize)
+	if (chunkX < 0 || chunkY < 0 || tileX < 0 || tileY < 0 || chunkX >= WIDTH || chunkY >= HEIGHT || tileX >= m_tileSize || tileY >= m_tileSize)
 		return nullptr;
 
 	const unsigned int chunkOffset = (chunkX + chunkY * WIDTH);
